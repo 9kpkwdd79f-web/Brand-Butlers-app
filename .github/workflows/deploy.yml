@@ -39,8 +39,8 @@ jobs:
             mkdir -p _site/preview
             cp -r dev/app/. _site/preview/
             # mark the test version so it is never mistaken for the live app
-            sed -i 's|<title>Brand Butlers App</title>|<title>Brand Butlers (test)</title>|' _site/preview/index.html
-            sed -i 's|bb-iphone-demo-v3|bb-iphone-preview-v3|' _site/preview/index.html
+            # test version: its own home screen icon and name, written straight into the page
+            sed -i 's|href="icon-180.png"|href="icon-test-180.png?v=2"|; s|href="manifest.webmanifest"|href="manifest-test.webmanifest"|; s|name="apple-mobile-web-app-title" content="Brand Butlers"|name="apple-mobile-web-app-title" content="BB Test"|; s|<title>Brand Butlers</title>|<title>BB Test</title>|' _site/preview/index.html
           fi
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
