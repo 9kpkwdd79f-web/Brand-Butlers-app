@@ -49,6 +49,10 @@ jobs:
             sed -i "s|href=\"icon-180.png\"|href=\"bbtest-180-$V.png\"|; s|href=\"manifest.webmanifest\"|href=\"manifest-test.webmanifest\"|; s|name=\"apple-mobile-web-app-title\" content=\"Brand Butlers\"|name=\"apple-mobile-web-app-title\" content=\"BB Test\"|; s|<title>Brand Butlers</title>|<title>BB Test</title>|; s|'icon-test-180.png'|'bbtest-180-$V.png'|" _site/preview/index.html
             sed -i "s|icon-test-512.png|bbtest-512-$V.png|; s|icon-test-180.png|bbtest-180-$V.png|" _site/preview/manifest-test.webmanifest
           fi
+          # stamp each build so open apps can tell a newer version has been published
+          # (live and test each use their own code version, so updating one doesn't nag users of the other)
+          sed -i "s|const BUILD = '__BUILD__'|const BUILD = '$(git -C live rev-parse --short HEAD)'|" _site/index.html
+          if [ -f _site/preview/index.html ]; then sed -i "s|const BUILD = '__BUILD__'|const BUILD = '$(git -C dev rev-parse --short HEAD)'|" _site/preview/index.html; fi
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
         with:

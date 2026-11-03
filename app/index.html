@@ -194,6 +194,8 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 .rules li.ok::before { border-color: var(--green); background: var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.6 2.4L12 5.5' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat; }
 .who { display: flex; align-items: center; gap: 10px; border: none; background: var(--fill); border-radius: 12px; padding: 8px 12px; text-align: left; font-size: 15px; }
 .who span.e { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.update { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); top: calc(10px + env(safe-area-inset-top, 0px)); border: none; border-radius: 999px; background: var(--blue); color: #FFFFFF; padding: 10px 18px; display: flex; flex-direction: column; align-items: center; gap: 1px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); font-size: 15px; }
+.update span { font-size: 12px; opacity: 0.9; }
 .vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .logo { display: block; flex-shrink: 0; }
 .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
@@ -247,6 +249,26 @@ const whenLabel = (j) => { const n = dayDiff(j.date); const d = parseD(j.date); 
 const longToday = () => { const d = new Date(); return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d.getDay()] + ' ' + d.getDate() + ' ' + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][d.getMonth()]; };
 const hhmm = (t) => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
 const fmtDur = (ms) => { const m = Math.round(ms / 60000); return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + (m % 60) + 'm'; };
+
+/* ---------- updates: tell people when a newer version has been published ---------- */
+const BUILD = '__BUILD__';
+let updateShown = false;
+function checkForUpdate() {
+  if (updateShown || BUILD.indexOf('__') === 0) return;
+  fetch(location.pathname + '?check=' + Date.now(), { cache: 'no-store' }).then((r) => r.text()).then((html) => {
+    const m = html.match(/const BUILD = '([^']+)'/);
+    if (m && m[1] !== BUILD && m[1].indexOf('__') !== 0) {
+      updateShown = true;
+      const el = document.createElement('button'); el.type = 'button'; el.className = 'update';
+      el.innerHTML = '<b>New version available</b><span>Tap to update</span>';
+      el.addEventListener('click', () => { location.replace(location.pathname + '?v=' + m[1]); });
+      document.body.appendChild(el);
+    }
+  }).catch(() => { /* offline: try later */ });
+}
+setInterval(checkForUpdate, 120000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
+setTimeout(checkForUpdate, 4000);
 
 /* ---------- server (Supabase) ---------- */
 const SB_URL = 'https://gipkzcpaqlyiqawgunhu.supabase.co';
@@ -869,7 +891,7 @@ function approvalDetail(j) {
   return h;
 }
 function jobDetail(j) {
-  let h = navbar(`<button type="button" class="navbtn" data-a="closeView">${I.back} Back</button>`, 'Ticket', '');
+  let h = navbar(`<button type="button" class="navbtn" data-a="closeView">${I.back} Back</button>`, 'Ticket', EDITABLE.includes(j.status) ? `<button type="button" class="navbtn r" data-a="editJob" data-v="${j.id}">Edit</button>` : '');
   h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Apple ticket ${esc(j.ticket)}</span><h1 style="font-size:28px;line-height:34px">${esc(j.store)}</h1>${j.addr ? `<span class="muted" style="font-size:15px">${esc(j.addr)}</span>` : ''}</div>`;
   h += `<div class="group" style="margin-top:16px"><div class="row"><span class="grow">Country</span>${flag(j.c)}<span class="val">${C[j.c].name}</span></div><div class="row"><span class="grow">When</span><span class="val">${esc(whenLabel(j))}</span></div><div class="row"><span class="grow">Fixture</span><span class="val">${esc(j.fixture || 'No template')}</span></div><div class="row"><span class="grow">Status</span>${pillFor(j)}</div><div class="row"><span class="grow">Price</span><span class="val num">${money(j.c, Number(j.price) || 0)}</span></div><div class="row"><span class="grow">Installer share</span><span class="val num">${j.split[0]} % · ${money(j.c, shareOf(j))}${j.second ? ' each' : ''}</span></div></div>`;
   h += EDITABLE.includes(j.status)
