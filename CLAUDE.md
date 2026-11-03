@@ -14,6 +14,11 @@
 - Project `brand-butlers` (ref `gipkzcpaqlyiqawgunhu`, region eu-north-1), used by the test version. Connected through the Supabase connector.
 - Tables: profiles (who may sign in, roles, status invited/reset/active/removed), stores, jobs, reports (draft data as JSON). Private storage bucket `photos`, one folder per job.
 - Row level security: admins see everything; installers only reach their jobs through `my_jobs()` (their share, never the price) and the `job_*` functions. Check with `get_advisors` after schema changes.
-- Edge functions: `account` (first password / after reset, no JWT) and `admin` (add, update, reset, remove people; admins only).
+- Edge functions: `account` (claim = first password / after reset with name + country; apple_status / link = finish Sign in with Apple with name + country) and `admin` (add, update, reset, remove people; admins only).
+- Trigger `guard_new_login` on auth.users: only emails in active profiles can get a login (also blocks unknown Apple IDs).
+- Sign in with Apple needs the Apple provider switched on in Supabase (Services ID + secret key from the .p8 file). The secret key must be renewed every 6 months.
 - The schema and functions are the migrations `core_schema` and `functions_storage_seed` in the project; read them with `list_migrations` / `get_edge_function` before changing anything.
 - Before the first live deploy on Supabase: create a separate live project so test data never mixes with real data, and point the live build at it.
+
+## Parked ideas
+- Offline mode: plan in `docs/offline-mode.md`. Not built; wait for Mathias to decide.

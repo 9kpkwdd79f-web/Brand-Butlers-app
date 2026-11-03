@@ -186,6 +186,14 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 .rules li.ok::before { border-color: var(--green); background: var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.6 2.4L12 5.5' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat; }
 .who { display: flex; align-items: center; gap: 10px; border: none; background: var(--fill); border-radius: 12px; padding: 8px 12px; text-align: left; font-size: 15px; }
 .who span.e { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Sign in with Apple, styled per Apple's button guidelines */
+.apple { height: 50px; width: 100%; border: none; border-radius: 12px; background: #000000; color: #FFFFFF; font-size: 17px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; }
+.apple .aglyph { font-family: -apple-system, 'SF Pro Text', sans-serif; font-size: 20px; line-height: 1; margin-top: -3px; }
+.apple[disabled] { opacity: 0.6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .apple { background: #FFFFFF; color: #000000; } }
+:root[data-theme="dark"] .apple { background: #FFFFFF; color: #000000; }
+.or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin: 8px 0 2px; }
+.or::before, .or::after { content: ""; flex: 1; height: 0.5px; background: var(--sep); }
 .vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .logo { display: block; flex-shrink: 0; }
 .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
@@ -250,7 +258,9 @@ const SB_URL = 'https://gipkzcpaqlyiqawgunhu.supabase.co';
 const SB_KEY = 'sb_publishable_9IN9GEfSh-8ovaTEmGVo_w_n2W91RBW';
 const PREVIEW = /\/preview\//.test(location.pathname);
 if (PREVIEW) document.title = 'Brand Butlers (test)';
-const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { storageKey: PREVIEW ? 'bb-auth-preview' : 'bb-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { storageKey: PREVIEW ? 'bb-auth-preview' : 'bb-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+/* the Apple logo character only exists in Apple's own system fonts, so show it only on Apple devices */
+const APPLE_GLYPH = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent) ? '<span class="aglyph" aria-hidden="true">\uF8FF</span>' : '';
 const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 /* only view preferences are kept on the phone; all data lives on the server */
@@ -291,7 +301,15 @@ async function loadAll() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { S.me = null; return; }
   const meRow = ok(await sb.from('profiles').select('*').eq('auth_id', session.user.id).maybeSingle());
-  if (!meRow || !meRow.active) { await sb.auth.signOut(); S.me = null; return; }
+  if (!meRow || !meRow.active) {
+    let st = { status: 'none' };
+    try { st = await callFn('account', { action: 'apple_status' }); } catch (e) { /* treat as none */ }
+    if (st.status === 'needs_setup') { S.me = null; S.setupPending = true; S.login = { step: 'setup', email: st.email, err: '', country: st.country != null ? st.country : 0, acc: { email: st.email, name: st.name || '', status: 'invited' } }; return; }
+    if (st.status === 'ok') return loadAll();
+    await sb.auth.signOut(); S.me = null;
+    S.login = { step: 'email', email: '', err: st.status === 'conflict' ? 'This email already has a password. Sign in with your email and password.' : 'There is no account for this Apple ID\u2019s email. Ask a Brand Butlers admin to add you.', acc: null };
+    return;
+  }
   const me = toUser(meRow); S.me = me.id;
   let jobs, reports;
   if (me.admin) {
@@ -312,6 +330,12 @@ async function loadAll() {
 let loadingNow = null;
 function refresh() { if (!loadingNow) loadingNow = loadAll().finally(() => { loadingNow = null; }); return loadingNow; }
 async function boot() {
+  const back = new URLSearchParams((location.hash || '').replace(/^#/, '') + '&' + location.search.replace(/^\?/, ''));
+  if (back.get('error_description') || back.get('error')) {
+    const d = back.get('error_description') || '';
+    S.login.err = /no_account_for_email|saving new user/i.test(d) ? 'There is no account for this Apple ID\u2019s email. If you chose \u201cHide My Email\u201d, try again and choose \u201cShare My Email\u201d, or sign in with your email.' : 'Sign in with Apple didn\u2019t finish. Try again or use your email.';
+    history.replaceState(null, '', location.pathname);
+  }
   S.loading = true; render(false);
   try { await loadAll(); } catch (e) { toast('Couldn’t reach the server. Check your connection.'); }
   S.loading = false;
@@ -445,7 +469,7 @@ function render(keepScroll = true) {
   const y = window.scrollY;
   let html = '';
   if (S.loading) html = `<div class="login"><div class="lhero">${LOGO(76)}<h1 class="lname">Brand Butlers</h1><p class="ltag">Loading…</p></div></div>`;
-  else if (!S.me || S.choosing) html = viewLogin();
+  else if (!S.me || S.choosing || S.setupPending) html = viewLogin();
   else if (S.view) html = viewSub();
   else html = S.role === 'admin' ? viewAdmin() : viewInstaller();
   app.innerHTML = html;
@@ -481,14 +505,27 @@ function viewLogin() {
   const hero = `<div class="lhero">${LOGO(76)}<h1 class="lname">Brand Butlers</h1><p class="ltag">Fixture installation and reporting</p>${PREVIEW ? '<span class="pill p-or">Test version</span>' : ''}</div>`;
   const err = L.err ? `<p class="err" role="alert">${esc(L.err)}</p>` : '';
   const pending = L.acc;
+  const who = (u) => `<label class="fl" for="cname">Your full name</label><input id="cname" class="box" autocomplete="name" autocapitalize="words" placeholder="First and last name" value="${esc(u.name || '')}">
+      <span class="fl">Your country</span><div class="seg tall" role="radiogroup" aria-label="Your country">${[0, 1, 2, 3].map((i) => `<button type="button" role="radio" class="${L.country === i ? 'on' : ''}" aria-checked="${L.country === i}" data-a="loginCountry" data-v="${i}">${flag(i)}${C[i].name}</button>`).join('')}</div>`;
+  if (L.step === 'setup' && pending) {
+    const u = pending;
+    return `<div class="login">${hero}<form class="lcard" data-form="setup" novalidate>
+      <h2 class="ltitle">Finish setting up</h2>
+      <p class="lsub">You signed in with Apple as <b>${esc(u.email)}</b>. Check your name and country to finish.</p>
+      ${who(u)}
+      ${err}
+      <button class="btn" type="submit" style="margin-top:10px">Continue</button>
+      <button type="button" class="link" data-a="signOut">Cancel</button>
+    </form></div>`;
+  }
   if (L.step === 'create' && pending) {
     const u = pending;
     return `<div class="login">${hero}<form class="lcard" data-form="create" novalidate>
       <h2 class="ltitle">${u.reset ? 'Create a new password' : 'Create your password'}</h2>
       <p class="lsub">${u.reset ? 'An admin reset your password.' : 'Welcome! This is your first time signing in.'} You're signing in as <b>${esc(u.email)}</b>.</p>
       <input class="vh" type="email" name="username" autocomplete="username" value="${esc(u.email)}" tabindex="-1" aria-hidden="true">
-      ${u.name ? '' : `<label class="fl" for="cname">Your full name</label><input id="cname" class="box" autocomplete="name" autocapitalize="words" placeholder="First and last name">`}
-      <label class="fl" for="pw1">New password</label>
+      ${who(u)}
+      <label class="fl" for="pw1" style="margin-top:8px">New password</label>
       <div class="pwwrap"><input id="pw1" class="box" type="password" autocomplete="new-password" data-pw="1"><button type="button" class="pweye" data-a="togglePw">Show</button></div>
       <label class="fl" for="pw2">Repeat password</label>
       <input id="pw2" class="box" type="password" autocomplete="new-password" data-pw="1">
@@ -522,6 +559,8 @@ function viewLogin() {
   }
   return `<div class="login">${hero}<form class="lcard" data-form="email" novalidate>
     <h2 class="ltitle">Sign in</h2>
+    <button type="button" class="apple" data-a="apple" aria-label="Sign in with Apple">${APPLE_GLYPH}Sign in with Apple</button>
+    <div class="or"><span>or use your email</span></div>
     <label class="fl" for="lemail">Email</label>
     <input id="lemail" class="box${L.err ? ' bad-field' : ''}" type="email" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email" placeholder="name@company.com" value="${esc(L.email || S.lastEmail || '')}">
     ${err}
@@ -1021,23 +1060,35 @@ const FORMS = {
     try { st = ok(await sb.rpc('account_status', { p_email: e })); }
     catch (err) { S.login = { step: 'email', email: e, err: friendly(err), acc: null }; render(false); return; }
     if (!st || st.status === 'none') { S.login = { step: 'email', email: e, err: 'There is no account for this email. Ask a Brand Butlers admin to add you.', acc: null }; render(false); return; }
-    S.login = { step: st.status === 'active' ? 'password' : 'create', email: e, err: '', acc: { email: e, name: st.name || '', status: st.status, reset: st.status === 'reset' } };
+    S.login = { step: st.status === 'active' ? 'password' : 'create', email: e, err: '', country: st.country != null ? st.country : 0, acc: { email: e, name: st.name || '', status: st.status, reset: st.status === 'reset' } };
     render(false);
     const nx = document.getElementById(st.status === 'active' ? 'lpw' : (st.name ? 'pw1' : 'cname')); if (nx) nx.focus();
   },
   async create(f) {
     const a = S.login.acc; if (!a) return;
     const nm = f.querySelector('#cname');
-    if (nm && !nm.value.trim()) { S.login.err = 'Enter your full name.'; render(false); return; }
+    a.name = nm.value;
+    if (!nm.value.trim()) { S.login.err = 'Enter your full name.'; render(false); document.getElementById('cname').focus(); return; }
     if (!pwRules()) return;
     const pw = document.getElementById('pw1').value;
     busy(f, 'Creating…');
-    try { await callFn('account', { action: 'claim', email: a.email, password: pw, name: nm ? nm.value : '' }); }
+    try { await callFn('account', { action: 'claim', email: a.email, password: pw, name: nm.value, country: S.login.country }); }
     catch (err) { S.login.err = err.message; render(false); return; }
     const r = await sb.auth.signInWithPassword({ email: a.email, password: pw });
     if (r.error) { S.login = { step: 'password', email: a.email, err: 'Your password is saved. Sign in with it.', acc: Object.assign({}, a, { status: 'active' }) }; render(false); return; }
     await afterSignIn();
     const me = meU(); if (me) toast('Password created. Welcome, ' + first(me.name) + '!');
+  },
+  async setup(f) {
+    const a = S.login.acc; if (!a) return;
+    const nm = f.querySelector('#cname'); a.name = nm.value;
+    if (!nm.value.trim()) { S.login.err = 'Enter your full name.'; render(false); document.getElementById('cname').focus(); return; }
+    busy(f, 'Saving…');
+    try { await callFn('account', { action: 'link', name: nm.value, country: S.login.country }); }
+    catch (err) { S.login.err = err.message; render(false); return; }
+    S.setupPending = false;
+    await afterSignIn();
+    const me = meU(); if (me) toast('Welcome, ' + first(me.name) + '!');
   },
   async password(f) {
     const a = S.login.acc; if (!a) return;
@@ -1069,6 +1120,15 @@ async function act(fn, okMsg) {
 }
 const upd = (id, patch) => sb.from('jobs').update(patch).eq('id', id).then(ok);
 const A = {
+  async apple(v, btn) {
+    if (btn) { btn.disabled = true; }
+    let on = false;
+    try { const r = await fetch(SB_URL + '/auth/v1/settings', { headers: { apikey: SB_KEY } }); const j = await r.json(); on = !!(j.external && j.external.apple); } catch (e) { /* treat as off */ }
+    if (!on) { if (btn) btn.disabled = false; S.login.err = 'Sign in with Apple isn\u2019t switched on yet. Use your email for now.'; render(false); return; }
+    const r = await sb.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: location.origin + location.pathname } });
+    if (r.error) { if (btn) btn.disabled = false; S.login.err = friendly(r.error); render(false); }
+  },
+  loginCountry(v, el) { S.login.country = Number(v); el.parentNode.querySelectorAll('button').forEach((b) => { const on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); }); },
   loginBack() { S.choosing = false; S.login = { step: 'email', email: S.login.email || '', err: '', acc: null }; render(false); },
   enter(v) { if (!S.me) return; S.choosing = false; S.role = v; S.tab = v === 'admin' ? 'overview' : 'jobs'; S.login = { step: 'email', email: '', err: '', acc: null }; render(false); },
   togglePw(v, el) { const f = el.closest('form'); const ins = f.querySelectorAll('input[type="password"], input[data-shown]'); const show = el.textContent.trim() === 'Show'; ins.forEach((i) => { i.type = show ? 'text' : 'password'; if (show) i.dataset.shown = '1'; else delete i.dataset.shown; }); el.textContent = show ? 'Hide' : 'Show'; },
