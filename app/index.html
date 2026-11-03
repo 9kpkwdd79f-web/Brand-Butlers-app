@@ -281,7 +281,7 @@ const friendly = (e) => {
 };
 const toUser = (p) => ({ id: p.id, email: p.email, name: p.name || '', phone: p.phone || '', c: p.country, admin: p.is_admin, installer: p.is_installer, status: p.status, active: p.active, hash: p.status === 'active', reset: p.status === 'reset' });
 const toJob = (r) => ({
-  id: r.id, ticket: r.ticket, c: r.country, store: r.store_name, addr: r.address || '', installer: r.installer, second: r.second || null,
+  id: r.id, ticket: r.ticket, c: r.country, storeId: r.store_id || null, store: r.store_name, addr: r.address || '', installer: r.installer, second: r.second || null,
   date: r.date, time: r.time, status: r.status, fixture: r.fixture || '', tools: r.tools || [], parts: r.parts || [], note: r.note || '', last: r.last_note || '',
   price: r.price != null ? Number(r.price) : null, share: r.share != null ? Number(r.share) : null, split: [Number(r.inst_pct != null ? r.inst_pct : 40), Number(r.adm_pct != null ? r.adm_pct : 10)],
   request: r.request || null, changes: r.changes || '', declineReason: r.decline_reason || '',
@@ -429,6 +429,7 @@ const STATUS = {
 };
 const effStatus = (j) => (j.status === 'scheduled' && Date.now() > jobTs(j) + 30 * 60000 ? 'overdue' : j.status);
 const OPEN = ['scheduled', 'progress', 'overdue', 'changes', 'declined'];
+const EDITABLE = ['scheduled', 'progress', 'changes', 'declined'];
 const pillFor = (j) => j.request && j.request.kind === 'resched' && j.status === 'scheduled' ? '<span class="pill p-or">Reschedule asked</span>' : `<span class="pill ${STATUS[effStatus(j)][1]}">${STATUS[effStatus(j)][0]}</span>`;
 const inPeriod = (j, p) => { const n = Math.abs(dayDiff(j.date)); return p === 0 ? n === 0 : p === 1 ? n <= 7 : n <= 31; };
 const shareOf = (j) => j.share != null ? j.share : (Number(j.price) || 0) * (j.split ? j.split[0] : 40) / 100 / (j.second ? 2 : 1);
@@ -616,7 +617,12 @@ function adminNew() {
   const ins = installers(d.c);
   const errL = (k) => (E[k] ? `<p class="foot" style="color:var(--red)">${esc(E[k])}</p>` : '');
   const twoNames = d.lead ? (d.secondOn && d.second ? first(nameOf(d.lead)) + ' and ' + first(nameOf(d.second)) : first(nameOf(d.lead))) : '';
-  let h = header('New ticket', 'Client: Apple');
+  const editing = d.editId ? job(d.editId) : null;
+  const lockInstaller = editing && !['scheduled', 'declined'].includes(editing.status);
+  let h = editing
+    ? navbar(`<button type="button" class="navbtn" data-a="cancelEdit">Cancel</button>`, 'Edit ticket', `<button type="button" class="navbtn r" data-a="createTicket">Save</button>`)
+      + (editing.status !== 'scheduled' && editing.status !== 'declined' ? `<div class="banner" style="margin-top:12px;background:var(--orange-bg);color:var(--fg2)">${esc(first(nameOf(editing.installer)))} has started the report. Changes show up in their app right away.</div>` : '')
+    : header('New ticket', 'Client: Apple');
   h += `<h2 class="sec">Apple ticket number</h2>`;
   h += `<input id="ticket" class="box num${E.ticket ? ' bad-field' : ''}" data-bind="ticket" value="${esc(d.ticket)}" placeholder="From Apple's system" autocapitalize="characters" autocomplete="off" aria-label="Apple ticket number" style="font-weight:600">${errL('ticket')}`;
   const tpl = S.templates.find((t) => t.id === d.template);
@@ -634,7 +640,8 @@ function adminNew() {
   h += `<div class="row" style="margin-top:10px;border-radius:12px;border:none"><span class="ico" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">Support: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · the installer can call or text</span></span></div>`;
   h += `<h2 class="sec">When</h2><div class="group"><label class="row" for="ddate"><span class="lbl">Date</span><input id="ddate" class="inl" type="date" data-bind="date" value="${esc(d.date)}" style="text-align:right"></label><label class="row" for="dtime"><span class="lbl">Time</span><input id="dtime" class="inl" type="time" data-bind="time" value="${esc(d.time)}" style="text-align:right"></label></div>`;
   h += `<h2 class="sec">Installer</h2><div class="group${E.installer ? ' bad-field' : ''}">`;
-  if (!ins.length) h += `<div class="row"><span class="grow"><span>No installers yet</span><span class="sub">Add people with installer access under Team.</span></span><button type="button" class="btn small" style="width:auto;padding:0 14px" data-a="tab" data-v="team">Team</button></div>`;
+  if (lockInstaller) h += `<div class="row"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(nameOf(d.lead))}</span><span class="grow"><span>${esc(nameOf(d.lead))}${d.second ? ' + ' + esc(nameOf(d.second)) : ''}</span><span class="sub">Can\u2019t be changed after the report is started</span></span></div>`;
+  else if (!ins.length) h += `<div class="row"><span class="grow"><span>No installers yet</span><span class="sub">Add people with installer access under Team.</span></span><button type="button" class="btn small" style="width:auto;padding:0 14px" data-a="tab" data-v="team">Team</button></div>`;
   else {
     h += ins.map((u) => { const lead = u.id === d.lead, sec = d.secondOn && u.id === d.second; const n = S.jobs.filter((j) => (j.installer === u.id || j.second === u.id) && j.date === d.date && OPEN.includes(effStatus(j))).length; return `<button type="button" class="row" aria-pressed="${lead || sec}" data-a="draftPerson" data-v="${u.id}"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || u.email)}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub">${u.c !== d.c ? C[u.c].name + ' · ' : ''}${n ? n + (n === 1 ? ' job' : ' jobs') + ' that day' : 'Free that day'}</span></span>${d.secondOn ? (lead ? '<span class="pill p-blue">Lead</span>' : sec ? '<span class="pill p-grey">Second</span>' : '') : ''}${lead || sec ? I.tick('var(--blue)', 18) : ''}</button>`; }).join('');
     if (ins.length > 1) h += !d.secondOn ? `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftSecond">+ Add a second installer <span class="muted" style="font-size:13px">· rarely needed</span></button>` : `<div class="row" style="font-size:13px"><span class="grow muted">${d.second ? esc(first(nameOf(d.lead))) + ' leads and submits the report. The installer share is split.' : 'Tap who joins ' + esc(first(nameOf(d.lead)) || 'the lead') + '.'}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="draftNoSecond">Remove</button></div>`;
@@ -659,8 +666,8 @@ function adminNew() {
     <div class="row"><span class="grow">Brand Butlers<span class="sub num" id="amt-bb">${cur} ${fmt(sp.price * sp.bb / 100)}</span></span><b class="num" id="pct-bb" style="color:${sp.bb < 0 ? 'var(--red)' : 'var(--fg)'}">${fmt(sp.bb)} %</b></div></div>${errL('price')}
     <p class="foot">The installer only sees their own share, never the full price.</p>`;
   h += `<h2 class="sec">Note for installer</h2><textarea id="dnote" class="box" data-bind="note" placeholder="Anything they should know before arriving">${esc(d.note)}</textarea>`;
-  h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="createTicket">${twoNames ? 'Create ticket for ' + esc(twoNames) : 'Create ticket'}</button></div>`;
-  h += `<p class="foot" style="text-align:center">The job shows up in the installer's app right away.</p>`;
+  h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="createTicket">${editing ? 'Save changes' : twoNames ? 'Create ticket for ' + esc(twoNames) : 'Create ticket'}</button></div>`;
+  h += editing ? `<button type="button" class="link" style="width:100%" data-a="cancelEdit">Cancel</button>` : `<p class="foot" style="text-align:center">The job shows up in the installer's app right away.</p>`;
   return h;
 }
 function updateSplit() {
@@ -778,6 +785,7 @@ function viewSub() {
   if (v.kind === 'report') return reportFlow(j);
   if (v.kind === 'approval') return approvalDetail(j);
   if (v.kind === 'job') return jobDetail(j);
+  if (v.kind === 'edit') return adminNew();
   if (v.kind === 'submitted') return submitted(j);
   return '';
 }
@@ -785,6 +793,7 @@ function navbar(left, title, right, extra = '') { return `<div class="navbar">${
 function ensureReport(j) {
   if (!j.report) j.report = Object.assign(emptyReport(), { draft: true });
   if (!j.report.init) { j.report.parts = j.parts.map((p) => [p, 0]); j.report.init = true; }
+  else j.parts.forEach((p) => { if (!j.report.parts.some(([x]) => x === p)) j.report.parts.push([p, 0]); });
   return j.report;
 }
 function reportFlow(j) {
@@ -863,6 +872,10 @@ function jobDetail(j) {
   let h = navbar(`<button type="button" class="navbtn" data-a="closeView">${I.back} Back</button>`, 'Ticket', '');
   h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Apple ticket ${esc(j.ticket)}</span><h1 style="font-size:28px;line-height:34px">${esc(j.store)}</h1>${j.addr ? `<span class="muted" style="font-size:15px">${esc(j.addr)}</span>` : ''}</div>`;
   h += `<div class="group" style="margin-top:16px"><div class="row"><span class="grow">Country</span>${flag(j.c)}<span class="val">${C[j.c].name}</span></div><div class="row"><span class="grow">When</span><span class="val">${esc(whenLabel(j))}</span></div><div class="row"><span class="grow">Fixture</span><span class="val">${esc(j.fixture || 'No template')}</span></div><div class="row"><span class="grow">Status</span>${pillFor(j)}</div><div class="row"><span class="grow">Price</span><span class="val num">${money(j.c, Number(j.price) || 0)}</span></div><div class="row"><span class="grow">Installer share</span><span class="val num">${j.split[0]} % · ${money(j.c, shareOf(j))}${j.second ? ' each' : ''}</span></div></div>`;
+  h += EDITABLE.includes(j.status)
+    ? `<div style="margin-top:14px"><button type="button" class="btn" data-a="editJob" data-v="${j.id}">Edit ticket</button></div>`
+    : `<p class="foot" style="margin-top:12px">This ticket can\u2019t be edited because the report has been submitted.</p>`;
+  if (j.parts.length) h += `<h2 class="sec">Parts on site</h2><div class="group"><div class="row" style="font-size:15px">${j.parts.map(esc).join(', ')}</div></div>`;
   if (j.tools.length) h += `<h2 class="sec">Tools</h2><div class="group"><div class="row" style="font-size:15px">${j.tools.map(esc).join(', ')}</div></div>`;
   if (j.note) h += `<h2 class="sec">Note</h2><div class="group"><div class="row" style="font-size:15px">${esc(j.note)}</div></div>`;
   if (['scheduled', 'declined'].includes(j.status)) {
@@ -1105,7 +1118,7 @@ const A = {
   loginBack() { S.choosing = false; S.login = { step: 'email', email: S.login.email || '', err: '', acc: null }; render(false); },
   enter(v) { if (!S.me) return; S.choosing = false; S.role = v; S.tab = v === 'admin' ? 'overview' : 'jobs'; S.login = { step: 'email', email: '', err: '', acc: null }; render(false); },
   togglePw(v, el) { const f = el.closest('form'); const ins = f.querySelectorAll('input[type="password"], input[data-shown]'); const show = el.textContent.trim() === 'Show'; ins.forEach((i) => { i.type = show ? 'text' : 'password'; if (show) i.dataset.shown = '1'; else delete i.dataset.shown; }); el.textContent = show ? 'Hide' : 'Show'; },
-  tab(v) { S.tab = v; S.view = null; U.confirm = null; render(false); },
+  tab(v) { if (S.view && S.view.kind === 'edit') { S.draft = S.stash || null; S.stash = null; } S.tab = v; S.view = null; U.confirm = null; render(false); },
   set(v, el) { S[el.dataset.k] = Number(v); render(); },
   sheet(v) {
     U.sheet = v; U.err = ''; U.confirm = null; renderSheet();
@@ -1152,6 +1165,17 @@ const A = {
   },
 
   // admin: tickets
+  editJob(v) {
+    const j = job(v); if (!j || !EDITABLE.includes(j.status)) return;
+    const tpl = S.templates.find((t) => t.name === j.fixture);
+    const st = S.stores.find((x) => x.id === j.storeId) || S.stores.find((x) => x.c === j.c && x.name.toLowerCase() === j.store.toLowerCase());
+    S.stash = S.draft;
+    S.draft = { editId: j.id, ticket: j.ticket, template: tpl ? tpl.id : null, tplName: tpl ? tpl.name : '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: j.parts.slice(), c: j.c,
+      store: st ? st.id : 'new', storeName: st ? '' : j.store, storeAddr: st ? '' : j.addr, lead: j.installer, second: j.second, secondOn: !!j.second, date: j.date, time: j.time,
+      tools: j.tools.slice(), price: String(j.price), inst: String(j.split[0]), adm: String(j.split[1]), note: j.note, err: {} };
+    S.view = { kind: 'edit', id: j.id }; U.confirm = null; render(false);
+  },
+  cancelEdit() { const id = S.draft && S.draft.editId; S.draft = S.stash || null; S.stash = null; S.view = id ? { kind: 'job', id } : null; render(false); },
   openJob(v) { S.view = { kind: 'job', id: v }; U.confirm = null; render(false); },
   openApproval(v) { S.view = { kind: 'approval', id: v }; U.note = ''; render(false); },
   setInstaller(v) { const j = job(S.view.id); act(() => upd(j.id, { installer: v, second: j.second === v ? null : j.second, status: j.status === 'declined' ? 'scheduled' : j.status, decline_reason: '' }), j.store + ' assigned to ' + first(nameOf(v))); },
@@ -1205,7 +1229,7 @@ const A = {
     const d = S.draft; const E = {};
     const t = (d.ticket || '').trim().toUpperCase();
     if (!t) E.ticket = 'Enter the ticket number from Apple’s system.';
-    else if (S.jobs.some((j) => j.ticket === t)) E.ticket = 'A ticket with this number already exists.';
+    else if (S.jobs.some((j) => j.ticket === t && j.id !== d.editId)) E.ticket = 'A ticket with this number already exists.';
     let store = null;
     if (d.store !== 'new' && storesFor(d.c).length) store = S.stores.find((s) => s.id === d.store);
     else if ((d.storeName || '').trim()) store = { c: d.c, name: d.storeName.trim().replace(/\s+/g, ' '), addr: (d.storeAddr || '').trim(), isNew: true };
@@ -1216,17 +1240,34 @@ const A = {
     else if (sp.inst < 0 || sp.adm < 0 || sp.bb < 0) E.price = 'The shares add up to more than 100 %.';
     d.err = E;
     if (Object.keys(E).length) { render(); toast('Fill in the marked fields'); const el = document.querySelector('.bad-field'); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
-    if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+    if (btn) { btn.disabled = true; btn.textContent = d.editId ? 'Saving…' : 'Creating…'; }
     const tpl = S.templates.find((x) => x.id === d.template);
-    const prev = S.jobs.filter((j) => j.c === d.c && j.store.toLowerCase() === store.name.toLowerCase() && j.status === 'approved' && j.report && j.report.nextNote).sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0))[0];
     const second = d.secondOn && d.second ? d.second : null;
+    const resolveStore = async () => {
+      if (!store.isNew) return store.id;
+      const existing = S.stores.find((s) => s.c === d.c && s.name.toLowerCase() === store.name.toLowerCase());
+      if (existing) return existing.id;
+      return ok(await sb.from('stores').insert({ country: d.c, name: store.name, address: store.addr }).select('id').single()).id;
+    };
+    if (d.editId) {
+      const j0 = job(d.editId);
+      if (!j0 || !EDITABLE.includes(j0.status)) { toast('This ticket can\u2019t be edited any more: the report has been submitted.'); S.draft = S.stash || null; S.stash = null; S.view = j0 ? { kind: 'job', id: j0.id } : null; render(false); return; }
+      const lockInstaller = !['scheduled', 'declined'].includes(j0.status);
+      const id = d.editId;
+      const saved = await act(async () => {
+        const storeId = await resolveStore();
+        const patch = { ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, date: d.date || j0.date, time: d.time || j0.time, fixture: tpl ? tpl.name : (S.templates.some((x) => x.name === j0.fixture) ? '' : j0.fixture), tools: d.tools.slice(), parts: d.parts.slice(), note: (d.note || '').trim(), price: sp.price, inst_pct: sp.inst, adm_pct: sp.adm };
+        if (!lockInstaller) { patch.installer = d.lead; patch.second = second; if (j0.status === 'declined' && d.lead !== j0.installer) { patch.status = 'scheduled'; patch.decline_reason = ''; } }
+        if (j0.date !== patch.date || j0.time !== patch.time) patch.request = null;
+        ok(await sb.from('jobs').update(patch).eq('id', id));
+      }, 'Ticket ' + t + ' updated');
+      if (saved) { S.draft = S.stash || null; S.stash = null; S.view = { kind: 'job', id }; render(false); }
+      else if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; }
+      return;
+    }
+    const prev = S.jobs.filter((j) => j.c === d.c && j.store.toLowerCase() === store.name.toLowerCase() && j.status === 'approved' && j.report && j.report.nextNote).sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0))[0];
     const done = await act(async () => {
-      let storeId = store.id || null;
-      if (store.isNew) {
-        const existing = S.stores.find((s) => s.c === d.c && s.name.toLowerCase() === store.name.toLowerCase());
-        if (existing) storeId = existing.id;
-        else storeId = ok(await sb.from('stores').insert({ country: d.c, name: store.name, address: store.addr }).select('id').single()).id;
-      }
+      const storeId = await resolveStore();
       ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl ? tpl.name : '', tools: d.tools.slice(), parts: d.parts.slice(), note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_pct: sp.inst, adm_pct: sp.adm, created_by: S.me }));
     }, 'Ticket ' + t + ' created for ' + first(nameOf(d.lead)) + (second ? ' and ' + first(nameOf(second)) : ''));
     if (done) { S.split = [sp.inst, sp.adm]; S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2; render(false); }
