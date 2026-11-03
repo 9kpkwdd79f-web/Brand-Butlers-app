@@ -223,12 +223,7 @@ const C = [
   { k: 'DK', name: 'Denmark', cur: 'DKK', flag: ['#C8102E', '#FFFFFF', '#FFFFFF'], support: ['Sebastian Hoffmann', '+45 24 22 80 75', '+4524228075'] },
   { k: 'FI', name: 'Finland', cur: 'DKK', flag: ['#FFFFFF', '#002F6C', '#002F6C'], support: ['Sebastian Hoffmann', '+45 24 22 80 75', '+4524228075'] }
 ];
-const TEMPLATES = [
-  { name: 'Apple product table', tools: ['Cordless drill', 'Bit set', 'Spirit level', 'Measuring tape', 'Cleaning kit'], parts: ['Header sign', 'LED strip', 'Security tether'] },
-  { name: 'Apple accessory wall', tools: ['Cordless drill', 'Bit set', 'Spirit level', 'Step ladder'], parts: ['Shelf strip', 'Header sign', 'Price rail'] },
-  { name: 'Blank', tools: [], parts: [] }
-];
-const TOOLS = ['Cordless drill', 'Bit set', 'Spirit level', 'Step ladder', 'Measuring tape', 'Cable ties', 'Utility knife', 'Cleaning kit'];
+/* fixture templates and tools are made by admins and stored on the server (shared by all admins) */
 const ANGLES = [
   { t: 'Front, full fixture', h: 'Step back about 3 m so the whole fixture and floor fit. Phone upright, chest height.', pos: [26, 44], cone: '26,44 13,13 39,13' },
   { t: 'Left side, 45°', h: 'Stand at the front-left corner, about 2 m away.', pos: [7, 36], cone: '7,36 15,13 39,10' },
@@ -266,7 +261,7 @@ const KEY = PREVIEW ? 'bb-prefs-preview-v5' : 'bb-prefs-v5';
 const PREF_KEYS = ['lastEmail', 'role', 'tab', 'region', 'period', 'insRegion', 'insPeriod', 'earnPeriod', 'split'];
 function fresh() {
   return {
-    v: 5, users: [], jobs: [], stores: [], me: null, loading: true, choosing: false,
+    v: 5, users: [], jobs: [], stores: [], templates: [], tools: [], me: null, loading: true, choosing: false,
     lastEmail: '', role: 'admin', tab: 'overview', region: 0, period: 2, insRegion: 0, insPeriod: 2, earnPeriod: 2, split: [40, 10],
     view: null, step: 1, phase: 'before', login: { step: 'email', email: '', err: '', acc: null }, draft: null
   };
@@ -307,7 +302,9 @@ async function loadAll() {
   const me = toUser(meRow); S.me = me.id;
   let jobs, reports;
   if (me.admin) {
-    const [ps, st, js, rs] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*')]);
+    const [ps, st, js, rs, tp, tl] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*')]);
+    S.templates = ok(tp).map((t) => ({ id: t.id, name: t.name, tools: t.tools || [], parts: t.parts || [] })).sort((a, b) => a.name.localeCompare(b.name));
+    S.tools = ok(tl).map((t) => ({ id: t.id, name: t.name })).sort((a, b) => a.name.localeCompare(b.name));
     S.users = ok(ps).map(toUser); S.stores = ok(st).map((s) => ({ id: s.id, c: s.country, name: s.name, addr: s.address })); jobs = ok(js); reports = ok(rs);
   } else {
     const [js, rs] = await Promise.all([sb.rpc('my_jobs'), sb.from('reports').select('*')]);
@@ -604,7 +601,7 @@ function adminOverview() {
 function newDraft() {
   const me = meU(); const c = me.c;
   const st = storesFor(c); const ins = installers(c);
-  return { ticket: '', template: 0, c, store: st.length ? st[0].id : 'new', storeName: '', storeAddr: '', lead: ins.length === 1 ? ins[0].id : null, second: null, secondOn: false, date: new Date().getHours() >= 17 ? rel(1) : rel(0), time: new Date().getHours() >= 17 ? '09:00' : String(new Date().getHours() + 1).padStart(2, '0') + ':00', tools: TEMPLATES[0].tools.slice(), price: '', inst: String(S.split[0]), adm: String(S.split[1]), note: '', err: {} };
+  return { ticket: '', template: null, tplName: '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: [], c, store: st.length ? st[0].id : 'new', storeName: '', storeAddr: '', lead: ins.length === 1 ? ins[0].id : null, second: null, secondOn: false, date: new Date().getHours() >= 17 ? rel(1) : rel(0), time: new Date().getHours() >= 17 ? '09:00' : String(new Date().getHours() + 1).padStart(2, '0') + ':00', tools: [], price: '', inst: String(S.split[0]), adm: String(S.split[1]), note: '', err: {} };
 }
 function splitNums(d) {
   const price = Number(String(d.price).replace(/\s/g, '').replace(',', '.')) || 0;
@@ -622,7 +619,14 @@ function adminNew() {
   let h = header('New ticket', 'Client: Apple');
   h += `<h2 class="sec">Apple ticket number</h2>`;
   h += `<input id="ticket" class="box num${E.ticket ? ' bad-field' : ''}" data-bind="ticket" value="${esc(d.ticket)}" placeholder="From Apple's system" autocapitalize="characters" autocomplete="off" aria-label="Apple ticket number" style="font-weight:600">${errL('ticket')}`;
-  h += `<h2 class="sec">Fixture template</h2><div class="chips">${TEMPLATES.map((t, i) => `<button type="button" class="chip ${d.template === i ? 'on' : ''}" aria-pressed="${d.template === i}" data-a="draftTpl" data-v="${i}">${t.name}</button>`).join('')}</div>`;
+  const tpl = S.templates.find((t) => t.id === d.template);
+  h += `<h2 class="sec">Fixture template</h2>`;
+  h += S.templates.length
+    ? `<div class="chips">${S.templates.map((t) => `<button type="button" class="chip ${d.template === t.id ? 'on' : ''}" aria-pressed="${d.template === t.id}" data-a="draftTpl" data-v="${t.id}">${esc(t.name)}</button>`).join('')}</div>`
+    : `<p class="foot" style="margin-top:0">No templates yet. Choose tools and parts below, then save them as a template.</p>`;
+  if (tpl) h += U.confirm === 'deltpl'
+    ? `<div class="card" style="gap:10px;margin-top:10px"><b>Delete the template \u201c${esc(tpl.name)}\u201d?</b><span class="muted" style="font-size:15px">It disappears for all admins. Tickets already created keep their tools and parts.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="deleteTemplate" data-v="${tpl.id}">Delete</button></div></div>`
+    : `<p class="foot">Fills in the tools and parts from \u201c${esc(tpl.name)}\u201d. You can still change them. <button type="button" class="link" style="font-size:13px;padding:0;color:var(--red)" data-a="confirm" data-v="deltpl">Delete template</button></p>`;
   h += `<h2 class="sec">Country</h2><div class="seg tall" role="group" aria-label="Country">${[0, 1, 2, 3].map((i) => `<button type="button" class="${d.c === i ? 'on' : ''}" aria-pressed="${d.c === i}" data-a="draftCountry" data-v="${i}">${flag(i)}${C[i].name}</button>`).join('')}</div>`;
   h += `<h2 class="sec">Store</h2><div class="group${E.store ? ' bad-field' : ''}">${stores.map((s) => `<button type="button" class="row" aria-pressed="${d.store === s.id}" data-a="draftStore" data-v="${s.id}"><span class="grow"><span>${esc(s.name)}</span><span class="sub">${esc(s.addr)}</span></span>${d.store === s.id ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}
     ${d.store === 'new' || !stores.length ? `<label class="row" for="sname"><span class="lbl">Store</span><input id="sname" class="inl" data-bind="storeName" value="${esc(d.storeName)}" placeholder="e.g. Elkjøp Storo" autocomplete="off"></label><label class="row" for="saddr"><span class="lbl">Address</span><input id="saddr" class="inl" data-bind="storeAddr" value="${esc(d.storeAddr)}" placeholder="Street, postcode, city" autocomplete="off"></label>` : `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftStore" data-v="new">+ New store</button>`}</div>${errL('store')}
@@ -636,7 +640,18 @@ function adminNew() {
     if (ins.length > 1) h += !d.secondOn ? `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftSecond">+ Add a second installer <span class="muted" style="font-size:13px">· rarely needed</span></button>` : `<div class="row" style="font-size:13px"><span class="grow muted">${d.second ? esc(first(nameOf(d.lead))) + ' leads and submits the report. The installer share is split.' : 'Tap who joins ' + esc(first(nameOf(d.lead)) || 'the lead') + '.'}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="draftNoSecond">Remove</button></div>`;
   }
   h += `</div>${errL('installer')}`;
-  h += `<h2 class="sec">Tools to bring · ${d.tools.length}</h2><div class="group">${TOOLS.map((t) => { const on = d.tools.includes(t); return `<button type="button" class="row" aria-pressed="${on}" data-a="draftTool" data-v="${esc(t)}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span>${esc(t)}</button>`; }).join('')}</div>`;
+  const allTools = S.tools.map((t) => t.name); d.tools.forEach((t) => { if (!allTools.some((x) => x.toLowerCase() === t.toLowerCase())) allTools.push(t); });
+  h += `<h2 class="sec">Tools to bring · ${d.tools.length}${S.tools.length ? `<button type="button" class="link" style="font-size:13px;padding:0" data-a="toolEdit">${d.toolEdit ? 'Done' : 'Edit list'}</button>` : ''}</h2><div class="group">${allTools.map((t) => { const on = d.tools.includes(t); const saved = S.tools.find((x) => x.name === t); return d.toolEdit && saved
+      ? `<div class="row"><span class="grow">${esc(t)}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removeTool" data-v="${saved.id}">Remove</button></div>`
+      : `<button type="button" class="row" aria-pressed="${on}" data-a="draftTool" data-v="${esc(t)}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span>${esc(t)}</button>`; }).join('')}
+    <div class="row"><input id="newtool" class="inl" data-bind="newTool" data-enter="addTool" value="${esc(d.newTool)}" placeholder="${allTools.length ? 'Add a tool' : 'Add the first tool, e.g. Cordless drill'}" aria-label="Add a tool" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addTool">Add</button></div></div>
+    <p class="foot">Tools you add are saved to the list for all admins.</p>`;
+  h += `<h2 class="sec">Parts on site · ${d.parts.length}</h2><div class="group">${d.parts.map((p, i) => `<div class="row"><span class="grow">${esc(p)}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removePart" data-v="${i}" aria-label="Remove ${esc(p)}">Remove</button></div>`).join('')}
+    <div class="row"><input id="newpart" class="inl" data-bind="newPart" data-enter="addPart" value="${esc(d.newPart)}" placeholder="Add a part the installer will replace" aria-label="Add a part" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addPart">Add</button></div></div>
+    <p class="foot">The installer ticks off what they replaced and can add parts on site.</p>`;
+  h += d.tplOpen
+    ? `<div class="card" style="gap:10px;margin-top:14px"><b>${tpl ? 'Save as template' : 'Save as a new template'}</b><span class="muted" style="font-size:15px">Saves the ${d.tools.length} ${d.tools.length === 1 ? 'tool' : 'tools'} and ${d.parts.length} ${d.parts.length === 1 ? 'part' : 'parts'} above. All admins can use it.</span><input id="tplname" class="box" style="background:var(--bg)" data-bind="tplName" data-enter="saveTemplate" value="${esc(d.tplName)}" placeholder="e.g. Apple accessory wall" aria-label="Template name" autocomplete="off" autocapitalize="sentences"><div class="btn2"><button type="button" class="btn small sec" data-a="tplOpen" data-v="">Cancel</button><button type="button" class="btn small" data-a="saveTemplate">Save template</button></div></div>`
+    : `<button type="button" class="btn sec" style="margin-top:14px" data-a="tplOpen" data-v="1">${tpl ? 'Update or save as template' : 'Save as template'}</button>`;
   const sp = splitNums(d); const perInst = d.secondOn && d.second ? 2 : 1;
   h += `<h2 class="sec">Price and split</h2><div class="group${E.price ? ' bad-field' : ''}"><label class="row" for="dprice"><span class="grow">Ticket price</span><span class="muted">${cur}</span><input id="dprice" class="inl num" inputmode="decimal" data-bind="price" data-live="1" value="${esc(d.price)}" placeholder="0" style="flex:0 0 96px;text-align:right;font-weight:600"></label>
     <label class="row" for="dinst"><span class="grow">Installer${twoNames ? ' (' + esc(twoNames) + ')' : ''}<span class="sub num" id="amt-inst">${cur} ${fmt(sp.price * sp.inst / 100 / perInst)}${perInst === 2 ? ' each' : ''}</span></span><input id="dinst" class="inl num pct" inputmode="decimal" data-bind="inst" data-live="1" value="${esc(d.inst)}"><span class="muted">%</span></label>
@@ -730,7 +745,7 @@ function jobCard(j) {
   const lead = j.installer === S.me;
   return `<div class="card" style="margin-top:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="pill ${j.status === 'changes' ? 'p-or' : effStatus(j) === 'overdue' ? 'p-red' : 'p-blue'}" style="font-size:13px;padding:4px 10px">${j.status === 'changes' ? 'Changes requested' : j.status === 'progress' ? 'In progress' : 'Next · ' + esc(whenLabel(j))}</span><span class="pill p-green num" style="font-size:13px;padding:4px 10px">${fmt(shareOf(j))} ${c.cur}</span></div>
-    <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:22px;font-weight:700;letter-spacing:-0.3px">${esc(j.store)}</span>${j.addr ? `<span class="muted" style="font-size:15px">${esc(j.addr)}</span>` : ''}<span class="muted" style="font-size:15px">Apple ticket ${esc(j.ticket)} · ${esc(j.fixture)}${j.second ? ' · with ' + esc(nameOf(lead ? j.second : j.installer)) : ''}</span></div>
+    <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:22px;font-weight:700;letter-spacing:-0.3px">${esc(j.store)}</span>${j.addr ? `<span class="muted" style="font-size:15px">${esc(j.addr)}</span>` : ''}<span class="muted" style="font-size:15px">Apple ticket ${esc(j.ticket)}${j.fixture ? ' · ' + esc(j.fixture) : ''}${j.second ? ' · with ' + esc(nameOf(lead ? j.second : j.installer)) : ''}</span></div>
     ${j.status === 'changes' ? `<div class="banner" style="background:var(--orange-bg);color:var(--fg2)"><span><b style="color:var(--orange)">From your admin:</b> ${esc(j.changes || 'Please check the report and resubmit.')}</span></div>` : ''}
     <div class="btn2">${j.addr ? `<a class="btn small sec" href="https://maps.apple.com/?q=${encodeURIComponent(j.store + ', ' + j.addr)}" target="_blank" rel="noopener">${I.dir} Directions</a>` : '<span></span>'}<button type="button" class="btn small sec" data-a="sheet" data-v="support:${j.c}">${I.phone()} Support</button></div>
     ${j.tools.length ? `<div class="split"><span class="cap">Bring with you</span><div class="grid2">${j.tools.map((t) => `<span style="display:flex;align-items:center;gap:8px;font-size:15px">${I.tick('var(--green)', 16)}${esc(t)}</span>`).join('')}</div></div>` : ''}
@@ -827,7 +842,7 @@ function submitted(j) {
 function approvalDetail(j) {
   const r = j.report;
   let h = navbar(`<button type="button" class="navbtn" data-a="closeView">${I.back} Back</button>`, j.store, '');
-  h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Apple ticket ${esc(j.ticket)} · ${esc(nameOf(j.installer))}</span><h1 style="font-size:28px;line-height:34px">${esc(j.store)}</h1><span class="muted" style="font-size:15px">${esc(j.fixture)} · ${esc(whenLabel(j))}</span></div>`;
+  h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Apple ticket ${esc(j.ticket)} · ${esc(nameOf(j.installer))}</span><h1 style="font-size:28px;line-height:34px">${esc(j.store)}</h1><span class="muted" style="font-size:15px">${j.fixture ? esc(j.fixture) + ' · ' : ''}${esc(whenLabel(j))}</span></div>`;
   if (!r || r.draft) return h + `<div class="card" style="margin-top:16px">No submitted report yet.</div>`;
   const photosOk = ['before', 'after'].every((k) => r.photos[k].every((p) => p && p.ok));
   const chk = (ok, t, s) => `<div class="row"><span class="ico" style="width:30px;height:30px;background:${ok ? 'var(--green-bg)' : 'var(--red-bg)'}">${ok ? I.tick('var(--green)', 14) : I.flagP('var(--redbtn)')}</span><span class="grow"><span style="font-size:15px;font-weight:600">${t}</span><span class="sub">${s}</span></span></div>`;
@@ -847,7 +862,7 @@ function approvalDetail(j) {
 function jobDetail(j) {
   let h = navbar(`<button type="button" class="navbtn" data-a="closeView">${I.back} Back</button>`, 'Ticket', '');
   h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Apple ticket ${esc(j.ticket)}</span><h1 style="font-size:28px;line-height:34px">${esc(j.store)}</h1>${j.addr ? `<span class="muted" style="font-size:15px">${esc(j.addr)}</span>` : ''}</div>`;
-  h += `<div class="group" style="margin-top:16px"><div class="row"><span class="grow">Country</span>${flag(j.c)}<span class="val">${C[j.c].name}</span></div><div class="row"><span class="grow">When</span><span class="val">${esc(whenLabel(j))}</span></div><div class="row"><span class="grow">Fixture</span><span class="val">${esc(j.fixture)}</span></div><div class="row"><span class="grow">Status</span>${pillFor(j)}</div><div class="row"><span class="grow">Price</span><span class="val num">${money(j.c, Number(j.price) || 0)}</span></div><div class="row"><span class="grow">Installer share</span><span class="val num">${j.split[0]} % · ${money(j.c, shareOf(j))}${j.second ? ' each' : ''}</span></div></div>`;
+  h += `<div class="group" style="margin-top:16px"><div class="row"><span class="grow">Country</span>${flag(j.c)}<span class="val">${C[j.c].name}</span></div><div class="row"><span class="grow">When</span><span class="val">${esc(whenLabel(j))}</span></div><div class="row"><span class="grow">Fixture</span><span class="val">${esc(j.fixture || 'No template')}</span></div><div class="row"><span class="grow">Status</span>${pillFor(j)}</div><div class="row"><span class="grow">Price</span><span class="val num">${money(j.c, Number(j.price) || 0)}</span></div><div class="row"><span class="grow">Installer share</span><span class="val num">${j.split[0]} % · ${money(j.c, shareOf(j))}${j.second ? ' each' : ''}</span></div></div>`;
   if (j.tools.length) h += `<h2 class="sec">Tools</h2><div class="group"><div class="row" style="font-size:15px">${j.tools.map(esc).join(', ')}</div></div>`;
   if (j.note) h += `<h2 class="sec">Note</h2><div class="group"><div class="row" style="font-size:15px">${esc(j.note)}</div></div>`;
   if (['scheduled', 'declined'].includes(j.status)) {
@@ -1151,7 +1166,35 @@ const A = {
   },
   approveReq(v) { const j = job(v); const [d, t] = j.request.to.split(' '); act(() => upd(v, { date: d, time: t, request: null }), () => 'Moved to ' + whenLabel(job(v))); },
   denyReq(v) { act(() => upd(v, { request: null }), 'Kept the original time'); },
-  draftTpl(v) { const d = S.draft; d.template = +v; d.tools = TEMPLATES[+v].tools.slice(); render(); },
+  draftTpl(v) { const d = S.draft; U.confirm = null; if (d.template === v) { d.template = null; render(); return; } const t = S.templates.find((x) => x.id === v); d.template = v; d.tools = t.tools.slice(); d.parts = t.parts.slice(); d.tplName = t.name; render(); },
+  tplOpen(v) { const d = S.draft; d.tplOpen = !!v; if (v && !d.tplName) { const t = S.templates.find((x) => x.id === d.template); d.tplName = t ? t.name : ''; } render(); if (v) { const el = document.getElementById('tplname'); if (el) el.focus(); } },
+  async saveTemplate() {
+    const d = S.draft; const name = (d.tplName || '').trim().replace(/\s+/g, ' ');
+    if (!name) { toast('Give the template a name'); const el = document.getElementById('tplname'); if (el) el.focus(); return; }
+    const ex = S.templates.find((t) => t.name.toLowerCase() === name.toLowerCase());
+    const rowData = { name, tools: d.tools.slice(), parts: d.parts.slice(), updated_at: new Date().toISOString() };
+    const done = await act(async () => {
+      if (ex) ok(await sb.from('templates').update(rowData).eq('id', ex.id));
+      else ok(await sb.from('templates').insert(Object.assign(rowData, { created_by: S.me })));
+    }, ex ? 'Template \u201c' + name + '\u201d updated for all admins' : 'Template \u201c' + name + '\u201d saved for all admins');
+    if (done) { const t = S.templates.find((x) => x.name.toLowerCase() === name.toLowerCase()); d.template = t ? t.id : null; d.tplOpen = false; render(); }
+  },
+  async deleteTemplate(v) { const t = S.templates.find((x) => x.id === v); if (await act(async () => ok(await sb.from('templates').delete().eq('id', v)), 'Template \u201c' + t.name + '\u201d deleted')) { S.draft.template = null; U.confirm = null; render(); } },
+  async addTool() {
+    const d = S.draft; const name = (d.newTool || '').trim().replace(/\s+/g, ' ');
+    if (!name) { const el = document.getElementById('newtool'); if (el) el.focus(); return; }
+    const ex = S.tools.find((t) => t.name.toLowerCase() === name.toLowerCase());
+    const label = ex ? ex.name : name;
+    if (!d.tools.includes(label)) d.tools.push(label);
+    d.newTool = '';
+    if (ex) { render(); return; }
+    await act(async () => ok(await sb.from('tools').insert({ name, created_by: S.me })), '\u201c' + name + '\u201d added to the tools list for all admins');
+    const el = document.getElementById('newtool'); if (el) el.focus();
+  },
+  toolEdit() { S.draft.toolEdit = !S.draft.toolEdit; render(); },
+  async removeTool(v) { const t = S.tools.find((x) => x.id === v); const d = S.draft; d.tools = d.tools.filter((x) => x !== t.name); await act(async () => ok(await sb.from('tools').delete().eq('id', v)), '\u201c' + t.name + '\u201d removed from the list'); },
+  addPart() { const d = S.draft; const name = (d.newPart || '').trim().replace(/\s+/g, ' '); if (!name) return; if (!d.parts.some((p) => p.toLowerCase() === name.toLowerCase())) d.parts.push(name); d.newPart = ''; render(); const el = document.getElementById('newpart'); if (el) el.focus(); },
+  removePart(v) { S.draft.parts.splice(+v, 1); render(); },
   draftCountry(v) { const d = S.draft; d.c = +v; const st = storesFor(d.c); d.store = st.length ? st[0].id : 'new'; d.err = {}; render(); },
   draftStore(v) { S.draft.store = v; render(); if (v === 'new') { const el = document.getElementById('sname'); if (el) el.focus(); } },
   draftPerson(v) { const d = S.draft; if (d.secondOn && d.lead) { if (v === d.lead) return; d.second = d.second === v ? null : v; } else d.lead = v; d.err.installer = ''; render(); },
@@ -1174,7 +1217,7 @@ const A = {
     d.err = E;
     if (Object.keys(E).length) { render(); toast('Fill in the marked fields'); const el = document.querySelector('.bad-field'); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
     if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
-    const tpl = TEMPLATES[d.template];
+    const tpl = S.templates.find((x) => x.id === d.template);
     const prev = S.jobs.filter((j) => j.c === d.c && j.store.toLowerCase() === store.name.toLowerCase() && j.status === 'approved' && j.report && j.report.nextNote).sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0))[0];
     const second = d.secondOn && d.second ? d.second : null;
     const done = await act(async () => {
@@ -1184,7 +1227,7 @@ const A = {
         if (existing) storeId = existing.id;
         else storeId = ok(await sb.from('stores').insert({ country: d.c, name: store.name, address: store.addr }).select('id').single()).id;
       }
-      ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl.name, tools: d.tools.slice(), parts: tpl.parts.slice(), note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_pct: sp.inst, adm_pct: sp.adm, created_by: S.me }));
+      ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl ? tpl.name : '', tools: d.tools.slice(), parts: d.parts.slice(), note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_pct: sp.inst, adm_pct: sp.adm, created_by: S.me }));
     }, 'Ticket ' + t + ' created for ' + first(nameOf(d.lead)) + (second ? ' and ' + first(nameOf(second)) : ''));
     if (done) { S.split = [sp.inst, sp.adm]; S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2; render(false); }
     else if (btn) { btn.disabled = false; btn.textContent = 'Create ticket'; }
@@ -1253,6 +1296,10 @@ document.addEventListener('click', (e) => {
   if (el.tagName === 'A' && el.getAttribute('href')) return;
   e.preventDefault();
   A[a](el.dataset.v, el);
+});
+document.addEventListener('keydown', (e) => {
+  const el = e.target; if (e.key !== 'Enter' || !el.dataset || !el.dataset.enter || !A[el.dataset.enter]) return;
+  e.preventDefault(); A[el.dataset.enter]();
 });
 document.addEventListener('submit', (e) => {
   const f = e.target.closest('form[data-form]'); if (!f) return;
