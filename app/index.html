@@ -8,6 +8,14 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-title" content="Brand Butlers">
+<script>
+/* test version: its own home screen icon and name, so it is never mixed up with the live app */
+if (/\/preview\//.test(location.pathname)) {
+  document.querySelector('link[rel="apple-touch-icon"]').href = 'icon-test-180.png';
+  document.querySelector('link[rel="manifest"]').href = 'manifest-test.webmanifest';
+  document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'BB Test';
+}
+</script>
 <title>Brand Butlers</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">

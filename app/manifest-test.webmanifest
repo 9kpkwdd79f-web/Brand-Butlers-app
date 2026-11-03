@@ -1,0 +1,1 @@
+{ "name": "Brand Butlers (test)", "short_name": "BB Test", "start_url": "./", "display": "standalone", "background_color": "#F2F2F7", "theme_color": "#F2F2F7", "icons": [ { "src": "icon-test-512.png", "sizes": "512x512", "type": "image/png" }, { "src": "icon-test-180.png", "sizes": "180x180", "type": "image/png" } ] }
