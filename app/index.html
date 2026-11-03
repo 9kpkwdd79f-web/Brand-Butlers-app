@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-title" content="Brand Butlers">
-<title>Brand Butlers App</title>
+<title>Brand Butlers</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
@@ -163,6 +163,40 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 50; background: rgba(28,28,30,0.94); color: #FFFFFF; font-size: 15px; font-weight: 500; padding: 10px 16px; border-radius: 999px; display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 32px); text-align: center; }
 .demo { font-size: 12px; color: var(--muted); text-align: center; padding: 18px 16px 0; line-height: 17px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* sign in */
+.login { min-height: calc(100svh - 16px); display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 24px 0 32px; max-width: 420px; margin: 0 auto; }
+.lhero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+.lname { font-size: 30px; line-height: 36px; margin: 6px 0 0; }
+.ltag { margin: 0; color: var(--muted); font-size: 15px; }
+.lcard { background: var(--card); border-radius: 22px; padding: 22px 20px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05); }
+.lcard .box { background: var(--fill); }
+.ltitle { margin: 0 0 2px; font-size: 22px; font-weight: 700; letter-spacing: -0.2px; }
+.lsub { margin: 0 0 6px; color: var(--muted); font-size: 15px; line-height: 21px; }
+.lsub b { color: var(--fg); font-weight: 600; word-break: break-all; }
+.lfoot { text-align: center; color: var(--muted); font-size: 13px; line-height: 18px; margin: 0 12px; }
+.fl { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 6px; }
+.err { margin: 2px 0 0; color: var(--red); font-size: 14px; line-height: 19px; }
+.pwwrap { position: relative; }
+.pwwrap .box { padding-right: 72px; }
+.pweye { position: absolute; right: 6px; top: 6px; height: 36px; padding: 0 10px; border: none; border-radius: 8px; background: transparent; color: var(--blue); font-size: 15px; font-weight: 600; }
+.rules { list-style: none; margin: 4px 0 2px; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); }
+.rules li { display: flex; align-items: center; gap: 8px; }
+.rules li::before { content: ""; width: 16px; height: 16px; border-radius: 8px; border: 1.5px solid var(--chev); box-sizing: border-box; flex-shrink: 0; }
+.rules li.ok { color: var(--green-fg); }
+.rules li.ok::before { border-color: var(--green); background: var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.6 2.4L12 5.5' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat; }
+.who { display: flex; align-items: center; gap: 10px; border: none; background: var(--fill); border-radius: 12px; padding: 8px 12px; text-align: left; font-size: 15px; }
+.who span.e { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.logo { display: block; flex-shrink: 0; }
+.tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
+.empty { background: var(--card); border-radius: 20px; padding: 28px 22px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+.empty b { font-size: 17px; }
+.empty span { color: var(--muted); font-size: 15px; line-height: 21px; }
+.pct { flex: 0 0 52px !important; text-align: right; font-weight: 600; }
+.sheet .group { flex-shrink: 0; }
+.sheet .cap { margin: 4px 4px -4px; }
+.bad-field { outline: 2px solid var(--redbtn) !important; }
+.slot1 .ph { aspect-ratio: 4 / 3; }
 </style>
 </head>
 <body>
@@ -173,28 +207,17 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 (function () {
 'use strict';
 
-/* ---------- reference data ---------- */
+/* ---------- fixed reference data ---------- */
 const C = [
-  { k: 'NO', name: 'Norway', cur: 'NOK', price: 4500, flag: ['#BA0C2F', '#FFFFFF', '#00205B'], admin: 'Mathias Thorsen', support: ['Mathias Thorsen', '+47 97 49 40 79', '+4797494079'] },
-  { k: 'SE', name: 'Sweden', cur: 'SEK', price: 4200, flag: ['#006AA7', '#FECC02', '#FECC02'], admin: 'Sebastian Hoffmann', support: ['Sebastian Hoffmann', '+45 24 22 80 75', '+4524228075'] },
-  { k: 'DK', name: 'Denmark', cur: 'DKK', price: 3100, flag: ['#C8102E', '#FFFFFF', '#FFFFFF'], admin: 'Sebastian Hoffmann', support: ['Sebastian Hoffmann', '+45 24 22 80 75', '+4524228075'] },
-  { k: 'FI', name: 'Finland', cur: 'EUR', price: 420, flag: ['#FFFFFF', '#002F6C', '#002F6C'], admin: 'Sebastian Hoffmann', support: ['Sebastian Hoffmann', '+45 24 22 80 75', '+4524228075'] }
-];
-const CREW = [
-  ['Jonas Berg', 'Emma Lund', 'Henrik Dahl'],
-  ['Ali Haider', 'Sara Lindqvist'],
-  ['Mads Nielsen', 'Freja Holm'],
-  ['Mikko Virtanen', 'Aino Korhonen']
-];
-const STORES = [
-  [['Elkjøp Storo', 'Vitaminveien 7, 0485 Oslo'], ['Elkjøp Lambertseter', 'Langbølgen 2, 1150 Oslo'], ['Power Lagunen', 'Laguneveien 1, 5239 Bergen'], ['Elkjøp Sandvika', 'Sandviksveien 176, 1337 Sandvika']],
-  [['Elgiganten Kista', 'Kistagången 12, 164 40 Kista'], ['Elgiganten Mölndal', 'Göteborgsvägen 96, 431 30 Mölndal']],
-  [['Power Aarhus', 'Ankersgade 12, 8000 Aarhus'], ['Elgiganten Fisketorvet', 'Kalvebod Brygge 59, 1560 København']],
-  [['Gigantti Itis', 'Itäkatu 1–7, 00930 Helsinki'], ['Gigantti Jumbo', 'Vantaanportinkatu 3, 01510 Vantaa']]
+  { k: 'NO', name: 'Norway', cur: 'NOK', flag: ['#BA0C2F', '#FFFFFF', '#00205B'], support: ['Mathias Thorsen', '+47 97 49 40 79', '+4797494079'] },
+  { k: 'SE', name: 'Sweden', cur: 'SEK', flag: ['#006AA7', '#FECC02', '#FECC02'], support: ['Sebastian Hoffmann', '+45 24 22 80 75', '+4524228075'] },
+  { k: 'DK', name: 'Denmark', cur: 'DKK', flag: ['#C8102E', '#FFFFFF', '#FFFFFF'], support: ['Sebastian Hoffmann', '+45 24 22 80 75', '+4524228075'] },
+  { k: 'FI', name: 'Finland', cur: 'EUR', flag: ['#FFFFFF', '#002F6C', '#002F6C'], support: ['Sebastian Hoffmann', '+45 24 22 80 75', '+4524228075'] }
 ];
 const TEMPLATES = [
+  { name: 'Apple product table', tools: ['Cordless drill', 'Bit set', 'Spirit level', 'Measuring tape', 'Cleaning kit'], parts: ['Header sign', 'LED strip', 'Security tether'] },
   { name: 'Apple accessory wall', tools: ['Cordless drill', 'Bit set', 'Spirit level', 'Step ladder'], parts: ['Shelf strip', 'Header sign', 'Price rail'] },
-  { name: 'Apple product table', tools: ['Cordless drill', 'Bit set', 'Spirit level', 'Measuring tape', 'Cleaning kit'], parts: ['Header sign', 'LED strip', 'Security tether'] }
+  { name: 'Blank', tools: [], parts: [] }
 ];
 const TOOLS = ['Cordless drill', 'Bit set', 'Spirit level', 'Step ladder', 'Measuring tape', 'Cable ties', 'Utility knife', 'Cleaning kit'];
 const ANGLES = [
@@ -204,95 +227,114 @@ const ANGLES = [
   { t: 'Header sign', h: 'Centre the sign, phone level, avoid reflections.', pos: [26, 32], cone: '26,32 13,13 39,13' }
 ];
 const CHECKS = ['Fixture cleaned, devices wiped', 'Old parts and packaging removed', 'Demo devices on and secured', 'Store contact shown the result'];
-const USERS = {
-  mathias: { name: 'Mathias Thorsen', initials: 'MT', admin: true, c: 0 },
-  jonas: { name: 'Jonas Berg', initials: 'JB', admin: false, c: 0 }
-};
-const ME_INSTALLER = 'Jonas Berg';
+const OWNER_EMAIL = 'mathiaslamsa@hotmail.com';
 
 /* ---------- dates ---------- */
 const DAY = 86400000;
-const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+const today0 = () => { const t = new Date(); t.setHours(0, 0, 0, 0); return t; };
 const iso = (d) => { const x = new Date(d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
-const rel = (n) => iso(today0.getTime() + n * DAY);
+const rel = (n) => iso(today0().getTime() + n * DAY);
 const parseD = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
-const dayDiff = (s) => Math.round((parseD(s) - today0) / DAY);
+const dayDiff = (s) => Math.round((parseD(s) - today0()) / DAY);
+const jobTs = (j) => { const d = parseD(j.date); const [h, m] = String(j.time || '00:00').split(':').map(Number); d.setHours(h || 0, m || 0); return d.getTime(); };
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const whenLabel = (j) => { const n = dayDiff(j.date); const d = parseD(j.date); const day = n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : n === -1 ? 'Yesterday' : WD[d.getDay()] + ' ' + d.getDate() + ' ' + MO[d.getMonth()]; return day + ' ' + j.time; };
 const longToday = () => { const d = new Date(); return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d.getDay()] + ' ' + d.getDate() + ' ' + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][d.getMonth()]; };
+const hhmm = (t) => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+const fmtDur = (ms) => { const m = Math.round(ms / 60000); return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + (m % 60) + 'm'; };
 
-/* ---------- seed ---------- */
-function seed() {
-  const J = (o) => Object.assign({ second: '', tools: TEMPLATES[0].tools.slice(), parts: TEMPLATES[0].parts.slice(), fixture: 'Apple accessory wall', note: '', last: '', report: null, request: null, changes: '' }, o);
+/* ---------- saved state (this phone) ---------- */
+const PREVIEW = /\/preview\//.test(location.pathname);
+const KEY = PREVIEW ? 'bb-app-preview-v4' : 'bb-app-v4';
+if (PREVIEW) document.title = 'Brand Butlers (test)';
+const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function fresh() {
   return {
-    v: 3, user: null, role: 'admin', tab: 'overview', region: 0, period: 0, insRegion: 4, insPeriod: 2, earnPeriod: 2,
-    view: null, step: 1, phase: 'before', login: { step: 'pick', who: null },
-    draft: null, sheet: null, open: null,
-    jobs: [
-      J({ id: 'j1', ticket: 'A-482137', c: 0, store: 'Elkjøp Storo', addr: 'Vitaminveien 7, 0485 Oslo', installer: 'Jonas Berg', date: rel(0), time: '09:30', status: 'scheduled', note: 'Ask for the store manager at the info desk. The Apple fixture is by the main entrance.', last: 'Ask for Kari Nilsen at the info desk. Park at the back entrance. Left shelf strip on the Apple accessory wall was loose. Check it first.' }),
-      J({ id: 'j2', ticket: 'A-482151', c: 0, store: 'Power Lagunen', addr: 'Laguneveien 1, 5239 Bergen', installer: 'Emma Lund', date: rel(0), time: '08:30', status: 'overdue', fixture: 'Apple product table' }),
-      J({ id: 'j3', ticket: 'A-482122', c: 0, store: 'Elkjøp Lambertseter', addr: 'Langbølgen 2, 1150 Oslo', installer: 'Jonas Berg', date: rel(0), time: '08:00', status: 'waiting', report: sampleReport() }),
-      J({ id: 'j4', ticket: 'A-482160', c: 0, store: 'Power Alnabru', addr: 'Strømsveien 245, 0668 Oslo', installer: 'Emma Lund', second: 'Henrik Dahl', date: rel(1), time: '10:00', status: 'scheduled', fixture: 'Apple product table' }),
-      J({ id: 'j5', ticket: 'A-482163', c: 0, store: 'Elkjøp Sandvika', addr: 'Sandviksveien 176, 1337 Sandvika', installer: 'Jonas Berg', date: rel(4), time: '09:00', status: 'scheduled' }),
-      J({ id: 'j6', ticket: 'A-482090', c: 0, store: 'Power Tromsø', addr: 'Stakkevollvegen 31, 9010 Tromsø', installer: 'Jonas Berg', date: rel(-12), time: '10:00', status: 'approved', report: sampleReport() }),
-      J({ id: 'j7', ticket: 'A-482140', c: 1, store: 'Elgiganten Kista', addr: 'Kistagången 12, 164 40 Kista', installer: 'Sara Lindqvist', date: rel(0), time: '10:00', status: 'scheduled', fixture: 'Apple product table' }),
-      J({ id: 'j8', ticket: 'A-482158', c: 1, store: 'Elgiganten Mölndal', addr: 'Göteborgsvägen 96, 431 30 Mölndal', installer: 'Ali Haider', date: rel(2), time: '09:00', status: 'scheduled', request: { kind: 'resched', to: rel(5) + ' 09:00', reason: 'Car is in for service.' } }),
-      J({ id: 'j9', ticket: 'A-482144', c: 2, store: 'Power Aarhus', addr: 'Ankersgade 12, 8000 Aarhus', installer: 'Mads Nielsen', date: rel(0), time: '11:00', status: 'scheduled', fixture: 'Apple product table' }),
-      J({ id: 'j10', ticket: 'A-482101', c: 2, store: 'Elgiganten Fisketorvet', addr: 'Kalvebod Brygge 59, 1560 København', installer: 'Mads Nielsen', date: rel(-3), time: '10:00', status: 'approved' }),
-      J({ id: 'j11', ticket: 'A-482146', c: 3, store: 'Gigantti Itis', addr: 'Itäkatu 1–7, 00930 Helsinki', installer: 'Mikko Virtanen', date: rel(0), time: '12:00', status: 'scheduled' }),
-      J({ id: 'j12', ticket: 'A-482098', c: 3, store: 'Gigantti Jumbo', addr: 'Vantaanportinkatu 3, 01510 Vantaa', installer: 'Aino Korhonen', date: rel(-1), time: '13:00', status: 'waiting', fixture: 'Apple product table', report: sampleReport() })
-    ]
+    v: 4,
+    users: [{ id: 'u-owner', email: OWNER_EMAIL, name: '', phone: '', c: 0, admin: true, installer: true, salt: '', hash: '', mustSet: true, reset: false, created: Date.now() }],
+    jobs: [], stores: [], split: [40, 10],
+    me: null, lastEmail: '', role: 'admin', tab: 'overview', region: 0, period: 2, insRegion: 0, insPeriod: 2, earnPeriod: 2,
+    view: null, step: 1, phase: 'before', login: { step: 'email', email: '', err: '', pending: null }, draft: null
   };
 }
-function sampleReport() {
-  return { contact: 'Kari Nilsen', contactRole: 'Store manager', parts: [['Shelf strip', 3], ['Header sign', 1]], comments: 'Header sign replaced and aligned.', nextNote: '', problem: null, photos: { before: [1, 1, 1, 1].map(() => ({ sample: 'before', ok: true })), after: [1, 1, 1, 1].map(() => ({ sample: 'after', ok: true })) }, checks: [true, true, true, true], signature: 'sample', submittedAt: '11:02', sample: true };
-}
-
-/* ---------- state + storage ---------- */
-const KEY = 'bb-iphone-demo-v3';
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { S = null; }
-if (!S || S.v !== 3) S = seed();
-S.sheet = null;
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage full or blocked: demo keeps working in memory */ } }
+if (!S || S.v !== 4) S = fresh();
+const U = { sheet: null, form: null, err: '', confirm: null, cant: null, note: '', slots: null };
+let warnedFull = false;
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { if (!warnedFull) { warnedFull = true; toast('This phone is out of space for the app'); } } }
+
+/* photos and signatures live in IndexedDB (much more room than localStorage) */
+const PH = new Map();
+let dbp = null;
+function idb() { if (!dbp) dbp = new Promise((res) => { try { const r = indexedDB.open(PREVIEW ? 'bb-photos-preview' : 'bb-photos', 1); r.onupgradeneeded = () => r.result.createObjectStore('p'); r.onsuccess = () => res(r.result); r.onerror = () => res(null); } catch (e) { res(null); } }); return dbp; }
+async function phPut(k, v) { PH.set(k, v); const db = await idb(); if (!db) return; try { db.transaction('p', 'readwrite').objectStore('p').put(v, k); } catch (e) { /* kept in memory */ } }
+async function phGet(k) { if (PH.has(k)) return PH.get(k); const db = await idb(); if (!db) return null; return new Promise((res) => { try { const q = db.transaction('p').objectStore('p').get(k); q.onsuccess = () => { if (q.result) PH.set(k, q.result); res(q.result || null); }; q.onerror = () => res(null); } catch (e) { res(null); } }); }
+async function phDel(k) { PH.delete(k); const db = await idb(); if (!db) return; try { db.transaction('p', 'readwrite').objectStore('p').delete(k); } catch (e) { /* ignore */ } }
+const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const pimg = (k, alt) => `<img data-pk="${esc(k)}" alt="${esc(alt || '')}" src="${PH.get(k) || BLANK}">`;
+function hydrate() { document.querySelectorAll('img[data-pk]').forEach((im) => { const k = im.dataset.pk; if (!PH.has(k)) phGet(k).then((v) => { if (v) im.src = v; }); }); }
+
+/* ---------- passwords (PBKDF2, only a salted hash is stored) ---------- */
+const enc = new TextEncoder();
+const b64 = (buf) => btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
+const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+async function derive(pw, salt) {
+  const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+  return b64(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 150000 }, key, 256));
+}
+async function setPw(u, pw) { const s = crypto.getRandomValues(new Uint8Array(16)); u.salt = b64(s); u.hash = await derive(pw, s); u.mustSet = false; u.reset = false; }
+async function checkPw(u, pw) { if (!u.hash) return false; return (await derive(pw, unb64(u.salt))) === u.hash; }
 
 /* ---------- helpers ---------- */
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 const fmt = (n) => Math.round(n).toLocaleString('nb-NO').replace(/ /g, ' ');
-const first = (n) => String(n).split(' ')[0];
-const initials = (n) => String(n).split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+const first = (n) => String(n || '').split(' ')[0];
+const initials = (n) => String(n || '?').replace(/@.*/, '').split(/[\s._-]+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 const job = (id) => S.jobs.find((j) => j.id === id);
+const userBy = (id) => S.users.find((u) => u.id === id);
+const meU = () => userBy(S.me);
+const nameOf = (id) => { const u = userBy(id); return u ? (u.name || u.email) : 'Removed user'; };
+const validEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
+const installers = (c) => S.users.filter((u) => u.installer).sort((a, b) => ((a.c === c ? 0 : 1) - (b.c === c ? 0 : 1)) || (a.name || a.email).localeCompare(b.name || b.email));
+const storesFor = (c) => S.stores.filter((s) => s.c === c).sort((a, b) => a.name.localeCompare(b.name));
 const flag = (c, w = 20, h = 14) => { const f = C[c].flag; return `<svg width="${w}" height="${h}" viewBox="0 0 22 16" aria-hidden="true" style="border-radius:2px;flex-shrink:0;box-shadow:0 0 0 0.5px rgba(0,0,0,0.2)"><rect width="22" height="16" fill="${f[0]}"/><rect x="6" width="4" height="16" fill="${f[1]}"/><rect y="6" width="22" height="4" fill="${f[1]}"/><rect x="7" width="2" height="16" fill="${f[2]}"/><rect y="7" width="22" height="2" fill="${f[2]}"/></svg>`; };
 const nordicMark = (w = 24, h = 16) => `<svg width="${w}" height="${h}" viewBox="0 0 30 20" aria-hidden="true"><rect width="16" height="11" rx="1.5" fill="#BA0C2F"/><rect x="4.4" width="2.9" height="11" fill="#fff"/><rect y="4.1" width="16" height="2.9" fill="#fff"/><rect x="5.1" width="1.5" height="11" fill="#00205B"/><rect y="4.8" width="16" height="1.5" fill="#00205B"/><g transform="translate(7 4.5)"><rect width="16" height="11" rx="1.5" fill="#006AA7" stroke="#fff" stroke-width="0.8"/><rect x="4.4" width="2.9" height="11" fill="#FECC02"/><rect y="4.1" width="16" height="2.9" fill="#FECC02"/></g><g transform="translate(14 9)"><rect width="16" height="11" rx="1.5" fill="#C8102E" stroke="#fff" stroke-width="0.8"/><rect x="4.4" width="2.9" height="11" fill="#fff"/><rect y="4.1" width="16" height="2.9" fill="#fff"/></g></svg>`;
+/* Brand mark. Swap for the official Brand Butlers logo when it arrives. */
+const LOGO = (s = 72) => `<svg class="logo" width="${s}" height="${s}" viewBox="0 0 72 72" role="img" aria-label="Brand Butlers"><rect width="72" height="72" rx="17" fill="var(--fg)"/><text x="36" y="46.5" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="30" font-weight="700" letter-spacing="-1" fill="var(--bg)">BB</text></svg>`;
 const I = {
   chev: '<svg class="chev" viewBox="0 0 10 16" fill="none" stroke="var(--chev)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l6 6-6 6"/></svg>',
   back: '<svg width="10" height="17" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2L2 8l6 6"/></svg>',
   tick: (c = '#FFFFFF', s = 12) => `<svg width="${s}" height="${s}" viewBox="0 0 16 16" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>`,
   phone: (c = 'currentColor', s = 16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>`,
   msg: (c = 'currentColor', s = 16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>`,
-  cam: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  cam: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   flagP: (c = 'currentColor') => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>`,
-  dir: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>'
+  dir: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>',
+  key: (c = 'currentColor') => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></svg>`
 };
 const TABICON = {
   overview: '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
   new: '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
   approvals: '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 14l2 2 4-4"/></svg>',
+  team: '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.5c2.2.3 3.6 1.9 4 4.5"/></svg>',
   insights: '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>',
   jobs: '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
   earnings: '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></svg>'
 };
-const FIX_SVG = (tone) => `<svg viewBox="0 0 160 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="filter:${tone === 'after' ? 'saturate(0.9)' : 'saturate(0.6) brightness(0.9)'}"><rect width="160" height="120" fill="#E9E9EE"/><rect y="100" width="160" height="20" fill="#D8D8DE"/><rect x="40" y="12" width="80" height="90" rx="2" fill="#D8B98A"/><rect x="44" y="16" width="72" height="82" fill="#FAFAF8"/><rect x="46" y="18" width="68" height="16" fill="#1C1C1E"/><circle cx="58" cy="26" r="5" fill="#5E8BFF"/><circle cx="66" cy="26" r="5" fill="#FF7A59"/><rect x="76" y="23" width="30" height="3" rx="1.5" fill="#fff"/><rect x="46" y="52" width="68" height="2" fill="#C9A878"/><rect x="46" y="72" width="68" height="2" fill="#C9A878"/><rect x="46" y="92" width="68" height="2" fill="#C9A878"/><rect x="50" y="40" width="9" height="12" fill="${tone === 'after' ? '#5E8BFF' : '#8E8E93'}"/><rect x="63" y="42" width="9" height="10" fill="#30B0C7"/><rect x="76" y="39" width="9" height="13" fill="${tone === 'after' ? '#FF9F0A' : '#8E8E93'}"/><rect x="89" y="41" width="9" height="11" fill="#AF52DE"/><rect x="102" y="40" width="9" height="12" fill="#34C759"/><rect x="52" y="60" width="11" height="12" fill="#5E8BFF"/><rect x="68" y="62" width="10" height="10" fill="${tone === 'after' ? '#34C759' : '#8E8E93'}"/><rect x="84" y="59" width="11" height="13" fill="#FF9F0A"/><rect x="100" y="61" width="10" height="11" fill="#30B0C7"/><rect x="56" y="82" width="14" height="10" fill="#AF52DE"/><rect x="80" y="80" width="16" height="12" fill="#5E8BFF"/></svg>`;
-const SAMPLE_SIG = '<svg viewBox="0 0 300 90" width="220" height="66" role="img" aria-label="Signature"><path d="M18 64c10-30 22-44 28-36s-8 40-2 42 18-34 26-30-4 26 4 26 14-20 22-18 0 16 8 14 10-12 18-10M140 58c8-4 14-20 22-16s-6 20 2 20 16-18 26-16 2 14 12 12 30-6 50-10" fill="none" stroke="var(--fg)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const small = (svg, c) => svg.replace('width="25" height="25"', 'width="16" height="16"').replace('currentColor', c);
 const STATUS = {
   scheduled: ['Scheduled', 'p-blue'], progress: ['In progress', 'p-or'], overdue: ['Overdue', 'p-red'],
   waiting: ['Waiting for approval', 'p-grey'], approved: ['Approved · sent to Apple', 'p-green'], changes: ['Changes requested', 'p-or'], declined: ['Declined', 'p-red']
 };
-const pillFor = (j) => j.request && j.request.kind === 'resched' && j.status === 'scheduled' ? '<span class="pill p-or">Reschedule asked</span>' : `<span class="pill ${STATUS[j.status][1]}">${STATUS[j.status][0]}</span>`;
+const effStatus = (j) => (j.status === 'scheduled' && Date.now() > jobTs(j) + 30 * 60000 ? 'overdue' : j.status);
+const OPEN = ['scheduled', 'progress', 'overdue', 'changes', 'declined'];
+const pillFor = (j) => j.request && j.request.kind === 'resched' && j.status === 'scheduled' ? '<span class="pill p-or">Reschedule asked</span>' : `<span class="pill ${STATUS[effStatus(j)][1]}">${STATUS[effStatus(j)][0]}</span>`;
 const inPeriod = (j, p) => { const n = Math.abs(dayDiff(j.date)); return p === 0 ? n === 0 : p === 1 ? n <= 7 : n <= 31; };
-const shareOf = (j) => C[j.c].price * 0.4 / (j.second ? 2 : 1);
+const shareOf = (j) => (Number(j.price) || 0) * (j.split ? j.split[0] : 40) / 100 / (j.second ? 2 : 1);
 const money = (c, n) => C[c].cur + ' ' + fmt(n);
+const sumByCur = (pairs) => { const m = {}; pairs.forEach(([c, n]) => { m[C[c].cur] = (m[C[c].cur] || 0) + n; }); return Object.keys(m).map((k) => k + ' ' + fmt(m[k])); };
 
 /* ---------- toast ---------- */
 let toastT = null;
@@ -301,7 +343,7 @@ function toast(msg) {
   const el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status');
   el.innerHTML = I.tick('#30D158', 14) + '<span></span>'; el.querySelector('span').textContent = msg;
   document.body.appendChild(el);
-  clearTimeout(toastT); toastT = setTimeout(() => el.remove(), 3200);
+  clearTimeout(toastT); toastT = setTimeout(() => el.remove(), 3400);
 }
 
 /* =================================================================== */
@@ -312,25 +354,28 @@ const overlay = document.getElementById('overlay');
 let tabBarEl = null;
 
 function render(keepScroll = true) {
+  const me = meU();
+  if (S.me && (!me || me.mustSet)) { S.me = null; S.view = null; U.sheet = null; }
   const y = window.scrollY;
   let html = '';
-  if (!S.user) html = viewLogin();
+  if (!S.me) html = viewLogin();
   else if (S.view) html = viewSub();
   else html = S.role === 'admin' ? viewAdmin() : viewInstaller();
   app.innerHTML = html;
-  app.classList.toggle('noTabs', !S.user || !!S.view);
+  app.classList.toggle('noTabs', !S.me || !!S.view);
   renderTabs();
   renderSheet();
+  hydrate();
   if (S.view && S.view.kind === 'report' && S.step === 3) setupSig();
-  if (keepScroll) window.scrollTo(0, y); else window.scrollTo(0, 0);
+  window.scrollTo(0, keepScroll ? y : 0);
   save();
 }
 
 function renderTabs() {
   if (tabBarEl) { tabBarEl.remove(); tabBarEl = null; }
-  if (!S.user || S.view) return;
+  if (!S.me || S.view) return;
   const tabs = S.role === 'admin'
-    ? [['overview', 'Overview'], ['new', 'New ticket'], ['approvals', 'Approvals'], ['insights', 'Insights']]
+    ? [['overview', 'Overview'], ['new', 'New ticket'], ['approvals', 'Approvals'], ['team', 'Team'], ['insights', 'Insights']]
     : [['jobs', 'Jobs'], ['earnings', 'Earnings']];
   const waiting = S.jobs.filter((j) => j.status === 'waiting').length;
   tabBarEl = document.createElement('nav'); tabBarEl.className = 'tabbar'; tabBarEl.setAttribute('aria-label', 'Tabs');
@@ -339,42 +384,70 @@ function renderTabs() {
 }
 
 function header(title, sub) {
-  const u = USERS[S.user];
-  return `<div class="head"><div><div class="date">${esc(sub)}</div><h1>${esc(title)}</h1></div><button type="button" class="avatar" data-a="sheet" data-v="account" aria-label="Account and workspace">${u.initials}</button></div>`;
+  const u = meU();
+  return `<div class="head"><div><div class="date">${esc(sub)}</div><h1>${esc(title)}</h1></div><button type="button" class="avatar" data-a="sheet" data-v="account" aria-label="Account">${initials(u.name || u.email)}</button></div>`;
 }
 
-/* ---------- login ---------- */
+/* ---------- sign in ---------- */
 function viewLogin() {
   const L = S.login;
-  const brand = `<div style="display:flex;align-items:center;gap:10px;padding-top:40px"><span style="width:36px;height:36px;border-radius:10px;background:var(--fg);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">BB</span><span style="font-size:17px;font-weight:600">Brand Butlers</span></div>`;
-  if (L.step === 'pick') {
-    return brand + `
-    <div style="margin-top:56px;display:flex;flex-direction:column;gap:10px"><h1>Sign in</h1><p class="muted" style="margin:0;font-size:17px;line-height:24px">This is a demo for your iPhone. Choose who to sign in as. You can switch any time.</p></div>
-    <div class="stack" style="margin-top:28px">
-      ${['mathias', 'jonas'].map((k) => { const u = USERS[k]; return `<button type="button" class="row" style="border-radius:16px;border:none;padding:16px" data-a="pickUser" data-v="${k}"><span class="avatar" style="width:44px;height:44px;border-radius:22px;margin:0">${u.initials}</span><span class="grow"><b style="font-weight:600">${u.name}</b><span class="sub">${u.admin ? 'Admin and installer · Norway' : 'Installer · Norway'}</span></span>${I.chev}</button>`; }).join('')}
-    </div>
-    <p class="demo">Nothing is sent anywhere. Everything you do stays on this phone, so you can play both roles: create a job as admin, do it as the installer, then approve it.</p>`;
+  const hero = `<div class="lhero">${LOGO(76)}<h1 class="lname">Brand Butlers</h1><p class="ltag">Fixture installation and reporting</p>${PREVIEW ? '<span class="pill p-or">Test version</span>' : ''}</div>`;
+  const err = L.err ? `<p class="err" role="alert">${esc(L.err)}</p>` : '';
+  const pending = userBy(L.pending);
+  if (L.step === 'create' && pending) {
+    const u = pending;
+    return `<div class="login">${hero}<form class="lcard" data-form="create" novalidate>
+      <h2 class="ltitle">${u.reset ? 'Create a new password' : 'Create your password'}</h2>
+      <p class="lsub">${u.reset ? 'An admin reset your password.' : 'Welcome! This is your first time signing in.'} You're signing in as <b>${esc(u.email)}</b>.</p>
+      <input class="vh" type="email" name="username" autocomplete="username" value="${esc(u.email)}" tabindex="-1" aria-hidden="true">
+      ${u.name ? '' : `<label class="fl" for="cname">Your full name</label><input id="cname" class="box" autocomplete="name" autocapitalize="words" placeholder="First and last name">`}
+      <label class="fl" for="pw1">New password</label>
+      <div class="pwwrap"><input id="pw1" class="box" type="password" autocomplete="new-password" data-pw="1"><button type="button" class="pweye" data-a="togglePw">Show</button></div>
+      <label class="fl" for="pw2">Repeat password</label>
+      <input id="pw2" class="box" type="password" autocomplete="new-password" data-pw="1">
+      <ul class="rules" aria-live="polite"><li id="r-len">At least 8 characters</li><li id="r-match">Both passwords match</li></ul>
+      ${err}
+      <button class="btn" type="submit" id="pwgo" disabled style="margin-top:6px">Create password and sign in</button>
+      <button type="button" class="link" data-a="loginBack">Use another email</button>
+    </form></div>`;
   }
-  if (L.step === 'code') {
-    const u = USERS[L.who];
-    return brand + `
-    <div style="margin-top:56px;display:flex;flex-direction:column;gap:10px"><h1>Check your email</h1><p class="muted" style="margin:0;font-size:17px;line-height:24px">In the real app, ${esc(first(u.name))} gets a 6-digit code by email. For this demo, any code works.</p></div>
-    <label for="code" class="muted" style="display:block;margin-top:32px;font-size:13px;font-weight:500">Code</label>
-    <input id="code" class="box num" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="482137" style="margin-top:8px;height:60px;font-size:28px;letter-spacing:12px;text-align:center">
-    <div class="stack" style="margin-top:24px"><button type="button" class="btn" data-a="verify">Verify</button><button type="button" class="link" data-a="loginBack">Use another account</button></div>`;
+  if (L.step === 'password' && pending) {
+    const u = pending;
+    return `<div class="login">${hero}<form class="lcard" data-form="password" novalidate>
+      <h2 class="ltitle">Welcome back${u.name ? ', ' + esc(first(u.name)) : ''}</h2>
+      <button type="button" class="who" data-a="loginBack"><span class="avatar" style="margin:0;width:30px;height:30px;font-size:12px">${initials(u.name || u.email)}</span><span class="e">${esc(u.email)}</span><span style="color:var(--blue);font-weight:600">Change</span></button>
+      <input class="vh" type="email" name="username" autocomplete="username" value="${esc(u.email)}" tabindex="-1" aria-hidden="true">
+      <label class="fl" for="lpw">Password</label>
+      <div class="pwwrap"><input id="lpw" class="box${L.err ? ' bad-field' : ''}" type="password" autocomplete="current-password"><button type="button" class="pweye" data-a="togglePw">Show</button></div>
+      ${err}
+      <button class="btn" type="submit" style="margin-top:6px">Sign in</button>
+      <button type="button" class="link" data-a="sheet" data-v="forgot">Forgot password?</button>
+    </form></div>`;
   }
-  return brand + `
-    <div style="margin-top:56px;display:flex;flex-direction:column;gap:10px"><h1>Welcome back</h1><p class="muted" style="margin:0;font-size:17px;line-height:24px">You have access to both workspaces. Switch any time from the round button at the top right.</p></div>
-    <div class="stack" style="margin-top:28px">
-      <button type="button" class="row" style="border-radius:16px;border:none;padding:16px" data-a="enter" data-v="admin"><span class="ico" style="width:44px;height:44px;border-radius:12px;background:var(--blue)">${TABICON.overview.replace('currentColor', '#FFFFFF')}</span><span class="grow"><b style="font-weight:600">Admin</b><span class="sub">Tickets, approvals and insights</span></span>${I.chev}</button>
-      <button type="button" class="row" style="border-radius:16px;border:none;padding:16px" data-a="enter" data-v="installer"><span class="ico" style="width:44px;height:44px;border-radius:12px;background:var(--green)">${TABICON.jobs.replace('currentColor', '#FFFFFF')}</span><span class="grow"><b style="font-weight:600">Installer</b><span class="sub">Your jobs and reports</span></span>${I.chev}</button>
-    </div>`;
+  if (L.step === 'workspace' && pending) {
+    const u = pending;
+    return `<div class="login">${hero}<div class="lcard">
+      <h2 class="ltitle">Hi ${esc(first(u.name) || '')}</h2>
+      <p class="lsub">You have access to both workspaces. Switch any time from the round button at the top right.</p>
+      <button type="button" class="row" style="border-radius:16px;border:none;padding:14px;background:var(--fill)" data-a="enter" data-v="admin"><span class="ico" style="width:44px;height:44px;border-radius:12px;background:var(--blue)">${TABICON.overview.replace('currentColor', '#FFFFFF')}</span><span class="grow"><b style="font-weight:600">Admin</b><span class="sub">Tickets, approvals, team and insights</span></span>${I.chev}</button>
+      <button type="button" class="row" style="border-radius:16px;border:none;padding:14px;background:var(--fill)" data-a="enter" data-v="installer"><span class="ico" style="width:44px;height:44px;border-radius:12px;background:var(--green)">${TABICON.jobs.replace('currentColor', '#FFFFFF')}</span><span class="grow"><b style="font-weight:600">Installer</b><span class="sub">Your jobs, reports and earnings</span></span>${I.chev}</button>
+    </div></div>`;
+  }
+  return `<div class="login">${hero}<form class="lcard" data-form="email" novalidate>
+    <h2 class="ltitle">Sign in</h2>
+    <label class="fl" for="lemail">Email</label>
+    <input id="lemail" class="box${L.err ? ' bad-field' : ''}" type="email" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email" placeholder="name@company.com" value="${esc(L.email || S.lastEmail || '')}">
+    ${err}
+    <button class="btn" type="submit" style="margin-top:6px">Continue</button>
+  </form>
+  <p class="lfoot">Access is by invitation. If you can't sign in, ask your Brand Butlers admin.</p></div>`;
 }
 
 /* ---------- admin ---------- */
 function viewAdmin() {
   if (S.tab === 'new') return adminNew();
   if (S.tab === 'approvals') return adminApprovals();
+  if (S.tab === 'team') return adminTeam();
   if (S.tab === 'insights') return adminInsights();
   return adminOverview();
 }
@@ -384,170 +457,215 @@ function regionSeg(key, val) {
 function periodSeg(key, val) {
   return `<div class="seg" role="group" aria-label="Period">${['Day', 'Week', 'Month'].map((l, i) => `<button type="button" class="${val === i ? 'on' : ''}" aria-pressed="${val === i}" data-a="set" data-k="${key}" data-v="${i}">${l}</button>`).join('')}</div>`;
 }
+function who(j) { return esc(nameOf(j.installer)) + (j.second ? ' + ' + esc(first(nameOf(j.second))) : ''); }
 function adminOverview() {
+  const me = meU();
   const R = S.region, nordic = R === 4;
-  const scope = S.jobs.filter((j) => (nordic || j.c === R));
+  const scope = S.jobs.filter((j) => nordic || j.c === R);
   const inP = scope.filter((j) => inPeriod(j, S.period));
-  const open = inP.filter((j) => ['scheduled', 'progress', 'overdue', 'changes'].includes(j.status)).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-  const done = inP.filter((j) => ['waiting', 'approved'].includes(j.status));
+  const open = inP.filter((j) => OPEN.includes(effStatus(j))).sort((a, b) => jobTs(a) - jobTs(b));
+  const done = inP.filter((j) => ['waiting', 'approved'].includes(j.status)).sort((a, b) => jobTs(b) - jobTs(a));
   const waiting = scope.filter((j) => j.status === 'waiting');
-  const overdue = scope.filter((j) => j.status === 'overdue');
+  const overdue = scope.filter((j) => effStatus(j) === 'overdue');
+  const declined = scope.filter((j) => j.status === 'declined');
   const requests = scope.filter((j) => j.request && j.status === 'scheduled');
   const problems = scope.filter((j) => j.report && j.report.problem && j.status === 'waiting');
-  const lowStock = (R === 0 || nordic);
   let h = header('Overview', longToday());
   h += `<div style="margin-top:14px">${regionSeg('region', R)}</div>`;
   const here = nordic
     ? `${nordicMark(40, 27)}<span class="grow"><b>Nordic overview</b><span class="sub">Norway, Sweden, Denmark and Finland together</span></span>`
-    : `${flag(R, 40, 29)}<span class="grow"><span style="display:flex;align-items:center;gap:8px"><b>${C[R].name}</b>${R === 0 ? '<span class="pill p-blue" style="font-size:11px">Your country</span>' : ''}</span><span class="sub">Admin and support: ${C[R].support[0]} · ${C[R].support[1]} · ${C[R].cur}</span></span>`;
+    : `${flag(R, 40, 29)}<span class="grow"><span style="display:flex;align-items:center;gap:8px"><b>${C[R].name}</b>${R === me.c ? '<span class="pill p-blue" style="font-size:11px">Your country</span>' : ''}</span><span class="sub">Support: ${C[R].support[0]} · ${C[R].support[1]} · ${C[R].cur}</span></span>`;
   h += `<div class="row" style="margin-top:10px;border-radius:16px;border:none">${here}</div>`;
+  if (!S.jobs.length) {
+    h += `<div class="empty" style="margin-top:16px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--blue-bg)">${small(TABICON.new, 'var(--blue)').replace('width="16" height="16"', 'width="24" height="24"')}</span><b>No tickets yet</b><span>Create the first ticket and assign it to an installer. ${S.users.length < 2 ? 'Add your installers under Team first, or assign it to yourself to try the flow.' : ''}</span><button type="button" class="btn small" style="width:auto;padding:0 18px;margin-top:6px" data-a="tab" data-v="new">Create a ticket</button></div>`;
+    return h;
+  }
   const alerts = [];
-  if (waiting.length) alerts.push(`<button type="button" class="alert" style="border:none;background:var(--blue);color:#FFFFFF;flex-direction:row;align-items:center;text-align:left" data-a="tab" data-v="approvals"><span class="ico" style="background:rgba(255,255,255,0.2)">${TABICON.approvals.replace('width="25" height="25"', 'width="16" height="16"').replace('currentColor', '#FFFFFF')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${waiting.length} ${waiting.length === 1 ? 'report' : 'reports'} waiting for approval</b><span style="font-size:13px;opacity:0.85">Nothing reaches Apple until you approve</span></span>${I.chev.replace('var(--chev)', '#FFFFFF')}</button>`);
-  problems.forEach((j) => alerts.push(`<button type="button" class="alert" style="border:none;flex-direction:row;align-items:center;text-align:left;color:var(--fg)" data-a="openApproval" data-v="${j.id}"><span class="ico" style="background:var(--red-bg)">${I.flagP('var(--redbtn)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">Problem reported · follow-up drafted</b><span class="muted" style="font-size:13px">${esc(j.report.problem.type)} at ${esc(j.store)}</span></span>${I.chev}</button>`));
-  overdue.forEach((j) => alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--red-bg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--redbtn)" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">Not started · overdue</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)} was due ${esc(j.time)}. ${esc(first(j.installer))} hasn't checked in.</span></span></div><div class="btn2"><button type="button" class="btn small sec" data-a="reassign" data-v="${j.id}">Reassign</button><button type="button" class="btn small" data-a="sheet" data-v="call:${encodeURIComponent(j.installer)}">Call ${esc(first(j.installer))}</button></div></div>`));
-  requests.forEach((j) => { const [d, t] = j.request.to.split(' '); alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--orange-bg)">${TABICON.jobs.replace('width="25" height="25"', 'width="16" height="16"').replace('currentColor', 'var(--orange)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${esc(j.installer)} asked to reschedule</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)}, ${esc(whenLabel(j))} → ${esc(whenLabel({ date: d, time: t }))}</span>${j.request.reason ? `<span class="muted" style="font-size:13px">“${esc(j.request.reason)}”</span>` : ''}</span></div><div class="btn2"><button type="button" class="btn small sec" data-a="denyReq" data-v="${j.id}">Keep time</button><button type="button" class="btn small" data-a="approveReq" data-v="${j.id}">Approve</button></div></div>`); });
-  if (lowStock) alerts.push(`<div class="alert" style="flex-direction:row;align-items:center"><span class="ico" style="background:var(--orange-bg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg></span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">Low stock</b><span class="muted" style="font-size:13px">Jonas has 2 shelf strips left</span></span></div>`);
+  if (waiting.length) alerts.push(`<button type="button" class="alert" style="border:none;background:var(--blue);color:#FFFFFF;flex-direction:row;align-items:center;text-align:left" data-a="tab" data-v="approvals"><span class="ico" style="background:rgba(255,255,255,0.2)">${small(TABICON.approvals, '#FFFFFF')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${waiting.length} ${waiting.length === 1 ? 'report' : 'reports'} waiting for approval</b><span style="font-size:13px;opacity:0.85">Nothing reaches Apple until you approve</span></span>${I.chev.replace('var(--chev)', '#FFFFFF')}</button>`);
+  problems.forEach((j) => alerts.push(`<button type="button" class="alert" style="border:none;flex-direction:row;align-items:center;text-align:left;color:var(--fg)" data-a="openApproval" data-v="${j.id}"><span class="ico" style="background:var(--red-bg)">${I.flagP('var(--redbtn)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">Problem reported</b><span class="muted" style="font-size:13px">${esc(j.report.problem.type)} at ${esc(j.store)}</span></span>${I.chev}</button>`));
+  overdue.forEach((j) => { const u = userBy(j.installer); alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--red-bg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--redbtn)" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">Not started · overdue</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)} was due ${esc(whenLabel(j))}. ${esc(first(nameOf(j.installer)))} hasn't started the report.</span></span></div><div class="btn2"><button type="button" class="btn small sec" data-a="openJob" data-v="${j.id}">Change installer</button>${u && u.phone ? `<button type="button" class="btn small" data-a="sheet" data-v="call:${u.id}">Call ${esc(first(u.name))}</button>` : `<button type="button" class="btn small" data-a="openJob" data-v="${j.id}">Open ticket</button>`}</div></div>`); });
+  declined.forEach((j) => alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--red-bg)">${I.flagP('var(--redbtn)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${esc(nameOf(j.installer))} declined a job</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)}, ${esc(whenLabel(j))}</span>${j.declineReason ? `<span class="muted" style="font-size:13px">“${esc(j.declineReason)}”</span>` : ''}</span></div><button type="button" class="btn small" data-a="openJob" data-v="${j.id}">Assign someone else</button></div>`));
+  requests.forEach((j) => { const [d, t] = j.request.to.split(' '); alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--orange-bg)">${small(TABICON.jobs, 'var(--orange)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${esc(nameOf(j.installer))} asked to reschedule</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)}, ${esc(whenLabel(j))} → ${esc(whenLabel({ date: d, time: t }))}</span>${j.request.reason ? `<span class="muted" style="font-size:13px">“${esc(j.request.reason)}”</span>` : ''}</span></div><div class="btn2"><button type="button" class="btn small sec" data-a="denyReq" data-v="${j.id}">Keep time</button><button type="button" class="btn small" data-a="approveReq" data-v="${j.id}">Approve</button></div></div>`); });
   h += alerts.length ? `<div class="stack" style="margin-top:10px">${alerts.join('')}</div>` : `<div class="banner" style="margin-top:10px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 16)}Nothing needs your attention in ${nordic ? 'the Nordics' : C[R].name}</div>`;
   if (nordic) {
-    h += `<h2 class="sec">By country</h2><div class="group">${[0, 1, 2, 3].map((c) => { const mine = S.jobs.filter((j) => j.c === c && inPeriod(j, S.period)); const td = mine.filter((j) => ['scheduled', 'progress', 'overdue', 'changes'].includes(j.status)).length; const dn = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).length; return `<button type="button" class="row" data-a="set" data-k="region" data-v="${c}">${flag(c, 28, 20)}<span class="grow"><span>${C[c].name}</span><span class="sub">${C[c].admin}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end"><b class="num" style="font-size:15px">${td} to do</b><span class="num" style="font-size:13px;color:var(--green)">${dn} done</span></span>${I.chev}</button>`; }).join('')}</div>`;
+    h += `<h2 class="sec">By country</h2><div class="group">${[0, 1, 2, 3].map((c) => { const mine = S.jobs.filter((j) => j.c === c && inPeriod(j, S.period)); const td = mine.filter((j) => OPEN.includes(effStatus(j))).length; const dn = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).length; return `<button type="button" class="row" data-a="set" data-k="region" data-v="${c}">${flag(c, 28, 20)}<span class="grow"><span>${C[c].name}</span><span class="sub">Support: ${C[c].support[0]}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end"><b class="num" style="font-size:15px">${td} to do</b><span class="num" style="font-size:13px;color:var(--green)">${dn} done</span></span>${I.chev}</button>`; }).join('')}</div>`;
   }
   h += `<div style="margin-top:16px">${periodSeg('period', S.period)}</div>`;
   h += `<div class="tiles" style="margin-top:12px"><div class="tile"><span class="k">To do</span><span class="v num">${open.filter((j) => j.status !== 'progress').length}</span></div><div class="tile"><span class="k">In progress</span><span class="v num" style="color:var(--orange)">${open.filter((j) => j.status === 'progress').length}</span></div><div class="tile"><span class="k">Done</span><span class="v num" style="color:var(--green)">${done.length}</span></div></div>`;
-  h += `<h2 class="sec">To be conducted</h2><div class="group">${open.length ? open.map((j) => `<button type="button" class="row" data-a="openJob" data-v="${j.id}"><span class="grow"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(j.store)}</span><span class="sub">${nordic ? C[j.c].k + ' · ' : ''}${esc(j.ticket)} · ${esc(j.installer)}${j.second ? ' + ' + esc(first(j.second)) : ''}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0"><span class="sub num" style="font-size:13px;color:var(--muted)">${esc(whenLabel(j))}</span>${pillFor(j)}</span></button>`).join('') : '<div class="row muted">No open jobs in this period.</div>'}</div>`;
+  h += `<h2 class="sec">To be conducted</h2><div class="group">${open.length ? open.map((j) => `<button type="button" class="row" data-a="openJob" data-v="${j.id}"><span class="grow"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(j.store)}</span><span class="sub">${nordic ? C[j.c].k + ' · ' : ''}${esc(j.ticket)} · ${who(j)}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0"><span class="num" style="font-size:13px;color:var(--muted)">${esc(whenLabel(j))}</span>${pillFor(j)}</span></button>`).join('') : '<div class="row muted">No open jobs in this period.</div>'}</div>`;
   h += `<h2 class="sec">Finalized</h2><div class="group">${done.length ? done.map((j) => `<button type="button" class="row" data-a="openApproval" data-v="${j.id}"><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(whenLabel(j))}</span></span>${pillFor(j)}${I.chev}</button>`).join('') : '<div class="row muted">Nothing finalized in this period.</div>'}</div>`;
   h += `<p class="foot">Reports go to one Apple email address for all countries once you approve them.</p>`;
   return h;
 }
 
 function newDraft() {
-  return { ticket: '', template: 0, c: 0, store: 0, lead: 0, second: -1, date: rel(0), time: '09:30', tools: TEMPLATES[0].tools.slice(), price: '', notify: [true, true, true], note: '', err: '' };
+  const me = meU(); const c = me.c;
+  const st = storesFor(c); const ins = installers(c);
+  return { ticket: '', template: 0, c, store: st.length ? st[0].id : 'new', storeName: '', storeAddr: '', lead: ins.length === 1 ? ins[0].id : null, second: null, secondOn: false, date: new Date().getHours() >= 17 ? rel(1) : rel(0), time: new Date().getHours() >= 17 ? '09:00' : String(new Date().getHours() + 1).padStart(2, '0') + ':00', tools: TEMPLATES[0].tools.slice(), price: '', inst: String(S.split[0]), adm: String(S.split[1]), note: '', err: {} };
+}
+function splitNums(d) {
+  const price = Number(String(d.price).replace(/\s/g, '').replace(',', '.')) || 0;
+  const inst = Number(String(d.inst).replace(',', '.')) || 0, adm = Number(String(d.adm).replace(',', '.')) || 0;
+  return { price, inst, adm, bb: 100 - inst - adm };
 }
 function adminNew() {
   const d = S.draft || (S.draft = newDraft());
-  const crew = CREW[d.c], stores = STORES[d.c], cur = C[d.c].cur;
-  const price = Number(d.price) || C[d.c].price;
-  const hasSecond = d.second >= 0;
-  const who = hasSecond ? first(crew[d.lead]) + ' and ' + first(crew[d.second]) : first(crew[d.lead]);
+  const E = d.err || {};
+  const cur = C[d.c].cur;
+  const stores = storesFor(d.c);
+  const ins = installers(d.c);
+  const errL = (k) => (E[k] ? `<p class="foot" style="color:var(--red)">${esc(E[k])}</p>` : '');
+  const twoNames = d.lead ? (d.secondOn && d.second ? first(nameOf(d.lead)) + ' and ' + first(nameOf(d.second)) : first(nameOf(d.lead))) : '';
   let h = header('New ticket', 'Client: Apple');
   h += `<h2 class="sec">Apple ticket number</h2>`;
-  h += `<input id="ticket" class="box num" data-bind="ticket" value="${esc(d.ticket)}" placeholder="From Apple's system, e.g. A-482200" autocapitalize="characters" autocomplete="off" aria-label="Apple ticket number" style="font-weight:600${d.err ? ';outline:2px solid var(--redbtn)' : ''}">`;
-  if (d.err) h += `<p class="foot" style="color:var(--red)">${esc(d.err)}</p>`;
+  h += `<input id="ticket" class="box num${E.ticket ? ' bad-field' : ''}" data-bind="ticket" value="${esc(d.ticket)}" placeholder="From Apple's system" autocapitalize="characters" autocomplete="off" aria-label="Apple ticket number" style="font-weight:600">${errL('ticket')}`;
   h += `<h2 class="sec">Fixture template</h2><div class="chips">${TEMPLATES.map((t, i) => `<button type="button" class="chip ${d.template === i ? 'on' : ''}" aria-pressed="${d.template === i}" data-a="draftTpl" data-v="${i}">${t.name}</button>`).join('')}</div>`;
   h += `<h2 class="sec">Country</h2><div class="seg tall" role="group" aria-label="Country">${[0, 1, 2, 3].map((i) => `<button type="button" class="${d.c === i ? 'on' : ''}" aria-pressed="${d.c === i}" data-a="draftCountry" data-v="${i}">${flag(i)}${C[i].name}</button>`).join('')}</div>`;
-  h += `<h2 class="sec">Store · from the store list</h2><div class="group">${stores.map((s, i) => `<button type="button" class="row" aria-pressed="${d.store === i}" data-a="draftSet" data-k="store" data-v="${i}"><span class="grow"><span>${esc(s[0])}</span><span class="sub">${esc(s[1])}</span></span>${d.store === i ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}</div>`;
-  h += `<div class="row" style="margin-top:10px;border-radius:12px;border:none"><span class="ico" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">Support added: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · installer can call or text</span></span></div>`;
+  h += `<h2 class="sec">Store</h2><div class="group${E.store ? ' bad-field' : ''}">${stores.map((s) => `<button type="button" class="row" aria-pressed="${d.store === s.id}" data-a="draftStore" data-v="${s.id}"><span class="grow"><span>${esc(s.name)}</span><span class="sub">${esc(s.addr)}</span></span>${d.store === s.id ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}
+    ${d.store === 'new' || !stores.length ? `<label class="row" for="sname"><span class="lbl">Store</span><input id="sname" class="inl" data-bind="storeName" value="${esc(d.storeName)}" placeholder="e.g. Elkjøp Storo" autocomplete="off"></label><label class="row" for="saddr"><span class="lbl">Address</span><input id="saddr" class="inl" data-bind="storeAddr" value="${esc(d.storeAddr)}" placeholder="Street, postcode, city" autocomplete="off"></label>` : `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftStore" data-v="new">+ New store</button>`}</div>${errL('store')}
+    <p class="foot">${stores.length ? 'Stores you add are saved for next time.' : 'Stores you add are saved for next time. The store list from Excel can be imported later.'}</p>`;
+  h += `<div class="row" style="margin-top:10px;border-radius:12px;border:none"><span class="ico" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">Support: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · the installer can call or text</span></span></div>`;
   h += `<h2 class="sec">When</h2><div class="group"><label class="row" for="ddate"><span class="lbl">Date</span><input id="ddate" class="inl" type="date" data-bind="date" value="${esc(d.date)}" style="text-align:right"></label><label class="row" for="dtime"><span class="lbl">Time</span><input id="dtime" class="inl" type="time" data-bind="time" value="${esc(d.time)}" style="text-align:right"></label></div>`;
-  h += `<h2 class="sec">Installer</h2><div class="group">${crew.map((n, i) => { const lead = i === d.lead, sec = i === d.second; return `<button type="button" class="row" aria-pressed="${lead || sec}" data-a="draftPerson" data-v="${i}"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(n)}</span><span class="grow"><span>${esc(n)}</span><span class="sub">${S.jobs.filter((j) => (j.installer === n || j.second === n) && dayDiff(j.date) === 0 && j.status !== 'approved').length} jobs today</span></span>${hasSecond || d.second === -2 ? (lead ? '<span class="pill p-blue">Lead</span>' : sec ? '<span class="pill p-grey">Second</span>' : '') : ''}${lead || sec ? I.tick('var(--blue)', 18) : ''}</button>`; }).join('')}
-    ${d.second === -1 ? `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftSecond">+ Add a second installer <span class="muted" style="font-size:13px">· rarely needed</span></button>` : `<div class="row" style="font-size:13px"><span class="grow muted">${hasSecond ? esc(first(crew[d.lead])) + ' leads and submits the report. The share is split.' : 'Tap who joins ' + esc(first(crew[d.lead])) + '.'}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="draftNoSecond">Remove</button></div>`}</div>`;
+  h += `<h2 class="sec">Installer</h2><div class="group${E.installer ? ' bad-field' : ''}">`;
+  if (!ins.length) h += `<div class="row"><span class="grow"><span>No installers yet</span><span class="sub">Add people with installer access under Team.</span></span><button type="button" class="btn small" style="width:auto;padding:0 14px" data-a="tab" data-v="team">Team</button></div>`;
+  else {
+    h += ins.map((u) => { const lead = u.id === d.lead, sec = d.secondOn && u.id === d.second; const n = S.jobs.filter((j) => (j.installer === u.id || j.second === u.id) && j.date === d.date && OPEN.includes(effStatus(j))).length; return `<button type="button" class="row" aria-pressed="${lead || sec}" data-a="draftPerson" data-v="${u.id}"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || u.email)}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub">${u.c !== d.c ? C[u.c].name + ' · ' : ''}${n ? n + (n === 1 ? ' job' : ' jobs') + ' that day' : 'Free that day'}</span></span>${d.secondOn ? (lead ? '<span class="pill p-blue">Lead</span>' : sec ? '<span class="pill p-grey">Second</span>' : '') : ''}${lead || sec ? I.tick('var(--blue)', 18) : ''}</button>`; }).join('');
+    if (ins.length > 1) h += !d.secondOn ? `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftSecond">+ Add a second installer <span class="muted" style="font-size:13px">· rarely needed</span></button>` : `<div class="row" style="font-size:13px"><span class="grow muted">${d.second ? esc(first(nameOf(d.lead))) + ' leads and submits the report. The installer share is split.' : 'Tap who joins ' + esc(first(nameOf(d.lead)) || 'the lead') + '.'}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="draftNoSecond">Remove</button></div>`;
+  }
+  h += `</div>${errL('installer')}`;
   h += `<h2 class="sec">Tools to bring · ${d.tools.length}</h2><div class="group">${TOOLS.map((t) => { const on = d.tools.includes(t); return `<button type="button" class="row" aria-pressed="${on}" data-a="draftTool" data-v="${esc(t)}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span>${esc(t)}</button>`; }).join('')}</div>`;
-  h += `<h2 class="sec">Price and split</h2><div class="group"><label class="row" for="dprice"><span class="grow">Ticket price</span><span class="muted">${cur}</span><input id="dprice" class="inl num" inputmode="numeric" data-bind="price" data-rerender="1" value="${esc(d.price)}" placeholder="${C[d.c].price}" style="flex:0 0 90px;text-align:right;font-weight:600"></label>
-    <div class="row"><span class="grow">${hasSecond ? 'Installers (' + esc(who) + ')' : 'Installer (' + esc(who) + ')'}<span class="sub num">40% · ${cur} ${fmt(price * 0.4 / (hasSecond ? 2 : 1))}${hasSecond ? ' each' : ''}</span></span></div>
-    <div class="row"><span class="grow">Admin<span class="sub num">10% · ${cur} ${fmt(price * 0.1)}</span></span></div>
-    <div class="row"><span class="grow">Brand Butlers<span class="sub num">50% · ${cur} ${fmt(price * 0.5)}</span></span></div></div>
+  const sp = splitNums(d); const perInst = d.secondOn && d.second ? 2 : 1;
+  h += `<h2 class="sec">Price and split</h2><div class="group${E.price ? ' bad-field' : ''}"><label class="row" for="dprice"><span class="grow">Ticket price</span><span class="muted">${cur}</span><input id="dprice" class="inl num" inputmode="decimal" data-bind="price" data-live="1" value="${esc(d.price)}" placeholder="0" style="flex:0 0 96px;text-align:right;font-weight:600"></label>
+    <label class="row" for="dinst"><span class="grow">Installer${twoNames ? ' (' + esc(twoNames) + ')' : ''}<span class="sub num" id="amt-inst">${cur} ${fmt(sp.price * sp.inst / 100 / perInst)}${perInst === 2 ? ' each' : ''}</span></span><input id="dinst" class="inl num pct" inputmode="decimal" data-bind="inst" data-live="1" value="${esc(d.inst)}"><span class="muted">%</span></label>
+    <label class="row" for="dadm"><span class="grow">Admin<span class="sub num" id="amt-adm">${cur} ${fmt(sp.price * sp.adm / 100)}</span></span><input id="dadm" class="inl num pct" inputmode="decimal" data-bind="adm" data-live="1" value="${esc(d.adm)}"><span class="muted">%</span></label>
+    <div class="row"><span class="grow">Brand Butlers<span class="sub num" id="amt-bb">${cur} ${fmt(sp.price * sp.bb / 100)}</span></span><b class="num" id="pct-bb" style="color:${sp.bb < 0 ? 'var(--red)' : 'var(--fg)'}">${fmt(sp.bb)} %</b></div></div>${errL('price')}
     <p class="foot">The installer only sees their own share, never the full price.</p>`;
   h += `<h2 class="sec">Note for installer</h2><textarea id="dnote" class="box" data-bind="note" placeholder="Anything they should know before arriving">${esc(d.note)}</textarea>`;
-  h += `<h2 class="sec">Notify ${esc(who)} by</h2><div class="group">${['Push notification', 'Email', 'Calendar invite'].map((l, i) => `<button type="button" class="row" aria-pressed="${d.notify[i]}" data-a="draftNotify" data-v="${i}"><span class="grow">${l}</span><span class="tog ${d.notify[i] ? 'on' : ''}"></span></button>`).join('')}</div>`;
-  h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="createTicket">Create and notify ${esc(who)}</button></div>`;
-  h += `<p class="demo">Demo: no notifications are actually sent. Assign it to Jonas Berg in Norway, then switch to the installer workspace to see it arrive.</p>`;
+  h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="createTicket">${twoNames ? 'Create ticket for ' + esc(twoNames) : 'Create ticket'}</button></div>`;
+  h += `<p class="foot" style="text-align:center">The job shows up in the installer's app right away.</p>`;
   return h;
+}
+function updateSplit() {
+  const d = S.draft; if (!d) return;
+  const sp = splitNums(d), cur = C[d.c].cur, per = d.secondOn && d.second ? 2 : 1;
+  const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+  set('amt-inst', cur + ' ' + fmt(sp.price * sp.inst / 100 / per) + (per === 2 ? ' each' : ''));
+  set('amt-adm', cur + ' ' + fmt(sp.price * sp.adm / 100));
+  set('amt-bb', cur + ' ' + fmt(sp.price * sp.bb / 100));
+  const p = document.getElementById('pct-bb'); if (p) { p.textContent = fmt(sp.bb) + ' %'; p.style.color = sp.bb < 0 ? 'var(--red)' : 'var(--fg)'; }
 }
 
 function adminApprovals() {
   const waiting = S.jobs.filter((j) => j.status === 'waiting');
-  const recent = S.jobs.filter((j) => j.status === 'approved' || j.status === 'changes');
+  const recent = S.jobs.filter((j) => j.status === 'approved' || j.status === 'changes').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0)).slice(0, 20);
   let h = header('Approvals', 'Before anything reaches Apple');
-  h += `<h2 class="sec">Waiting · ${waiting.length}</h2><div class="group">${waiting.length ? waiting.map((j) => `<button type="button" class="row" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(j.installer)} · ${esc(whenLabel(j))}</span></span>${j.report && j.report.problem ? '<span class="pill p-red">Problem</span>' : ''}${I.chev}</button>`).join('') : '<div class="row muted">All caught up.</div>'}</div>`;
-  h += `<h2 class="sec">Recently handled</h2><div class="group">${recent.length ? recent.map((j) => `<button type="button" class="row" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(j.installer)}</span></span>${pillFor(j)}</button>`).join('') : '<div class="row muted">Nothing yet.</div>'}</div>`;
+  h += `<h2 class="sec">Waiting · ${waiting.length}</h2><div class="group">${waiting.length ? waiting.map((j) => `<button type="button" class="row" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(nameOf(j.installer))} · ${esc(whenLabel(j))}</span></span>${j.report && j.report.problem ? '<span class="pill p-red">Problem</span>' : ''}${I.chev}</button>`).join('') : '<div class="row muted">All caught up.</div>'}</div>`;
+  h += `<h2 class="sec">Recently handled</h2><div class="group">${recent.length ? recent.map((j) => `<button type="button" class="row" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(nameOf(j.installer))}</span></span>${pillFor(j)}</button>`).join('') : '<div class="row muted">Nothing yet.</div>'}</div>`;
+  return h;
+}
+
+function statusPill(u) { return u.hash ? '' : u.reset ? '<span class="pill p-or">Password reset</span>' : '<span class="pill p-or">Invited</span>'; }
+function adminTeam() {
+  const list = S.users.slice().sort((a, b) => (a.id === S.me ? -1 : b.id === S.me ? 1 : (a.name || a.email).localeCompare(b.name || b.email)));
+  let h = header('Team', 'Accounts and access');
+  h += `<div style="margin-top:16px"><button type="button" class="btn" data-a="addPerson">+ Add person</button></div>`;
+  h += `<h2 class="sec">Accounts · ${list.length}</h2><div class="group">${list.map((u) => `<button type="button" class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px" data-a="openUser" data-v="${u.id}"><span class="avatar" style="margin:2px 0 0;width:38px;height:38px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub" style="word-break:break-all">${esc(u.email)}</span><span class="tags">${flag(u.c, 16, 11)}${u.admin ? '<span class="pill p-blue">Admin</span>' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}${statusPill(u)}</span></span><span style="align-self:center">${I.chev}</span></button>`).join('')}</div>`;
+  h += `<p class="foot">New people create their own password the first time they sign in. If someone forgets theirs, open their account and tap Reset password.</p>`;
   return h;
 }
 
 function adminInsights() {
   const R = S.insRegion, P = S.insPeriod, nordic = R === 4;
-  const stats = [
-    [[2, '1h 24m', 0, 50], [9, '1h 28m', 5, 11], [26, '1h 27m', 6, 4]],
-    [[0, '–', 0, 0], [3, '1h 21m', 8, 0], [11, '1h 22m', 7, 9]],
-    [[0, '–', 0, 0], [1, '1h 10m', 0, 0], [5, '1h 14m', 4, 0]],
-    [[0, '–', 0, 0], [1, '1h 32m', 0, 0], [3, '1h 29m', 5, 0]]
-  ];
-  const sc = nordic ? [0, 1, 2, 3] : [R];
-  const jobs = sc.reduce((a, i) => a + stats[i][P][0], 0);
-  const w = (k) => jobs ? Math.round(sc.reduce((a, i) => a + stats[i][P][k] * stats[i][P][0], 0) / jobs) : 0;
+  const inScope = (j) => (nordic || j.c === R);
+  const sc = S.jobs.filter((j) => inScope(j) && inPeriod(j, P));
+  const done = sc.filter((j) => j.status === 'approved' || j.status === 'waiting');
+  const appr = sc.filter((j) => j.status === 'approved');
+  const timed = done.filter((j) => j.startedAt && j.report && j.report.submittedTs);
+  const avg = timed.length ? timed.reduce((a, j) => a + (j.report.submittedTs - j.startedAt), 0) / timed.length : null;
+  const shots = done.reduce((a, j) => a + ((j.report && j.report.shots) || 0), 0);
+  const retake = shots ? Math.max(0, Math.round((shots - 8 * done.length) / shots * 100)) : null;
+  const overdueNow = S.jobs.filter((j) => inScope(j) && effStatus(j) === 'overdue').length;
   let h = header('Insights', 'Admins only');
   h += `<div style="margin-top:14px">${regionSeg('insRegion', R)}</div><div style="margin-top:10px">${periodSeg('insPeriod', P)}</div>`;
-  h += `<div class="grid2" style="margin-top:14px"><div class="tile"><span class="k">Jobs done</span><span class="v num">${jobs}</span></div><div class="tile"><span class="k">Avg time on site</span><span class="v num">${nordic ? '1h 25m' : stats[R][P][1]}</span></div><div class="tile"><span class="k">Photo retakes</span><span class="v num">${w(2)}%</span></div><div class="tile"><span class="k">Overdue rate</span><span class="v num" style="color:var(--red)">${w(3)}%</span></div></div>`;
-  h += `<h2 class="sec">${nordic ? 'By country' : 'Revenue split'}</h2>`;
-  if (nordic) h += `<div class="group">${[0, 1, 2, 3].map((i) => `<button type="button" class="row" data-a="set" data-k="insRegion" data-v="${i}">${flag(i, 28, 20)}<span class="grow"><span>${C[i].name}</span><span class="sub num">${stats[i][P][0]} jobs · ${stats[i][P][1]} avg · ${stats[i][P][3]}% overdue</span></span><b class="num" style="font-size:15px">${money(i, stats[i][P][0] * C[i].price)}</b>${I.chev}</button>`).join('')}</div><p class="foot">Each country in its own currency.</p>`;
-  else { const b = stats[R][P][0] * C[R].price; h += `<div class="card" style="gap:12px"><div role="img" aria-label="Installers 40 percent, admin 10 percent, Brand Butlers 50 percent" style="display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px"><span style="flex:40;background:var(--green)"></span><span style="flex:10;background:var(--orange)"></span><span style="flex:50;background:var(--blue)"></span></div>${[['Installers', 0.4, 'var(--green)'], ['Admin', 0.1, 'var(--orange)'], ['Brand Butlers', 0.5, 'var(--blue)']].map(([l, p, col]) => `<span style="display:flex;align-items:center;gap:8px;font-size:15px"><span style="width:10px;height:10px;border-radius:3px;background:${col}"></span><span style="flex:1">${l}</span><b class="num">${money(R, b * p)}</b></span>`).join('')}</div>`; }
-  const people = [];
-  sc.forEach((i) => CREW[i].forEach((n, k) => { const j = [[1, 4, 11], [1, 3, 9], [0, 2, 6], [0, 2, 6], [0, 1, 5]][k] || [0, 1, 2]; people.push({ n, i, jobs: (i === 0 ? j : [[0, 2, 6], [0, 1, 5], [0, 1, 3]][k] || [0, 0, 2])[P] }); }));
-  people.sort((a, b) => b.jobs - a.jobs);
-  h += `<h2 class="sec">Installer earnings</h2><div class="group">${people.map((p) => `<div class="row">${flag(p.i)}<span class="grow"><span>${esc(p.n)}</span><span class="sub num">${p.jobs} ${p.jobs === 1 ? 'job' : 'jobs'}</span></span><b class="num" style="font-size:15px">${money(p.i, p.jobs * C[p.i].price * 0.4)}</b></div>`).join('')}</div>`;
-  h += `<p class="foot">Sample figures for the demo.</p>`;
+  h += `<div class="grid2" style="margin-top:14px"><div class="tile"><span class="k">Jobs done</span><span class="v num">${done.length}</span></div><div class="tile"><span class="k">Avg time on site</span><span class="v num">${avg == null ? '–' : fmtDur(avg)}</span></div><div class="tile"><span class="k">Photo retakes</span><span class="v num">${retake == null ? '–' : retake + '%'}</span></div><div class="tile"><span class="k">Overdue now</span><span class="v num" style="color:${overdueNow ? 'var(--red)' : 'var(--fg)'}">${overdueNow}</span></div></div>`;
+  if (nordic) {
+    h += `<h2 class="sec">By country · approved</h2><div class="group">${[0, 1, 2, 3].map((i) => { const a = appr.filter((j) => j.c === i); return `<button type="button" class="row" data-a="set" data-k="insRegion" data-v="${i}">${flag(i, 28, 20)}<span class="grow"><span>${C[i].name}</span><span class="sub num">${a.length} ${a.length === 1 ? 'job' : 'jobs'}</span></span><b class="num" style="font-size:15px">${money(i, a.reduce((t, j) => t + (Number(j.price) || 0), 0))}</b>${I.chev}</button>`; }).join('')}</div><p class="foot">Each country in its own currency.</p>`;
+  } else {
+    const tot = appr.reduce((t, j) => t + (Number(j.price) || 0), 0);
+    const parts = [['Installers', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[0] / 100, 0), 'var(--green)'], ['Admin', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[1] / 100, 0), 'var(--orange)']];
+    parts.push(['Brand Butlers', tot - parts[0][1] - parts[1][1], 'var(--blue)']);
+    h += `<h2 class="sec">Revenue · approved</h2><div class="card" style="gap:12px"><span class="num" style="font-size:28px;font-weight:700">${money(R, tot)}</span>${tot ? `<div role="img" aria-label="Revenue split" style="display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px">${parts.map((p) => `<span style="flex:${Math.max(p[1], 0)};background:${p[2]}"></span>`).join('')}</div>` : ''}${parts.map(([l, v, col]) => `<span style="display:flex;align-items:center;gap:8px;font-size:15px"><span style="width:10px;height:10px;border-radius:3px;background:${col}"></span><span style="flex:1">${l}</span><b class="num">${money(R, v)}</b></span>`).join('')}</div>`;
+  }
+  const ins = S.users.filter((u) => u.installer && (nordic || u.c === R || appr.some((j) => j.installer === u.id || j.second === u.id)));
+  const rows = ins.map((u) => { const mine = appr.filter((j) => j.installer === u.id || j.second === u.id); return { u, n: mine.length, sums: sumByCur(mine.map((j) => [j.c, shareOf(j)])) }; }).sort((a, b) => b.n - a.n);
+  h += `<h2 class="sec">Installer earnings</h2><div class="group">${rows.length ? rows.map((r) => `<div class="row">${flag(r.u.c)}<span class="grow"><span>${esc(r.u.name || r.u.email)}</span><span class="sub num">${r.n} ${r.n === 1 ? 'job' : 'jobs'} approved</span></span><b class="num" style="font-size:15px;text-align:right">${r.sums.length ? r.sums.join('<br>') : money(r.u.c, 0)}</b></div>`).join('') : '<div class="row muted">No installers in this country yet.</div>'}</div>`;
+  h += `<p class="foot">Money counts approved reports only. Time on site runs from “start report” to submit.</p>`;
   return h;
 }
 
 /* ---------- installer ---------- */
-function myJobs() { return S.jobs.filter((j) => j.installer === ME_INSTALLER || j.second === ME_INSTALLER); }
+function myJobs() { return S.jobs.filter((j) => (j.installer === S.me || j.second === S.me) && j.status !== 'declined'); }
 function viewInstaller() {
   if (S.tab === 'earnings') return installerEarnings();
-  const mine = myJobs().sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-  const active = mine.filter((j) => ['scheduled', 'progress', 'overdue', 'changes'].includes(j.status));
-  const next = active.find((j) => j.status === 'changes') || active.find((j) => dayDiff(j.date) >= 0) || active[0];
+  const me = meU();
+  const mine = myJobs().sort((a, b) => jobTs(a) - jobTs(b));
+  const active = mine.filter((j) => ['scheduled', 'progress', 'changes'].includes(j.status));
+  const pick = S.focus && active.find((j) => j.id === S.focus);
+  const next = pick || active.find((j) => j.status === 'changes') || active.find((j) => j.status === 'progress') || active.find((j) => dayDiff(j.date) >= 0) || active[0];
   const rest = active.filter((j) => j !== next);
-  const sent = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).reverse();
+  const sent = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).sort((a, b) => jobTs(b) - jobTs(a));
   let h = header('Today', longToday());
   if (next) h += jobCard(next);
-  else h += `<div class="card" style="margin-top:16px;align-items:center;text-align:center"><b>No jobs right now</b><span class="muted" style="font-size:15px">New jobs from your admin show up here instantly.</span></div>`;
-  h += `<h2 class="sec">Coming up</h2><div class="group">${rest.length ? rest.map((j) => { const d = parseD(j.date); return `<button type="button" class="row" data-a="focusJob" data-v="${j.id}"><span style="width:44px;display:flex;flex-direction:column;align-items:center;flex-shrink:0"><span style="font-size:11px;font-weight:600;color:${dayDiff(j.date) === 0 ? 'var(--redbtn)' : 'var(--muted)'}">${WD[d.getDay()].toUpperCase()}</span><span class="num" style="font-size:20px;font-weight:600">${d.getDate()}</span></span><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.time)} · ${esc(j.addr.split(',').pop().trim())}${j.second ? ' · with ' + esc(first(j.installer === ME_INSTALLER ? j.second : j.installer)) : ''}</span></span>${pillFor(j)}</button>`; }).join('') : '<div class="row muted">Nothing else planned.</div>'}</div>`;
-  h += `<h2 class="sec">Submitted</h2><div class="group">${sent.length ? sent.map((j) => `<div class="row"><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(whenLabel(j))}</span></span>${pillFor(j)}</div>`).join('') : '<div class="row muted">No reports yet.</div>'}</div>`;
+  else h += `<div class="empty" style="margin-top:16px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--green-bg)">${small(TABICON.jobs, 'var(--green)').replace('width="16" height="16"', 'width="24" height="24"')}</span><b>No jobs right now</b><span>When an admin assigns a job to you, it shows up here.${me.admin ? ' You are an admin too: create a ticket and assign it to yourself to try the report.' : ''}</span>${me.admin ? '<button type="button" class="btn small" style="width:auto;padding:0 18px;margin-top:6px" data-a="switchRole" data-v="admin">Go to admin</button>' : ''}</div>`;
+  if (rest.length) h += `<h2 class="sec">Coming up</h2><div class="group">${rest.map((j) => { const d = parseD(j.date); return `<button type="button" class="row" data-a="focusJob" data-v="${j.id}"><span style="width:44px;display:flex;flex-direction:column;align-items:center;flex-shrink:0"><span style="font-size:11px;font-weight:600;color:${dayDiff(j.date) === 0 ? 'var(--redbtn)' : 'var(--muted)'}">${WD[d.getDay()].toUpperCase()}</span><span class="num" style="font-size:20px;font-weight:600">${d.getDate()}</span></span><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.time)}${j.addr ? ' · ' + esc(j.addr.split(',').pop().trim()) : ''}${j.second ? ' · with ' + esc(first(nameOf(j.installer === S.me ? j.second : j.installer))) : ''}</span></span>${pillFor(j)}</button>`; }).join('')}</div>`;
+  if (sent.length) h += `<h2 class="sec">Submitted</h2><div class="group">${sent.map((j) => `<div class="row"><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(whenLabel(j))}</span></span>${pillFor(j)}</div>`).join('')}</div>`;
   return h;
 }
 function jobCard(j) {
   const c = C[j.c];
   const req = j.request && j.request.kind === 'resched';
+  const lead = j.installer === S.me;
   return `<div class="card" style="margin-top:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="pill ${j.status === 'changes' ? 'p-or' : 'p-blue'}" style="font-size:13px;padding:4px 10px">${j.status === 'changes' ? 'Changes requested' : 'Next · ' + esc(whenLabel(j))}</span><span class="pill p-green num" style="font-size:13px;padding:4px 10px">${fmt(shareOf(j))} ${c.cur}</span></div>
-    <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:22px;font-weight:700;letter-spacing:-0.3px">${esc(j.store)}</span><span class="muted" style="font-size:15px">${esc(j.addr)}</span><span class="muted" style="font-size:15px">Apple ticket ${esc(j.ticket)} · ${esc(j.fixture)}${j.second ? ' · with ' + esc(j.installer === ME_INSTALLER ? j.second : j.installer) : ''}</span></div>
-    ${j.status === 'changes' ? `<div class="banner" style="background:var(--orange-bg);color:var(--fg2)"><b style="color:var(--orange)">From your admin:</b> ${esc(j.changes || 'Please check the report and resubmit.')}</div>` : ''}
-    <div class="btn2"><a class="btn small sec" href="https://maps.apple.com/?q=${encodeURIComponent(j.addr)}" target="_blank" rel="noopener">${I.dir} Directions</a><button type="button" class="btn small sec" data-a="sheet" data-v="support:${j.c}">${I.phone()} Support</button></div>
-    <div class="split"><span class="cap">Bring with you</span><div class="grid2">${j.tools.map((t) => `<span style="display:flex;align-items:center;gap:8px;font-size:15px">${I.tick('var(--green)', 16)}${esc(t)}</span>`).join('')}</div></div>
-    <div class="split"><span class="cap">Parts on site</span><div class="chips">${j.parts.map((p) => `<span class="pill p-grey" style="font-size:13px;padding:5px 10px;font-weight:500">${esc(p)}</span>`).join('')}</div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="pill ${j.status === 'changes' ? 'p-or' : effStatus(j) === 'overdue' ? 'p-red' : 'p-blue'}" style="font-size:13px;padding:4px 10px">${j.status === 'changes' ? 'Changes requested' : j.status === 'progress' ? 'In progress' : 'Next · ' + esc(whenLabel(j))}</span><span class="pill p-green num" style="font-size:13px;padding:4px 10px">${fmt(shareOf(j))} ${c.cur}</span></div>
+    <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:22px;font-weight:700;letter-spacing:-0.3px">${esc(j.store)}</span>${j.addr ? `<span class="muted" style="font-size:15px">${esc(j.addr)}</span>` : ''}<span class="muted" style="font-size:15px">Apple ticket ${esc(j.ticket)} · ${esc(j.fixture)}${j.second ? ' · with ' + esc(nameOf(lead ? j.second : j.installer)) : ''}</span></div>
+    ${j.status === 'changes' ? `<div class="banner" style="background:var(--orange-bg);color:var(--fg2)"><span><b style="color:var(--orange)">From your admin:</b> ${esc(j.changes || 'Please check the report and resubmit.')}</span></div>` : ''}
+    <div class="btn2">${j.addr ? `<a class="btn small sec" href="https://maps.apple.com/?q=${encodeURIComponent(j.store + ', ' + j.addr)}" target="_blank" rel="noopener">${I.dir} Directions</a>` : '<span></span>'}<button type="button" class="btn small sec" data-a="sheet" data-v="support:${j.c}">${I.phone()} Support</button></div>
+    ${j.tools.length ? `<div class="split"><span class="cap">Bring with you</span><div class="grid2">${j.tools.map((t) => `<span style="display:flex;align-items:center;gap:8px;font-size:15px">${I.tick('var(--green)', 16)}${esc(t)}</span>`).join('')}</div></div>` : ''}
+    ${j.parts.length ? `<div class="split"><span class="cap">Parts on site</span><div class="chips">${j.parts.map((p) => `<span class="pill p-grey" style="font-size:13px;padding:5px 10px;font-weight:500">${esc(p)}</span>`).join('')}</div></div>` : ''}
     ${j.note ? `<div class="split"><span class="cap">Note from admin</span><span style="font-size:15px;line-height:21px;color:var(--fg2)">${esc(j.note)}</span></div>` : ''}
     ${j.last ? `<div class="note"><b>From the last visit</b>${esc(j.last)}</div>` : ''}
     <button type="button" class="row" style="border-radius:12px;border:none;background:var(--bg)" data-a="sheet" data-v="support:${j.c}"><span class="avatar" style="margin:0;width:32px;height:32px;background:var(--green-bg);color:var(--green)">${initials(c.support[0])}</span><span class="grow"><span style="font-size:15px;font-weight:500">${c.support[0]}</span><span class="sub num">Support in ${c.name} · ${c.support[1]}</span></span><span class="ico" style="width:32px;height:32px;background:var(--blue)">${I.msg('#FFFFFF', 15)}</span><span class="ico" style="width:32px;height:32px;background:var(--green)">${I.phone('#FFFFFF', 15)}</span></button>
-    ${req ? `<div class="banner" style="background:var(--orange-bg);color:var(--fg2)"><span style="flex:1"><b style="color:var(--orange)">Reschedule asked</b><br>Your admin has been notified and will confirm.</span><button type="button" class="link" style="font-size:15px" data-a="undoReq" data-v="${j.id}">Undo</button></div>`
-      : `<div class="stack"><button type="button" class="btn" data-a="startReport" data-v="${j.id}">${j.status === 'changes' ? 'Open report and resubmit' : j.report && j.report.draft ? 'Continue report' : 'I’m on site — start report'}</button>${j.status === 'changes' ? '' : `<button type="button" class="link" data-a="sheet" data-v="cant:${j.id}">Can’t make it?</button>`}</div>`}
+    ${!lead ? `<div class="banner" style="background:var(--fill);color:var(--fg2)">${esc(first(nameOf(j.installer)))} leads this job and submits the report.</div>`
+      : req ? `<div class="banner" style="background:var(--orange-bg);color:var(--fg2)"><span style="flex:1"><b style="color:var(--orange)">Reschedule asked</b><br>Your admin has been notified and will confirm.</span><button type="button" class="link" style="font-size:15px" data-a="undoReq" data-v="${j.id}">Undo</button></div>`
+      : `<div class="stack"><button type="button" class="btn" data-a="startReport" data-v="${j.id}">${j.status === 'changes' ? 'Open report and resubmit' : j.status === 'progress' ? 'Continue report' : 'I’m on site — start report'}</button>${j.status === 'scheduled' ? `<button type="button" class="link" data-a="cantMake" data-v="${j.id}">Can’t make it?</button>` : ''}</div>`}
   </div>`;
 }
 function installerEarnings() {
-  const P = S.earnPeriod;
-  const mine = myJobs().filter((j) => ['waiting', 'approved'].includes(j.status) && inPeriod(j, P));
+  const P = S.earnPeriod; const me = meU();
+  const mine = myJobs().filter((j) => ['waiting', 'approved'].includes(j.status) && inPeriod(j, P)).sort((a, b) => jobTs(b) - jobTs(a));
   const appr = mine.filter((j) => j.status === 'approved'), pend = mine.filter((j) => j.status === 'waiting');
-  const sum = (a) => a.reduce((t, j) => t + shareOf(j), 0);
+  const tot = sumByCur(appr.map((j) => [j.c, shareOf(j)])); const ptot = sumByCur(pend.map((j) => [j.c, shareOf(j)]));
   let h = header('Earnings', 'Your share only');
   h += `<div style="margin-top:14px">${periodSeg('earnPeriod', P)}</div>`;
-  h += `<div class="card" style="margin-top:16px;gap:6px"><span class="muted" style="font-size:15px">Your share · ${['today', 'this week', 'this month'][P]}</span><span class="num" style="font-size:44px;line-height:50px;font-weight:700;letter-spacing:-1px">NOK ${fmt(sum(appr))}</span><span class="muted" style="font-size:15px">${appr.length} ${appr.length === 1 ? 'job' : 'jobs'} approved</span>${pend.length ? `<span class="pill p-or" style="align-self:flex-start;margin-top:6px;font-size:13px;padding:5px 10px">+ NOK ${fmt(sum(pend))} waiting for approval</span>` : ''}</div>`;
-  h += `<h2 class="sec">Jobs</h2><div class="group">${mine.length ? mine.map((j) => `<div class="row"><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(whenLabel(j))}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><b class="num" style="font-size:17px">NOK ${fmt(shareOf(j))}</b><span style="font-size:12px;font-weight:600;color:${j.status === 'approved' ? 'var(--green)' : 'var(--orange)'}">${j.status === 'approved' ? 'Approved' : 'Waiting for approval'}</span></span></div>`).join('') : '<div class="row muted">No jobs in this period yet.</div>'}</div>`;
+  h += `<div class="card" style="margin-top:16px;gap:6px"><span class="muted" style="font-size:15px">Your share · ${['today', 'this week', 'this month'][P]}</span><span class="num" style="font-size:40px;line-height:46px;font-weight:700;letter-spacing:-1px">${tot.length ? tot.join('<br>') : money(me.c, 0)}</span><span class="muted" style="font-size:15px">${appr.length} ${appr.length === 1 ? 'job' : 'jobs'} approved</span>${ptot.length ? `<span class="pill p-or" style="align-self:flex-start;margin-top:6px;font-size:13px;padding:5px 10px">+ ${ptot.join(' + ')} waiting for approval</span>` : ''}</div>`;
+  h += `<h2 class="sec">Jobs</h2><div class="group">${mine.length ? mine.map((j) => `<div class="row"><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(whenLabel(j))}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><b class="num" style="font-size:17px">${money(j.c, shareOf(j))}</b><span style="font-size:12px;font-weight:600;color:${j.status === 'approved' ? 'var(--green)' : 'var(--orange)'}">${j.status === 'approved' ? 'Approved' : 'Waiting for approval'}</span></span></div>`).join('') : '<div class="row muted">No submitted jobs in this period yet.</div>'}</div>`;
   h += `<p class="foot">Your share per job is set by your admin. A job counts once its report is approved.</p>`;
   return h;
 }
 
-/* ---------- sub views: report flow, approval detail, job detail ---------- */
+/* ---------- sub views ---------- */
 function viewSub() {
-  const v = S.view;
-  if (v.kind === 'report') return reportFlow(job(v.id));
-  if (v.kind === 'approval') return approvalDetail(job(v.id));
-  if (v.kind === 'job') return jobDetail(job(v.id));
-  if (v.kind === 'submitted') return submitted(job(v.id));
+  const v = S.view; const j = job(v.id);
+  if (!j) { S.view = null; return S.role === 'admin' ? viewAdmin() : viewInstaller(); }
+  if (v.kind === 'report') return reportFlow(j);
+  if (v.kind === 'approval') return approvalDetail(j);
+  if (v.kind === 'job') return jobDetail(j);
+  if (v.kind === 'submitted') return submitted(j);
   return '';
 }
-function navbar(left, title, right, extra = '') {
-  return `<div class="navbar">${left}<span class="t">${esc(title)}</span>${right || '<span></span>'}${extra}</div>`;
-}
+function navbar(left, title, right, extra = '') { return `<div class="navbar">${left}<span class="t">${esc(title)}</span>${right || '<span></span>'}${extra}</div>`; }
 function ensureReport(j) {
-  if (!j.report || j.report.sample) {
-    j.report = { draft: true, contact: '', contactRole: 'Store manager', parts: j.parts.map((p, i) => [p, i === 0 ? 1 : 0]), extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signature: null };
-  }
+  if (!j.report) j.report = { draft: true, contact: '', contactRole: 'Store manager', parts: j.parts.map((p) => [p, 0]), extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0 };
   return j.report;
 }
 function reportFlow(j) {
@@ -559,113 +677,158 @@ function reportFlow(j) {
   let h = navbar(left, j.store, right, prog);
   if (st === 1) {
     h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 1 of 3</span><h1 style="font-size:28px;line-height:34px">Contact and parts</h1></div>`;
-    h += `<h2 class="sec">Who did you speak with?</h2><div class="group"><label class="row" for="rcontact"><span class="lbl">Name</span><input id="rcontact" class="inl" data-rbind="contact" value="${esc(r.contact)}" placeholder="Full name" autocomplete="off"></label><div class="row" style="flex-wrap:wrap">${['Store manager', 'Department lead', 'Staff'].map((x) => `<button type="button" class="chip ${r.contactRole === x ? 'on' : ''}" data-a="rset" data-k="contactRole" data-v="${x}">${x}</button>`).join('')}</div></div>`;
+    h += `<h2 class="sec">Who did you speak with?</h2><div class="group"><label class="row" for="rcontact"><span class="lbl">Name</span><input id="rcontact" class="inl" data-rbind="contact" value="${esc(r.contact)}" placeholder="Full name" autocomplete="off" autocapitalize="words"></label><div class="row" style="flex-wrap:wrap">${['Store manager', 'Department lead', 'Staff'].map((x) => `<button type="button" class="chip ${r.contactRole === x ? 'on' : ''}" data-a="rset" data-k="contactRole" data-v="${x}">${x}</button>`).join('')}</div></div>`;
     h += `<h2 class="sec">Parts replaced</h2><div class="group">${r.parts.map(([p, q], i) => `<div class="row"><button type="button" style="flex:1;display:flex;align-items:center;gap:12px;border:none;background:none;padding:0;text-align:left;min-height:44px" data-a="partToggle" data-v="${i}" aria-pressed="${q > 0}"><span class="check ${q > 0 ? 'on' : ''}">${I.tick()}</span><span>${esc(p)}</span></button>${q > 0 ? `<div class="step"><button type="button" aria-label="Fewer" data-a="partQty" data-v="${i}" data-d="-1">−</button><span class="num">${q}</span><button type="button" aria-label="More" data-a="partQty" data-v="${i}" data-d="1">+</button></div>` : ''}</div>`).join('')}
-      <div class="row"><input id="rextra" class="inl" data-rbind="extra" value="${esc(r.extra)}" placeholder="Add another part" aria-label="Add another part"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="partAdd">Add</button></div></div>
-      <p class="foot">Parts you add are flagged for the admin.</p>`;
+      <div class="row"><input id="rextra" class="inl" data-rbind="extra" value="${esc(r.extra)}" placeholder="${r.parts.length ? 'Add another part' : 'Add a part you replaced'}" aria-label="Add a part"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="partAdd">Add</button></div></div>
+      <p class="foot">Parts you add on site are flagged for the admin.</p>`;
     h += `<h2 class="sec">Comments for Apple</h2><textarea id="rcomments" class="box" data-rbind="comments" placeholder="Anything Apple should know">${esc(r.comments)}</textarea>`;
-    h += `<h2 class="sec">Note for the next visit</h2><textarea id="rnext" class="box" data-rbind="nextNote" placeholder="Parking, who to ask for, anything to check" style="min-height:64px">${esc(r.nextNote)}</textarea><p class="foot">Only for installers. Shown on the job card next time.</p>`;
+    h += `<h2 class="sec">Note for the next visit</h2><textarea id="rnext" class="box" data-rbind="nextNote" placeholder="Parking, who to ask for, anything to check" style="min-height:64px">${esc(r.nextNote)}</textarea><p class="foot">Only for installers. Shown on the job card next time someone visits this store.</p>`;
     h += `<div style="margin-top:20px">${r.problem ? `<div class="banner" style="background:var(--red-bg);color:var(--fg2)">${I.flagP('var(--redbtn)')}<span style="flex:1"><b style="color:var(--red)">Problem reported:</b> ${esc(r.problem.type)}. ${esc(r.problem.text)}</span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="probRemove">Remove</button></div>`
-      : r.probOpen ? `<div class="card" style="gap:12px"><b>Report a problem</b><div class="chips">${['Damaged fixture', 'Missing fixture', 'Missing parts', 'Other'].map((x) => `<button type="button" class="chip ${r.probType === x ? 'on' : ''}" data-a="rset" data-k="probType" data-v="${x}">${x}</button>`).join('')}</div><textarea id="rprob" class="box" style="background:var(--bg)" data-rbind="probText" placeholder="Describe what's wrong">${esc(r.probText)}</textarea><div class="btn2"><button type="button" class="btn small sec" data-a="rset" data-k="probOpen" data-v="">Cancel</button><button type="button" class="btn small red" data-a="probSave">Send to admin</button></div></div>`
+      : r.probOpen ? `<div class="card" style="gap:12px"><b>Report a problem</b><div class="chips">${['Damaged fixture', 'Missing fixture', 'Missing parts', 'Other'].map((x) => `<button type="button" class="chip ${r.probType === x ? 'on' : ''}" data-a="rset" data-k="probType" data-v="${x}">${x}</button>`).join('')}</div><textarea id="rprob" class="box" style="background:var(--bg)" data-rbind="probText" placeholder="Describe what's wrong">${esc(r.probText)}</textarea><div class="btn2"><button type="button" class="btn small sec" data-a="rset" data-k="probOpen" data-v="">Cancel</button><button type="button" class="btn small red" data-a="probSave">Add to report</button></div></div>`
       : `<button type="button" class="row" style="border-radius:12px;border:none;color:var(--red)" data-a="rset" data-k="probOpen" data-v="1">${I.flagP('var(--redbtn)')}<span class="grow"><span>Report a problem</span><span class="sub">Damaged or missing fixture, missing parts</span></span>${I.chev}</button>`}</div>`;
     h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="stepNext">Continue to photos</button></div>`;
   } else if (st === 2) {
     const ph = S.phase;
     const done = (k) => r.photos[k].filter((p) => p && p.ok).length;
-    h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 2 of 3</span><h1 style="font-size:28px;line-height:34px">Photos</h1><p class="muted" style="margin:6px 0 0;font-size:15px;line-height:21px">${ph === 'before' ? 'Match each reference before you start work. Every photo is checked for light and sharpness.' : 'Retake each angle. Your before photo is the guide, so every pair lines up.'}</p></div>`;
+    h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 2 of 3</span><h1 style="font-size:28px;line-height:34px">Photos</h1><p class="muted" style="margin:6px 0 0;font-size:15px;line-height:21px">${ph === 'before' ? 'Take these four before you start work. Each photo is checked for light and sharpness.' : 'Retake each angle when you are done. Your before photo is the guide, so every pair lines up.'}</p></div>`;
     h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Phase"><button type="button" class="${ph === 'before' ? 'on' : ''}" data-a="phase" data-v="before">Before · ${done('before')}/4</button><button type="button" class="${ph === 'after' ? 'on' : ''}" data-a="phase" data-v="after">After · ${done('after')}/4</button></div>`;
     h += `<div class="stack" style="margin-top:14px;gap:12px">${ANGLES.map((a, i) => {
       const mine = r.photos[ph][i];
-      const guide = ph === 'before' ? `<div class="ph">${FIX_SVG('before')}<span class="tag">Reference</span></div>` : (r.photos.before[i] ? `<div class="ph">${photoImg(r.photos.before[i], 'before')}<span class="tag">Your before</span></div>` : `<div class="ph" style="display:flex;align-items:center;justify-content:center"><span class="muted" style="font-size:13px;padding:8px;text-align:center">Take the before photo first</span></div>`);
-      const slot = mine ? `<div class="ph">${photoImg(mine, ph)}<span class="tag">${ph === 'before' ? 'Before' : 'After'}</span>${mine.ok ? `<span class="ok">${I.tick()}</span>` : `<span class="bad">${esc(mine.issue)}</span>`}</div>`
+      const slot = mine ? `<div class="ph">${pimg(mine.k, (ph === 'before' ? 'Before: ' : 'After: ') + a.t)}<span class="tag">${ph === 'before' ? 'Before' : 'After'}</span>${mine.ok ? `<span class="ok">${I.tick()}</span>` : `<span class="bad">${esc(mine.issue)}</span>`}</div>`
         : `<div class="ph"><label class="take">${I.cam}Take photo<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label></div>`;
-      return `<div class="shot"><div class="pair">${guide}${slot}</div><div style="display:flex;gap:12px;align-items:flex-start"><svg class="where" viewBox="0 0 52 52" role="img" aria-label="Where to stand"><rect x="13" y="6" width="26" height="6" rx="1.5" fill="var(--fg)"/><polygon points="${a.cone}" fill="var(--blue)" fill-opacity="0.2"/><circle cx="${a.pos[0]}" cy="${a.pos[1]}" r="4" fill="var(--blue)"/></svg><div style="flex:1;display:flex;flex-direction:column;gap:3px"><b>${i + 1} · ${a.t}</b><span class="muted" style="font-size:15px;line-height:20px">${a.h}</span>${mine ? `<label class="retake" style="align-self:flex-start;margin-top:6px">Retake<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label>` : ''}</div></div></div>`;
+      const top = ph === 'before' ? `<div class="slot1">${slot}</div>` : `<div class="pair">${r.photos.before[i] ? `<div class="ph">${pimg(r.photos.before[i].k, 'Before: ' + a.t)}<span class="tag">Your before</span></div>` : `<div class="ph" style="display:flex;align-items:center;justify-content:center"><span class="muted" style="font-size:13px;padding:8px;text-align:center">Take the before photo first</span></div>`}${slot}</div>`;
+      return `<div class="shot">${top}<div style="display:flex;gap:12px;align-items:flex-start"><svg class="where" viewBox="0 0 52 52" role="img" aria-label="Where to stand"><rect x="13" y="6" width="26" height="6" rx="1.5" fill="var(--fg)"/><polygon points="${a.cone}" fill="var(--blue)" fill-opacity="0.2"/><circle cx="${a.pos[0]}" cy="${a.pos[1]}" r="4" fill="var(--blue)"/></svg><div style="flex:1;display:flex;flex-direction:column;gap:3px"><b>${i + 1} · ${a.t}</b><span class="muted" style="font-size:15px;line-height:20px">${a.h}</span>${mine ? `<label class="retake" style="align-self:flex-start;margin-top:6px">Retake<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label>` : ''}</div></div></div>`;
     }).join('')}</div>`;
     const left = 8 - done('before') - done('after');
-    h += `<div style="margin-top:20px" class="stack"><button type="button" class="btn" data-a="stepNext" ${left ? 'disabled' : ''}>${left ? left + ' photos left' : 'Continue to sign-off'}</button><button type="button" class="link" style="font-size:15px" data-a="fillSamples">Demo: fill the rest with sample photos</button></div>`;
-    h += `<p class="demo">On iPhone, Take photo opens the camera. In the full app, the reference is shown as a see-through outline on the live camera.</p>`;
+    h += `<div style="margin-top:20px" class="stack">${ph === 'before' && done('before') === 4 && done('after') < 4 ? '<button type="button" class="btn" data-a="phase" data-v="after">Done with work — take after photos</button>' : `<button type="button" class="btn" data-a="stepNext" ${left ? 'disabled' : ''}>${left ? left + (left === 1 ? ' photo' : ' photos') + ' left' : 'Continue to sign-off'}</button>`}</div>`;
   } else {
-    const ok = r.checks.every(Boolean) && !!r.signature;
+    const ok = r.checks.every(Boolean) && r.signed;
     h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 3 of 3</span><h1 style="font-size:28px;line-height:34px">Check and sign</h1></div>`;
     h += `<div class="banner" style="margin-top:14px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 18)}Photo check passed: all 8 are bright and sharp enough</div>`;
     h += `<h2 class="sec">Before you leave <span class="num">${r.checks.filter(Boolean).length} of 4</span></h2><div class="group">${CHECKS.map((c, i) => `<button type="button" class="row" aria-pressed="${r.checks[i]}" data-a="check" data-v="${i}"><span class="check g ${r.checks[i] ? 'on' : ''}">${I.tick()}</span>${c}</button>`).join('')}</div>`;
     h += `<h2 class="sec">Store sign-off <button type="button" class="link" style="font-size:13px;padding:0" data-a="sigClear">Clear</button></h2><div class="card" style="gap:8px;padding:14px"><span style="font-size:15px;line-height:20px;color:var(--fg2)">Hand the phone to ${esc(r.contact || 'the store contact')} to confirm the work is done.</span><canvas class="sig" id="sig" aria-label="Signature pad, sign with your finger"></canvas><span class="muted" style="font-size:13px">${esc(r.contact || 'Store contact')} · ${esc(r.contactRole)}</span></div>`;
-    h += `<h2 class="sec">What happens next</h2><div class="group"><div class="row"><span class="grow"><span>Your admin approves it first</span><span class="sub">Then it goes to Apple. You'll be notified if anything needs changing.</span></span></div></div>`;
-    h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="submitReport" ${ok ? '' : 'disabled'}>${!r.checks.every(Boolean) ? 'Finish the checklist' : !r.signature ? 'Sign to finalize' : 'Finalize and submit'}</button></div>`;
+    h += `<h2 class="sec">What happens next</h2><div class="group"><div class="row"><span class="grow"><span>An admin approves it first</span><span class="sub">Then it goes to Apple. You'll see it here if anything needs changing.</span></span></div></div>`;
+    h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="submitReport" ${ok ? '' : 'disabled'}>${!r.checks.every(Boolean) ? 'Finish the checklist' : !r.signed ? 'Sign to finalize' : 'Finalize and submit'}</button></div>`;
   }
   return h;
 }
-function photoImg(p, tone) { return p.sample ? FIX_SVG(p.sample) : `<img src="${p.data}" alt="">`; }
-
 function submitted(j) {
   return `<div style="min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:24px 8px">
     <span class="ico" style="width:88px;height:88px;border-radius:44px;background:var(--green)">${I.tick('#FFFFFF', 42)}</span>
     <h1 style="font-size:28px;line-height:34px">Report submitted</h1>
-    <p class="muted" style="margin:0;font-size:17px;line-height:24px">Your admin will review ${esc(j.store)} and send it to Apple. NOK ${fmt(shareOf(j))} is added to your earnings once approved.</p>
-    <div class="stack" style="width:100%;margin-top:20px"><button type="button" class="btn" data-a="closeView">Back to today</button>${USERS[S.user].admin ? '<button type="button" class="btn sec" data-a="switchRole" data-v="admin">Switch to admin and approve it</button>' : ''}</div>
+    <p class="muted" style="margin:0;font-size:17px;line-height:24px">An admin will review ${esc(j.store)} and send it to Apple. ${money(j.c, shareOf(j))} is added to your earnings once approved.</p>
+    <div class="stack" style="width:100%;margin-top:20px"><button type="button" class="btn" data-a="closeView">Back to today</button>${meU().admin ? '<button type="button" class="btn sec" data-a="switchRole" data-v="admin">Switch to admin and review it</button>' : ''}</div>
   </div>`;
 }
-
 function approvalDetail(j) {
   const r = j.report;
   let h = navbar(`<button type="button" class="navbtn" data-a="closeView">${I.back} Back</button>`, j.store, '');
-  h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Apple ticket ${esc(j.ticket)} · ${esc(j.installer)}</span><h1 style="font-size:28px;line-height:34px">${esc(j.store)}</h1><span class="muted" style="font-size:15px">${esc(j.fixture)} · ${esc(whenLabel(j))}</span></div>`;
-  if (!r) return h + `<div class="card" style="margin-top:16px">No report attached.</div>`;
+  h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Apple ticket ${esc(j.ticket)} · ${esc(nameOf(j.installer))}</span><h1 style="font-size:28px;line-height:34px">${esc(j.store)}</h1><span class="muted" style="font-size:15px">${esc(j.fixture)} · ${esc(whenLabel(j))}</span></div>`;
+  if (!r || r.draft) return h + `<div class="card" style="margin-top:16px">No submitted report yet.</div>`;
   const photosOk = ['before', 'after'].every((k) => r.photos[k].every((p) => p && p.ok));
   const chk = (ok, t, s) => `<div class="row"><span class="ico" style="width:30px;height:30px;background:${ok ? 'var(--green-bg)' : 'var(--red-bg)'}">${ok ? I.tick('var(--green)', 14) : I.flagP('var(--redbtn)')}</span><span class="grow"><span style="font-size:15px;font-weight:600">${t}</span><span class="sub">${s}</span></span></div>`;
-  h += `<h2 class="sec">Checks</h2><div class="group">${chk(!!r.signature, 'Signed by the store', esc(r.contact) + ' · ' + esc(r.contactRole))}${chk(photosOk, '8 photos passed the check', 'Bright and sharp, angles match')}${chk(r.checks.every(Boolean), 'Checklist complete', '4 of 4 before leaving')}${r.problem ? chk(false, 'Problem reported', esc(r.problem.type) + '. ' + esc(r.problem.text) + ' A follow-up ticket is drafted.') : ''}</div>`;
-  h += `<h2 class="sec">Before and after</h2><div class="stack">${ANGLES.map((a, i) => `<div class="shot" style="padding:10px;gap:8px"><b style="font-size:13px">${i + 1} · ${a.t}</b><div class="pair"><div class="ph">${r.photos.before[i] ? photoImg(r.photos.before[i], 'before') : ''}<span class="tag">Before</span></div><div class="ph">${r.photos.after[i] ? photoImg(r.photos.after[i], 'after') : ''}<span class="tag">After</span></div></div></div>`).join('')}</div>`;
+  h += `<h2 class="sec">Checks</h2><div class="group">${chk(r.signed, 'Signed by the store', esc(r.contact) + ' · ' + esc(r.contactRole))}${chk(photosOk, '8 photos passed the check', 'Bright and sharp enough')}${chk(r.checks.every(Boolean), 'Checklist complete', '4 of 4 before leaving')}${r.problem ? chk(false, 'Problem reported', esc(r.problem.type) + '. ' + esc(r.problem.text)) : ''}</div>`;
+  h += `<h2 class="sec">Before and after</h2><div class="stack">${ANGLES.map((a, i) => `<div class="shot" style="padding:10px;gap:8px"><b style="font-size:13px">${i + 1} · ${a.t}</b><div class="pair"><div class="ph">${r.photos.before[i] ? pimg(r.photos.before[i].k, 'Before') : ''}<span class="tag">Before</span></div><div class="ph">${r.photos.after[i] ? pimg(r.photos.after[i].k, 'After') : ''}<span class="tag">After</span></div></div></div>`).join('')}</div>`;
   const parts = r.parts.filter(([, q]) => q > 0);
   h += `<h2 class="sec">Parts replaced</h2><div class="group">${parts.length ? parts.map(([p, q]) => `<div class="row"><span class="grow">${esc(p)}</span><span class="val num">× ${q}</span></div>`).join('') : '<div class="row muted">None</div>'}</div>`;
   if (r.comments) h += `<h2 class="sec">Comments</h2><div class="group"><div class="row" style="font-size:15px;line-height:21px">${esc(r.comments)}</div></div>`;
-  h += `<h2 class="sec">Store sign-off</h2><div class="card" style="gap:6px;padding:14px">${r.signature === 'sample' ? SAMPLE_SIG : `<img src="${r.signature}" alt="Signature" style="height:90px;width:auto;align-self:flex-start;${'filter:var(--sigf, none)'}">`}<span class="muted" style="font-size:13px">${esc(r.contact)} · ${esc(r.contactRole)} · submitted ${esc(r.submittedAt || '')}</span></div>`;
+  h += `<h2 class="sec">Store sign-off</h2><div class="card" style="gap:6px;padding:14px"><div style="background:#FFFFFF;border-radius:10px;padding:6px;align-self:stretch">${r.signed ? pimg('sig-' + j.id, 'Signature').replace('<img', '<img style="height:110px;width:100%;object-fit:contain;display:block"') : ''}</div><span class="muted" style="font-size:13px">${esc(r.contact)} · ${esc(r.contactRole)} · submitted ${esc(r.submittedAt || '')}</span></div>`;
   if (j.status === 'waiting') {
-    h += `<h2 class="sec">Note to ${esc(first(j.installer))}</h2><textarea id="anote" class="box" data-abind="1" placeholder="Only needed if you ask for changes">${esc(S.open && S.open.note || '')}</textarea>`;
-    h += `<div class="btn2" style="margin-top:20px"><button type="button" class="btn sec" data-a="askChanges" data-v="${j.id}">Ask for changes</button><button type="button" class="btn" data-a="approve" data-v="${j.id}">Approve and send</button></div>`;
-    h += `<p class="demo">Demo: approving marks it as sent. No email goes to Apple.</p>`;
+    h += `<h2 class="sec">Note to ${esc(first(nameOf(j.installer)))}</h2><textarea id="anote" class="box" data-abind="1" placeholder="Only needed if you ask for changes">${esc(U.note)}</textarea>`;
+    h += `<div class="btn2" style="margin-top:20px"><button type="button" class="btn sec" data-a="askChanges" data-v="${j.id}">Ask for changes</button><button type="button" class="btn" data-a="approve" data-v="${j.id}">Approve</button></div>`;
+    h += `<p class="foot">Sending to Apple's email starts once the address is added and the app is connected to a server.</p>`;
   } else h += `<div style="margin-top:16px">${pillFor(j)}</div>`;
   return h;
 }
 function jobDetail(j) {
-  let h = navbar(`<button type="button" class="navbtn" data-a="closeView">${I.back} Back</button>`, 'Job', '');
-  h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Apple ticket ${esc(j.ticket)}</span><h1 style="font-size:28px;line-height:34px">${esc(j.store)}</h1><span class="muted" style="font-size:15px">${esc(j.addr)}</span></div>`;
-  h += `<div class="group" style="margin-top:16px"><div class="row"><span class="grow">Country</span>${flag(j.c)}<span class="val">${C[j.c].name}</span></div><div class="row"><span class="grow">When</span><span class="val">${esc(whenLabel(j))}</span></div><div class="row"><span class="grow">Installer</span><span class="val">${esc(j.installer)}${j.second ? ' + ' + esc(j.second) : ''}</span></div><div class="row"><span class="grow">Fixture</span><span class="val">${esc(j.fixture)}</span></div><div class="row"><span class="grow">Status</span>${pillFor(j)}</div><div class="row"><span class="grow">Price</span><span class="val num">${money(j.c, C[j.c].price)}</span></div></div>`;
-  h += `<h2 class="sec">Tools</h2><div class="group"><div class="row" style="font-size:15px">${j.tools.map(esc).join(', ')}</div></div>`;
-  if (j.status === 'overdue') h += `<div style="margin-top:20px"><button type="button" class="btn sec" data-a="reassign" data-v="${j.id}">Reassign</button></div>`;
+  let h = navbar(`<button type="button" class="navbtn" data-a="closeView">${I.back} Back</button>`, 'Ticket', '');
+  h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Apple ticket ${esc(j.ticket)}</span><h1 style="font-size:28px;line-height:34px">${esc(j.store)}</h1>${j.addr ? `<span class="muted" style="font-size:15px">${esc(j.addr)}</span>` : ''}</div>`;
+  h += `<div class="group" style="margin-top:16px"><div class="row"><span class="grow">Country</span>${flag(j.c)}<span class="val">${C[j.c].name}</span></div><div class="row"><span class="grow">When</span><span class="val">${esc(whenLabel(j))}</span></div><div class="row"><span class="grow">Fixture</span><span class="val">${esc(j.fixture)}</span></div><div class="row"><span class="grow">Status</span>${pillFor(j)}</div><div class="row"><span class="grow">Price</span><span class="val num">${money(j.c, Number(j.price) || 0)}</span></div><div class="row"><span class="grow">Installer share</span><span class="val num">${j.split[0]} % · ${money(j.c, shareOf(j))}${j.second ? ' each' : ''}</span></div></div>`;
+  if (j.tools.length) h += `<h2 class="sec">Tools</h2><div class="group"><div class="row" style="font-size:15px">${j.tools.map(esc).join(', ')}</div></div>`;
+  if (j.note) h += `<h2 class="sec">Note</h2><div class="group"><div class="row" style="font-size:15px">${esc(j.note)}</div></div>`;
+  if (['scheduled', 'declined'].includes(j.status)) {
+    const ins = installers(j.c);
+    h += `<h2 class="sec">Installer · tap to change</h2><div class="group">${ins.map((u) => `<button type="button" class="row" data-a="setInstaller" data-v="${u.id}"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || u.email)}</span>${u.c !== j.c ? `<span class="sub">${C[u.c].name}</span>` : ''}</span>${u.id === j.installer ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}</div>`;
+  } else h += `<h2 class="sec">Installer</h2><div class="group"><div class="row">${who(j)}</div></div>`;
+  if (j.report && !j.report.draft) h += `<div style="margin-top:20px"><button type="button" class="btn sec" data-a="openApproval" data-v="${j.id}">Open report</button></div>`;
+  h += `<div style="margin-top:20px">${U.confirm === 'deljob' ? `<div class="card" style="gap:12px"><b>Delete ticket ${esc(j.ticket)}?</b><span class="muted" style="font-size:15px">It disappears for the installer too. Photos and the report are deleted.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="deleteJob" data-v="${j.id}">Delete</button></div></div>` : `<button type="button" class="link" style="width:100%;color:var(--red)" data-a="confirm" data-v="deljob">Delete ticket</button>`}</div>`;
   return h;
 }
 
 /* ---------- sheets ---------- */
+function personForm(f) {
+  return `<div class="group">
+    <label class="row" for="fname"><span class="lbl">Name</span><input id="fname" class="inl" data-fbind="name" value="${esc(f.name)}" placeholder="Full name" autocomplete="off" autocapitalize="words"></label>
+    <label class="row" for="femail"><span class="lbl">Email</span><input id="femail" class="inl" type="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" data-fbind="email" value="${esc(f.email)}" placeholder="name@company.com" autocomplete="off"></label>
+    <label class="row" for="fphone"><span class="lbl">Phone</span><input id="fphone" class="inl" type="tel" data-fbind="phone" value="${esc(f.phone)}" placeholder="Optional" autocomplete="off"></label>
+  </div>
+  <span class="cap">Country</span><div class="seg tall" role="group" aria-label="Country">${[0, 1, 2, 3].map((i) => `<button type="button" class="${f.c === i ? 'on' : ''}" aria-pressed="${f.c === i}" data-a="fset" data-k="c" data-v="${i}">${flag(i)}${C[i].name}</button>`).join('')}</div>
+  <span class="cap">Access</span><div class="group">
+    <button type="button" class="row" aria-pressed="${f.admin}" data-a="ftog" data-k="admin"><span class="grow"><span>Admin</span><span class="sub">Tickets, approvals, team and insights</span></span><span class="tog ${f.admin ? 'on' : ''}"></span></button>
+    <button type="button" class="row" aria-pressed="${f.installer}" data-a="ftog" data-k="installer"><span class="grow"><span>Installer</span><span class="sub">Gets jobs and files reports</span></span><span class="tog ${f.installer ? 'on' : ''}"></span></button>
+  </div>
+  ${U.err ? `<p class="err" role="alert">${esc(U.err)}</p>` : ''}`;
+}
+function sheetHead(title, left = 'Cancel', right = '', rightAct = '') {
+  return `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center"><button type="button" class="link" style="padding:6px 0;justify-self:start" data-a="closeSheet">${left}</button><b>${title}</b>${right ? `<button type="button" class="link" style="padding:6px 0;justify-self:end;font-weight:600" data-a="${rightAct}">${right}</button>` : '<span></span>'}</div>`;
+}
 function renderSheet() {
-  if (!S.sheet) { overlay.innerHTML = ''; return; }
-  const [kind, arg] = String(S.sheet).split(':');
+  if (!U.sheet) { overlay.innerHTML = ''; return; }
+  const [kind, arg] = String(U.sheet).split(':');
+  const me = meU();
   let body = '';
-  if (kind === 'account') {
-    const u = USERS[S.user];
-    body = `<div style="display:flex;align-items:center;gap:12px;padding:8px 4px"><span class="avatar" style="width:48px;height:48px;border-radius:24px;margin:0">${u.initials}</span><div style="display:flex;flex-direction:column"><b>${u.name}</b><span class="muted" style="font-size:13px">${u.admin ? 'Admin and installer · Norway' : 'Installer · Norway'}</span></div></div>
-      ${u.admin ? `<div class="group">${['admin', 'installer'].map((r) => `<button type="button" class="row" data-a="switchRole" data-v="${r}"><span class="grow"><span>${r === 'admin' ? 'Admin workspace' : 'Installer workspace'}</span><span class="sub">${r === 'admin' ? 'Tickets, approvals and insights' : 'Jobs, reports and earnings'}</span></span>${S.role === r ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}</div>` : ''}
-      <div class="group"><button type="button" class="row" data-a="signOut"><span class="grow">Sign in as someone else</span></button><button type="button" class="row" data-a="sheet" data-v="reset"><span class="grow" style="color:var(--red)">Reset demo data</span></button></div>
-      <p class="demo" style="padding-top:0">Tip: in Safari, tap Share and then Add to Home Screen to open this like an app.</p>`;
-  } else if (kind === 'reset') {
-    body = `<b style="text-align:center">Reset the demo?</b><p class="muted" style="margin:0;text-align:center;font-size:15px">All jobs, photos and reports go back to the starting example.</p><div class="btn2"><button type="button" class="btn sec" data-a="sheet" data-v="account">Cancel</button><button type="button" class="btn red" data-a="reset">Reset</button></div>`;
-  } else if (kind === 'support' || kind === 'call') {
-    const name = kind === 'support' ? C[+arg].support[0] : decodeURIComponent(arg);
-    const phone = kind === 'support' ? C[+arg].support[1] : '';
-    const raw = kind === 'support' ? C[+arg].support[2] : '';
-    body = `<div style="text-align:center;display:flex;flex-direction:column;gap:2px;padding:4px"><b>${esc(name)}</b><span class="muted num" style="font-size:15px;user-select:all">${phone ? esc(phone) : 'Number from the Team list'}</span></div>
-      ${phone ? `<div class="group"><a class="row" href="tel:${raw}" style="justify-content:center;color:var(--blue);font-size:20px">${I.phone('var(--blue)', 20)} Call</a><a class="row" href="sms:${raw}" style="justify-content:center;color:var(--blue);font-size:20px">${I.msg('var(--blue)', 20)} Send message</a><button type="button" class="row" style="justify-content:center;color:var(--blue);font-size:17px" data-a="copy" data-v="${esc(phone)}">Copy number</button></div>` : ''}
+  if (kind === 'account' && me) {
+    body = `<div style="display:flex;align-items:center;gap:12px;padding:8px 4px"><span class="avatar" style="width:48px;height:48px;border-radius:24px;margin:0">${initials(me.name || me.email)}</span><div style="display:flex;flex-direction:column;min-width:0"><b>${esc(me.name)}</b><span class="muted" style="font-size:13px;word-break:break-all">${esc(me.email)}</span></div></div>
+      ${me.admin && me.installer ? `<div class="group">${['admin', 'installer'].map((r) => `<button type="button" class="row" data-a="switchRole" data-v="${r}"><span class="grow"><span>${r === 'admin' ? 'Admin workspace' : 'Installer workspace'}</span><span class="sub">${r === 'admin' ? 'Tickets, approvals, team and insights' : 'Jobs, reports and earnings'}</span></span>${S.role === r ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}</div>` : ''}
+      <div class="group"><button type="button" class="row" data-a="chpw"><span class="grow">Change password</span>${I.chev}</button><button type="button" class="row" data-a="signOut"><span class="grow" style="color:var(--red)">Sign out</span></button></div>
+      <p class="foot" style="text-align:center;margin-top:0">Tip: in Safari, tap Share and then Add to Home Screen to open this like an app.</p>`;
+  } else if (kind === 'chpw') {
+    body = `<form data-form="chpw" class="stack" novalidate>${sheetHead('Change password')}
+      <input class="vh" type="email" autocomplete="username" value="${esc(me.email)}" tabindex="-1" aria-hidden="true">
+      <div class="group"><label class="row" for="cp0"><span class="lbl">Current</span><input id="cp0" class="inl" type="password" autocomplete="current-password"></label><label class="row" for="pw1"><span class="lbl">New</span><input id="pw1" class="inl" type="password" autocomplete="new-password" data-pw="1" placeholder="At least 8 characters"></label><label class="row" for="pw2"><span class="lbl">Repeat</span><input id="pw2" class="inl" type="password" autocomplete="new-password" data-pw="1"></label></div>
+      <ul class="rules" style="margin:0 4px"><li id="r-len">At least 8 characters</li><li id="r-match">Both passwords match</li></ul>
+      ${U.err ? `<p class="err" role="alert">${esc(U.err)}</p>` : ''}
+      <button class="btn" type="submit" id="pwgo" disabled>Save new password</button></form>`;
+  } else if (kind === 'forgot') {
+    const admins = S.users.filter((u) => u.admin && u.name);
+    body = `<div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 4px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--blue-bg)">${I.key('var(--blue)')}</span><b style="font-size:20px">Forgot your password?</b><span class="muted" style="font-size:15px;line-height:21px">Ask a Brand Butlers admin to reset it. They do it under Team in the app. The next time you sign in here, you'll create a new password.</span></div>
+      ${admins.length ? `<span class="cap">Admins</span><div class="group">${admins.map((u) => `<div class="row"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(u.name)}</span><span class="grow"><span>${esc(u.name)}</span><span class="sub">${C[u.c].name}${u.phone ? ' · ' + esc(u.phone) : ''}</span></span>${u.phone ? `<a class="ico" style="width:34px;height:34px;background:var(--green)" href="tel:${esc(u.phone.replace(/\s/g, ''))}" aria-label="Call ${esc(u.name)}">${I.phone('#FFFFFF', 15)}</a>` : ''}</div>`).join('')}</div>` : ''}
+      <button type="button" class="btn sec" data-a="closeSheet">OK</button>`;
+  } else if (kind === 'add') {
+    body = `${sheetHead('Add person', 'Cancel', 'Add', 'savePerson')}${personForm(U.form)}
+      <p class="foot" style="margin-top:0">They sign in with this email and create their own password the first time. Let them know the app link.</p>
+      <button type="button" class="btn" data-a="savePerson">Add person</button>`;
+  } else if (kind === 'user') {
+    const u = userBy(arg); if (!u) { U.sheet = null; overlay.innerHTML = ''; return; }
+    const self = u.id === S.me;
+    let pwBlock;
+    if (U.confirm === 'reset') pwBlock = `<div class="card" style="gap:10px"><b>Reset password for ${esc(u.name || u.email)}?</b><span class="muted" style="font-size:15px;line-height:21px">Their current password stops working. Next time they sign in with ${esc(u.email)}, they create a new one.${self ? ' You will be signed out now.' : ''}</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small" data-a="resetPw" data-v="${u.id}">Reset password</button></div></div>`;
+    else if (!u.hash) pwBlock = `<div class="row" style="border-radius:12px;border:none"><span class="ico" style="background:var(--orange-bg)">${I.key('var(--orange)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">${u.reset ? 'Password has been reset' : 'Hasn’t signed in yet'}</span><span class="sub">They create a password the next time they sign in.</span></span></div>`;
+    else pwBlock = `<button type="button" class="btn sec" data-a="confirm" data-v="reset">${I.key('var(--blue)')} Reset password</button>`;
+    const canRemove = !self;
+    body = `${sheetHead(esc(u.name || 'Account'), 'Close', 'Save', 'savePerson')}${personForm(U.form)}
+      <span class="cap">Password</span>${pwBlock}
+      <button type="button" class="btn" data-a="savePerson">Save changes</button>
+      ${canRemove ? (U.confirm === 'remove' ? `<div class="card" style="gap:10px"><b>Remove ${esc(u.name || u.email)}?</b><span class="muted" style="font-size:15px">They can no longer sign in. Their past jobs and reports stay.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="removeUser" data-v="${u.id}">Remove</button></div></div>` : `<button type="button" class="link" style="color:var(--red)" data-a="confirm" data-v="remove">Remove account</button>`) : ''}`;
+  } else if (kind === 'support') {
+    const c = C[+arg];
+    body = `<div style="text-align:center;display:flex;flex-direction:column;gap:2px;padding:4px"><b>${esc(c.support[0])}</b><span class="muted num" style="font-size:15px;user-select:all">${esc(c.support[1])}</span><span class="muted" style="font-size:13px">Support in ${c.name}</span></div>
+      <div class="group"><a class="row" href="tel:${c.support[2]}" style="justify-content:center;color:var(--blue);font-size:20px">${I.phone('var(--blue)', 20)} Call</a><a class="row" href="sms:${c.support[2]}" style="justify-content:center;color:var(--blue);font-size:20px">${I.msg('var(--blue)', 20)} Send message</a><button type="button" class="row" style="justify-content:center;color:var(--blue);font-size:17px" data-a="copy" data-v="${esc(c.support[1])}">Copy number</button></div>
+      <button type="button" class="btn sec" data-a="closeSheet">Cancel</button>`;
+  } else if (kind === 'call') {
+    const u = userBy(arg); const raw = u && u.phone ? u.phone.replace(/\s/g, '') : '';
+    body = `<div style="text-align:center;display:flex;flex-direction:column;gap:2px;padding:4px"><b>${esc(u ? u.name : '')}</b><span class="muted num" style="font-size:15px;user-select:all">${esc(u && u.phone || 'No phone number saved')}</span></div>
+      ${raw ? `<div class="group"><a class="row" href="tel:${esc(raw)}" style="justify-content:center;color:var(--blue);font-size:20px">${I.phone('var(--blue)', 20)} Call</a><a class="row" href="sms:${esc(raw)}" style="justify-content:center;color:var(--blue);font-size:20px">${I.msg('var(--blue)', 20)} Send message</a></div>` : ''}
       <button type="button" class="btn sec" data-a="closeSheet">Cancel</button>`;
   } else if (kind === 'cant') {
-    const j = job(arg);
+    const j = job(arg); const m = U.cant;
     const slots = [[0, '15:00'], [1, '09:00'], [1, '13:00'], [3, '09:00']].map(([d, t]) => [rel(dayDiff(j.date) + d), t]);
-    S.cant = S.cant || { mode: 'resched', slot: 1, reason: '' };
-    const m = S.cant;
-    body = `<div style="display:flex;justify-content:space-between;align-items:center"><button type="button" class="link" style="padding:6px 0" data-a="closeSheet">Cancel</button><b>${esc(j.store)}</b><span style="width:52px"></span></div>
+    U.slots = slots;
+    body = `${sheetHead(esc(j.store))}
       <div class="seg"><button type="button" class="${m.mode === 'resched' ? 'on' : ''}" data-a="cantMode" data-v="resched">Reschedule</button><button type="button" class="${m.mode === 'decline' ? 'on' : ''}" data-a="cantMode" data-v="decline">Decline</button></div>
-      ${m.mode === 'resched' ? `<span class="cap" style="margin:6px 4px 0">Suggest a new time</span><div class="chips">${slots.map(([d, t], i) => `<button type="button" class="chip ${m.slot === i ? 'on' : ''}" data-a="cantSlot" data-v="${i}">${esc(whenLabel({ date: d, time: t }))}</button>`).join('')}</div>` : ''}
-      <span class="cap" style="margin:6px 4px 0">Reason</span><textarea id="creason" class="box" data-cbind="1" placeholder="Short note for your admin" style="min-height:64px">${esc(m.reason)}</textarea>
+      ${m.mode === 'resched' ? `<span class="cap">Suggest a new time</span><div class="chips">${slots.map(([d, t], i) => `<button type="button" class="chip ${m.slot === i ? 'on' : ''}" data-a="cantSlot" data-v="${i}">${esc(whenLabel({ date: d, time: t }))}</button>`).join('')}</div>` : ''}
+      <span class="cap">Reason</span><textarea id="creason" class="box" data-cbind="1" placeholder="Short note for your admin" style="min-height:64px">${esc(m.reason)}</textarea>
       <button type="button" class="btn ${m.mode === 'decline' ? 'red' : ''}" data-a="cantSend" data-v="${j.id}">${m.mode === 'resched' ? 'Send request to admin' : 'Decline job'}</button>`;
-    S._slots = slots;
   }
   overlay.innerHTML = `<div class="scrim"><button type="button" class="close" aria-label="Close" data-a="closeSheet"></button><div class="sheet" role="dialog" aria-modal="true"><span class="grab"></span>${body}</div></div>`;
 }
@@ -674,37 +837,37 @@ function renderSheet() {
 function setupSig() {
   const cv = document.getElementById('sig'); if (!cv) return;
   const j = job(S.view.id), r = j.report;
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
   const rect = cv.getBoundingClientRect();
   cv.width = rect.width * dpr; cv.height = rect.height * dpr;
   const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
-  const ink = getComputedStyle(document.documentElement).getPropertyValue('--fg').trim() || '#1C1C1E';
+  const ink = '#1C1C1E';
+  cv.style.background = '#FFFFFF';
+  const guide = () => { ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(128,128,128,0.45)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(16, rect.height - 34); ctx.lineTo(rect.width - 16, rect.height - 34); ctx.stroke(); ctx.restore(); };
+  const blank = () => { ctx.clearRect(0, 0, rect.width, rect.height); guide(); };
+  blank();
+  let empty = !r.signed;
+  if (r.signed) phGet('sig-' + j.id).then((v) => { if (!v) return; const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, rect.width, rect.height); im.src = v; });
+  else { ctx.fillStyle = 'rgba(128,128,128,0.75)'; ctx.font = '15px -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Sign here with a finger', rect.width / 2, rect.height / 2 - 6); }
   ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = ink;
-  ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(128,128,128,0.4)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(16, rect.height - 34); ctx.lineTo(rect.width - 16, rect.height - 34); ctx.stroke();
-  ctx.setLineDash([]); ctx.lineWidth = 2.6; ctx.strokeStyle = ink;
-  if (r.signature) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, rect.width, rect.height); im.src = r.signature; }
-  else { ctx.fillStyle = 'rgba(128,128,128,0.7)'; ctx.font = '15px ' + getComputedStyle(document.body).fontFamily; ctx.textAlign = 'center'; ctx.fillText('Sign here with a finger', rect.width / 2, rect.height / 2 - 6); }
-  let drawing = false, drew = false, cleared = !!r.signature;
+  let drawing = false, drew = false;
   const pt = (e) => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
   cv.addEventListener('pointerdown', (e) => {
     e.preventDefault(); cv.setPointerCapture(e.pointerId);
-    if (!cleared && !r.signature) { ctx.clearRect(0, 0, rect.width, rect.height); ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(128,128,128,0.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(16, rect.height - 34); ctx.lineTo(rect.width - 16, rect.height - 34); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 2.6; ctx.strokeStyle = ink; cleared = true; }
+    if (empty) { blank(); empty = false; }
     drawing = true; const [x, y] = pt(e); ctx.beginPath(); ctx.moveTo(x, y);
   });
   cv.addEventListener('pointermove', (e) => { if (!drawing) return; e.preventDefault(); const [x, y] = pt(e); ctx.lineTo(x, y); ctx.stroke(); drew = true; });
   const end = () => {
     if (!drawing) return; drawing = false;
     if (drew) {
-      // store as a transparent PNG with only the ink, so it reads in both themes
-      const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height;
-      const o = out.getContext('2d'); o.drawImage(cv, 0, 0);
-      r.signature = out.toDataURL('image/png'); save();
+      phPut('sig-' + j.id, cv.toDataURL('image/png'));
+      r.signed = true; save();
       const btn = document.querySelector('[data-a="submitReport"]');
       if (btn) { const ok = r.checks.every(Boolean); btn.disabled = !ok; btn.textContent = ok ? 'Finalize and submit' : 'Finish the checklist'; }
     }
   };
-  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); cv.addEventListener('pointerleave', end);
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
 }
 
 /* ---------- photo processing ---------- */
@@ -713,11 +876,10 @@ function processPhoto(file) {
     const url = URL.createObjectURL(file);
     const im = new Image();
     im.onload = () => {
-      const max = 720, s = Math.min(1, max / Math.max(im.width, im.height));
+      const max = 1280, s = Math.min(1, max / Math.max(im.width, im.height));
       const w = Math.round(im.width * s), h = Math.round(im.height * s);
       const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-      const ctx = cv.getContext('2d'); ctx.drawImage(im, 0, 0, w, h);
-      // quality check on a small grayscale copy
+      cv.getContext('2d').drawImage(im, 0, 0, w, h);
       const sw = 200, sh = Math.max(1, Math.round(h * sw / w));
       const sc = document.createElement('canvas'); sc.width = sw; sc.height = sh;
       const sx = sc.getContext('2d'); sx.drawImage(im, 0, 0, sw, sh);
@@ -732,96 +894,193 @@ function processPhoto(file) {
       let issue = '';
       if (mean < 45) issue = 'Too dark · retake';
       else if (lvar < 18) issue = 'Blurry · retake';
-      resolve({ data: cv.toDataURL('image/jpeg', 0.62), ok: !issue, issue, mean: Math.round(mean), sharp: Math.round(lvar) });
+      resolve({ data: cv.toDataURL('image/jpeg', 0.72), ok: !issue, issue });
     };
     im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('read')); };
     im.src = url;
   });
 }
 
+/* ---------- password field helpers ---------- */
+function pwRules() {
+  const a = document.getElementById('pw1'), b = document.getElementById('pw2'); if (!a || !b) return false;
+  const len = a.value.length >= 8, match = len && a.value === b.value;
+  const rl = document.getElementById('r-len'), rm = document.getElementById('r-match'), go = document.getElementById('pwgo');
+  if (rl) rl.classList.toggle('ok', len); if (rm) rm.classList.toggle('ok', match); if (go) go.disabled = !(len && match);
+  return len && match;
+}
+function busy(form, label) { const b = form && form.querySelector('button[type="submit"]'); if (b) { b.disabled = true; b.dataset.label = b.textContent; b.textContent = label; } }
+function noCrypto() { return !(window.crypto && crypto.subtle); }
+
 /* =================================================================== */
-/* EVENTS                                                              */
+/* ACTIONS                                                             */
 /* =================================================================== */
+function signIn(u) {
+  S.lastEmail = u.email;
+  S.login = { step: 'email', email: '', err: '', pending: null };
+  S.region = u.c; S.insRegion = u.c; S.view = null; S.draft = null; S.focus = null;
+  if (u.admin && u.installer) { S.login = { step: 'workspace', email: '', err: '', pending: u.id }; render(false); return; }
+  S.me = u.id; S.role = u.admin ? 'admin' : 'installer'; S.tab = u.admin ? 'overview' : 'jobs';
+  render(false);
+}
+const FORMS = {
+  async email(f) {
+    const e = (f.querySelector('#lemail').value || '').trim().toLowerCase();
+    if (!validEmail(e)) { S.login.err = 'Enter your email address.'; S.login.email = e; render(false); return; }
+    const u = S.users.find((x) => x.email === e);
+    if (!u) { S.login = { step: 'email', email: e, err: 'There is no account for this email. Ask a Brand Butlers admin to add you.', pending: null }; render(false); return; }
+    S.login = { step: u.mustSet || !u.hash ? 'create' : 'password', email: e, err: '', pending: u.id };
+    render(false);
+    const nx = document.getElementById(u.name ? (u.mustSet || !u.hash ? 'pw1' : 'lpw') : 'cname'); if (nx) nx.focus();
+  },
+  async create(f) {
+    const u = userBy(S.login.pending); if (!u) return;
+    const nm = f.querySelector('#cname');
+    if (nm && !nm.value.trim()) { S.login.err = 'Enter your full name.'; render(false); return; }
+    if (!pwRules()) return;
+    if (noCrypto()) { S.login.err = 'This browser can’t store passwords safely. Open the app in Safari.'; render(false); return; }
+    busy(f, 'Creating…');
+    if (nm) u.name = nm.value.trim().replace(/\s+/g, ' ');
+    await setPw(u, document.getElementById('pw1').value);
+    save(); signIn(u);
+    toast('Password created. Welcome, ' + first(u.name) + '!');
+  },
+  async password(f) {
+    const u = userBy(S.login.pending); if (!u) return;
+    const pw = f.querySelector('#lpw').value;
+    if (!pw) { S.login.err = 'Enter your password.'; render(false); return; }
+    if (noCrypto()) { S.login.err = 'This browser can’t check passwords. Open the app in Safari.'; render(false); return; }
+    busy(f, 'Signing in…');
+    if (await checkPw(u, pw)) signIn(u);
+    else { S.login.err = 'That password isn’t right. Try again, or tap Forgot password.'; render(false); const el = document.getElementById('lpw'); if (el) el.focus(); }
+  },
+  async chpw(f) {
+    const u = meU();
+    if (!(await checkPw(u, f.querySelector('#cp0').value))) { U.err = 'Your current password isn’t right.'; renderSheet(); return; }
+    if (!pwRules()) return;
+    busy(f, 'Saving…');
+    await setPw(u, document.getElementById('pw1').value); save();
+    U.sheet = null; U.err = ''; renderSheet(); toast('Password changed');
+  }
+};
 const A = {
-  pickUser(v) { S.login = { step: 'code', who: v }; render(false); },
-  loginBack() { S.login = { step: 'pick', who: null }; render(false); },
-  verify() { const who = S.login.who; if (USERS[who].admin) { S.login = { step: 'workspace', who }; } else { S.user = who; S.role = 'installer'; S.tab = 'jobs'; S.login = { step: 'pick', who: null }; } render(false); },
-  enter(v) { S.user = S.login.who; S.role = v; S.tab = v === 'admin' ? 'overview' : 'jobs'; S.login = { step: 'pick', who: null }; render(false); },
-  tab(v) { S.tab = v; S.view = null; render(false); },
+  loginBack() { S.login = { step: 'email', email: S.login.email || '', err: '', pending: null }; render(false); },
+  enter(v) { const u = userBy(S.login.pending); if (!u) return; S.me = u.id; S.role = v; S.tab = v === 'admin' ? 'overview' : 'jobs'; S.login = { step: 'email', email: '', err: '', pending: null }; render(false); },
+  togglePw(v, el) { const f = el.closest('form'); const ins = f.querySelectorAll('input[type="password"], input[data-shown]'); const show = el.textContent.trim() === 'Show'; ins.forEach((i) => { i.type = show ? 'text' : 'password'; if (show) i.dataset.shown = '1'; else delete i.dataset.shown; }); el.textContent = show ? 'Hide' : 'Show'; },
+  tab(v) { S.tab = v; S.view = null; U.confirm = null; render(false); },
   set(v, el) { S[el.dataset.k] = Number(v); render(); },
-  sheet(v) { S.sheet = v; if (!String(v).startsWith('cant')) S.cant = null; renderSheet(); },
-  closeSheet() { S.sheet = null; S.cant = null; renderSheet(); },
-  switchRole(v) { S.role = v; S.tab = v === 'admin' ? (S.jobs.some((j) => j.status === 'waiting') && S.view && S.view.kind === 'submitted' ? 'approvals' : 'overview') : 'jobs'; S.view = null; S.sheet = null; render(false); },
-  signOut() { S.user = null; S.view = null; S.sheet = null; S.login = { step: 'pick', who: null }; render(false); },
-  reset() { const keep = { user: S.user, role: S.role, tab: S.role === 'admin' ? 'overview' : 'jobs' }; S = Object.assign(seed(), keep); render(false); toast('Demo reset'); },
+  sheet(v) { U.sheet = v; U.err = ''; U.confirm = null; renderSheet(); },
+  closeSheet() { U.sheet = null; U.cant = null; U.err = ''; U.confirm = null; renderSheet(); },
+  confirm(v) { U.confirm = v || null; if (U.sheet) renderSheet(); else render(); },
+  switchRole(v) { const me = meU(); if (v === 'admin' && !me.admin) return; if (v === 'installer' && !me.installer) return; const fromSubmit = S.view && S.view.kind === 'submitted'; S.role = v; S.tab = v === 'admin' ? (fromSubmit ? 'approvals' : 'overview') : 'jobs'; S.view = null; U.sheet = null; render(false); },
+  signOut() { S.me = null; S.view = null; U.sheet = null; S.draft = null; S.login = { step: 'email', email: '', err: '', pending: null }; render(false); },
+  chpw() { U.sheet = 'chpw'; U.err = ''; renderSheet(); },
   copy(v) { const done = () => toast('Number copied'); try { navigator.clipboard.writeText(v).then(done, () => toast(v)); } catch (e) { toast(v); } },
 
-  // admin: overview
-  openJob(v) { S.view = { kind: 'job', id: v }; render(false); },
-  openApproval(v) { S.view = { kind: 'approval', id: v }; S.open = { note: '' }; render(false); },
-  reassign(v) { const j = job(v); const crew = CREW[j.c]; const nxt = crew.find((n) => n !== j.installer) || j.installer; j.installer = nxt; j.status = 'scheduled'; S.view = null; render(); toast(j.store + ' moved to ' + first(nxt) + ' · notified'); },
-  approveReq(v) { const j = job(v); const [d, t] = j.request.to.split(' '); j.date = d; j.time = t; j.request = null; render(); toast('Moved to ' + whenLabel(j) + ' · ' + first(j.installer) + ' notified'); },
-  denyReq(v) { const j = job(v); j.request = null; render(); toast('Kept the original time · ' + first(j.installer) + ' notified'); },
+  // team
+  addPerson() { U.form = { name: '', email: '', phone: '', c: meU().c, admin: false, installer: true }; U.err = ''; U.sheet = 'add'; renderSheet(); const el = document.getElementById('fname'); if (el) el.focus(); },
+  openUser(v) { const u = userBy(v); U.form = { id: u.id, name: u.name, email: u.email, phone: u.phone || '', c: u.c, admin: u.admin, installer: u.installer }; U.err = ''; U.confirm = null; U.sheet = 'user:' + u.id; renderSheet(); },
+  fset(v, el) { U.form[el.dataset.k] = Number(v); renderSheet(); },
+  ftog(v, el) { const k = el.dataset.k; U.form[k] = !U.form[k]; renderSheet(); },
+  savePerson() {
+    const f = U.form; const name = (f.name || '').trim().replace(/\s+/g, ' '); const email = (f.email || '').trim().toLowerCase();
+    const fail = (m) => { U.err = m; renderSheet(); };
+    if (!name) return fail('Enter a name.');
+    if (!validEmail(email)) return fail('Enter a valid email address.');
+    if (S.users.some((u) => u.email === email && u.id !== f.id)) return fail('Someone already has this email.');
+    if (!f.admin && !f.installer) return fail('Give at least admin or installer access.');
+    if (f.id === S.me && !f.admin) return fail('You can’t remove your own admin access.');
+    if (f.id && !f.admin && userBy(f.id).admin && S.users.filter((u) => u.admin).length === 1) return fail('There must be at least one admin.');
+    if (f.id) {
+      const u = userBy(f.id); const emailChanged = u.email !== email;
+      Object.assign(u, { name, email, phone: (f.phone || '').trim(), c: f.c, admin: f.admin, installer: f.installer });
+      if (f.id === S.me && !u.installer && S.role === 'installer') S.role = 'admin';
+      U.sheet = null; render(); toast(emailChanged ? 'Saved. ' + first(name) + ' now signs in with ' + email : 'Saved');
+    } else {
+      S.users.push({ id: uid('u'), email, name, phone: (f.phone || '').trim(), c: f.c, admin: f.admin, installer: f.installer, salt: '', hash: '', mustSet: true, reset: false, created: Date.now() });
+      U.sheet = null; render(); toast(first(name) + ' added. They create a password at first sign-in.');
+    }
+  },
+  resetPw(v) {
+    const u = userBy(v); u.hash = ''; u.salt = ''; u.mustSet = true; u.reset = true; U.confirm = null;
+    if (u.id === S.me) { save(); A.signOut(); toast('Password reset. Create a new one to sign in.'); return; }
+    renderSheet(); render(); toast('Password reset. ' + first(u.name || u.email) + ' creates a new one at next sign-in.');
+  },
+  removeUser(v) { const u = userBy(v); S.users = S.users.filter((x) => x.id !== v); U.sheet = null; U.confirm = null; render(); toast((u.name || u.email) + ' removed'); },
 
-  // admin: new ticket
+  // admin
+  openJob(v) { S.view = { kind: 'job', id: v }; U.confirm = null; render(false); },
+  openApproval(v) { S.view = { kind: 'approval', id: v }; U.note = ''; render(false); },
+  setInstaller(v) { const j = job(S.view.id); j.installer = v; if (j.second === v) j.second = null; if (j.status === 'declined') { j.status = 'scheduled'; j.declineReason = ''; } render(); toast(j.store + ' assigned to ' + first(nameOf(v))); },
+  deleteJob(v) { const j = job(v); if (j.report) { ['before', 'after'].forEach((k) => j.report.photos[k].forEach((p) => p && phDel(p.k))); phDel('sig-' + j.id); } S.jobs = S.jobs.filter((x) => x.id !== v); S.view = null; U.confirm = null; render(false); toast('Ticket ' + j.ticket + ' deleted'); },
+  approveReq(v) { const j = job(v); const [d, t] = j.request.to.split(' '); j.date = d; j.time = t; j.request = null; render(); toast('Moved to ' + whenLabel(j)); },
+  denyReq(v) { const j = job(v); j.request = null; render(); toast('Kept the original time'); },
   draftTpl(v) { const d = S.draft; d.template = +v; d.tools = TEMPLATES[+v].tools.slice(); render(); },
-  draftCountry(v) { const d = S.draft; d.c = +v; d.store = 0; d.lead = 0; d.second = -1; d.price = ''; render(); },
-  draftSet(v, el) { S.draft[el.dataset.k] = +v; render(); },
-  draftPerson(v) { const d = S.draft, i = +v; if (d.second === -2 || d.second >= 0) { if (i === d.lead) return; d.second = d.second === i ? -2 : i; } else d.lead = i; render(); },
-  draftSecond() { S.draft.second = -2; render(); },
-  draftNoSecond() { S.draft.second = -1; render(); },
+  draftCountry(v) { const d = S.draft; d.c = +v; const st = storesFor(d.c); d.store = st.length ? st[0].id : 'new'; d.err = {}; render(); },
+  draftStore(v) { S.draft.store = v; render(); if (v === 'new') { const el = document.getElementById('sname'); if (el) el.focus(); } },
+  draftPerson(v) { const d = S.draft; if (d.secondOn && d.lead) { if (v === d.lead) return; d.second = d.second === v ? null : v; } else d.lead = v; d.err.installer = ''; render(); },
+  draftSecond() { S.draft.secondOn = true; render(); },
+  draftNoSecond() { S.draft.secondOn = false; S.draft.second = null; render(); },
   draftTool(v) { const t = S.draft.tools; const i = t.indexOf(v); if (i >= 0) t.splice(i, 1); else t.push(v); render(); },
-  draftNotify(v) { S.draft.notify[+v] = !S.draft.notify[+v]; render(); },
   createTicket() {
-    const d = S.draft;
-    const t = (d.ticket || '').trim();
-    if (!t) { d.err = 'Enter the Apple ticket number from Apple’s system.'; render(false); const el = document.getElementById('ticket'); if (el) el.focus(); return; }
-    d.err = '';
-    const crew = CREW[d.c], st = STORES[d.c][d.store], tpl = TEMPLATES[d.template];
-    const j = { id: 'n' + Date.now(), ticket: t.toUpperCase(), c: d.c, store: st[0], addr: st[1], installer: crew[d.lead], second: d.second >= 0 ? crew[d.second] : '', date: d.date || rel(0), time: d.time || '09:30', status: 'scheduled', fixture: tpl.name, tools: d.tools.slice(), parts: tpl.parts.slice(), note: d.note, last: st[0] === 'Elkjøp Storo' ? 'Ask for Kari Nilsen at the info desk. Park at the back entrance.' : '', report: null, request: null, changes: '' };
-    S.jobs.unshift(j);
-    const who = j.second ? first(j.installer) + ' and ' + first(j.second) : first(j.installer);
+    const d = S.draft; const E = {};
+    const t = (d.ticket || '').trim().toUpperCase();
+    if (!t) E.ticket = 'Enter the ticket number from Apple’s system.';
+    else if (S.jobs.some((j) => j.ticket === t)) E.ticket = 'A ticket with this number already exists.';
+    let store = null;
+    if (d.store !== 'new' && storesFor(d.c).length) store = S.stores.find((s) => s.id === d.store);
+    else if ((d.storeName || '').trim()) store = { id: uid('s'), c: d.c, name: d.storeName.trim(), addr: (d.storeAddr || '').trim(), isNew: true };
+    if (!store) E.store = 'Choose a store or type its name.';
+    if (!d.lead || !userBy(d.lead)) E.installer = 'Choose an installer.';
+    const sp = splitNums(d);
+    if (!(sp.price > 0)) E.price = 'Enter the ticket price.';
+    else if (sp.inst < 0 || sp.adm < 0 || sp.bb < 0) E.price = 'The shares add up to more than 100 %.';
+    d.err = E;
+    if (Object.keys(E).length) { render(); toast('Fill in the marked fields'); const el = document.querySelector('.bad-field'); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+    if (store.isNew) { delete store.isNew; S.stores.push(store); }
+    const tpl = TEMPLATES[d.template];
+    const prev = S.jobs.filter((j) => j.c === d.c && j.store.toLowerCase() === store.name.toLowerCase() && j.status === 'approved' && j.report && j.report.nextNote).sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0))[0];
+    const j = { id: uid('j'), ticket: t, c: d.c, store: store.name, addr: store.addr, installer: d.lead, second: d.secondOn && d.second ? d.second : null, date: d.date || rel(0), time: d.time || '09:00', status: 'scheduled', fixture: tpl.name, tools: d.tools.slice(), parts: tpl.parts.slice(), note: (d.note || '').trim(), last: prev ? prev.report.nextNote : '', price: sp.price, split: [sp.inst, sp.adm], report: null, request: null, changes: '', createdBy: S.me, created: Date.now() };
+    S.jobs.push(j); S.split = [sp.inst, sp.adm];
     S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2;
     render(false);
-    toast('Ticket ' + j.ticket + ' created · ' + who + (j.second ? ' were' : ' was') + ' notified');
+    toast('Ticket ' + j.ticket + ' created for ' + first(nameOf(j.installer)) + (j.second ? ' and ' + first(nameOf(j.second)) : ''));
   },
-
-  // admin: approvals
-  approve(v) { const j = job(v); j.status = 'approved'; j.request = null; if (j.report && j.report.nextNote) j.last = j.report.nextNote; S.view = null; S.tab = 'approvals'; render(false); toast(j.store + ' approved and sent to Apple'); },
-  askChanges(v) { const j = job(v); j.status = 'changes'; j.changes = (S.open && S.open.note) || 'Please check the photos and resubmit.'; if (j.report) j.report.draft = true; S.view = null; render(false); toast('Sent back to ' + first(j.installer) + ' with your note'); },
+  approve(v) { const j = job(v); j.status = 'approved'; j.request = null; j.handledAt = Date.now(); j.handledBy = S.me; S.view = null; S.tab = 'approvals'; render(false); toast(j.store + ' approved'); },
+  askChanges(v) { const j = job(v); j.status = 'changes'; j.changes = (U.note || '').trim() || 'Please check the report and resubmit.'; j.handledAt = Date.now(); if (j.report) j.report.draft = true; S.view = null; render(false); toast('Sent back to ' + first(nameOf(j.installer))); },
 
   // installer
-  focusJob(v) { const j = job(v); const mine = myJobs(); S.jobs = [j].concat(S.jobs.filter((x) => x !== j)); render(false); },
-  startReport(v) { const j = job(v); if (j.status === 'scheduled' || j.status === 'overdue') j.status = 'progress'; ensureReport(j); S.view = { kind: 'report', id: v }; S.step = j.status === 'changes' ? 2 : 1; S.phase = 'before'; render(false); },
-  closeView() { S.view = null; render(false); },
-  stepNext() { const j = job(S.view.id), r = j.report; if (S.step === 1 && (r.extra || '').trim()) A.partAdd(); S.step = Math.min(3, S.step + 1); render(false); },
+  focusJob(v) { S.focus = v; render(false); },
+  startReport(v) { const j = job(v); if (j.status === 'scheduled') { j.status = 'progress'; j.startedAt = Date.now(); } ensureReport(j); S.view = { kind: 'report', id: v }; S.step = j.status === 'changes' ? 2 : 1; S.phase = 'before'; S.focus = v; render(false); },
+  closeView() { S.view = null; U.confirm = null; render(false); },
+  stepNext() { const j = job(S.view.id), r = j.report; if (S.step === 1 && (r.extra || '').trim()) A.partAdd(true); S.step = Math.min(3, S.step + 1); if (S.step === 2) S.phase = r.photos.before.every((p) => p && p.ok) ? 'after' : 'before'; render(false); },
   stepBack() { S.step = Math.max(1, S.step - 1); render(false); },
   rset(v, el) { const r = job(S.view.id).report; r[el.dataset.k] = el.dataset.k === 'probOpen' ? !!v : v; render(); },
   partToggle(v) { const r = job(S.view.id).report; const p = r.parts[+v]; p[1] = p[1] > 0 ? 0 : 1; render(); },
   partQty(v, el) { const r = job(S.view.id).report; const p = r.parts[+v]; p[1] = Math.max(1, p[1] + Number(el.dataset.d)); render(); },
-  partAdd() { const r = job(S.view.id).report; const n = (r.extra || '').trim(); if (!n) return; r.parts.push([n + ' (added on site)', 1]); r.extra = ''; render(); },
-  probSave() { const r = job(S.view.id).report; r.problem = { type: r.probType, text: (r.probText || '').trim() || 'See photos.' }; r.probOpen = false; render(); toast('Problem sent · your admin gets a follow-up ticket'); },
+  partAdd(quiet) { const r = job(S.view.id).report; const n = (r.extra || '').trim(); if (!n) return; r.parts.push([n + ' (added on site)', 1]); r.extra = ''; if (quiet !== true) render(); },
+  probSave() { const r = job(S.view.id).report; r.problem = { type: r.probType, text: (r.probText || '').trim() || 'See photos.' }; r.probOpen = false; render(); toast('Problem added. Your admin sees it with the report.'); },
   probRemove() { const r = job(S.view.id).report; r.problem = null; render(); },
   phase(v) { S.phase = v; render(false); },
-  fillSamples() { const r = job(S.view.id).report; ['before', 'after'].forEach((k) => { r.photos[k] = r.photos[k].map((p) => (p && p.ok ? p : { sample: k, ok: true })); }); render(); toast('Sample photos added'); },
   check(v) { const r = job(S.view.id).report; r.checks[+v] = !r.checks[+v]; render(); },
-  sigClear() { const r = job(S.view.id).report; r.signature = null; render(); },
+  sigClear() { const j = job(S.view.id); j.report.signed = false; phDel('sig-' + j.id); render(); },
   submitReport() {
     const j = job(S.view.id), r = j.report;
-    if (!r.checks.every(Boolean) || !r.signature) return;
-    if ((r.contact || '').trim() === '') r.contact = 'Store contact';
-    r.draft = false; const now = new Date(); r.submittedAt = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-    j.status = 'waiting'; j.changes = '';
+    if (!r.checks.every(Boolean) || !r.signed) return;
+    if (!(r.contact || '').trim()) r.contact = 'Store contact';
+    r.draft = false; r.submittedTs = Date.now(); r.submittedAt = hhmm(r.submittedTs);
+    j.status = 'waiting'; j.changes = ''; S.focus = null;
     S.view = { kind: 'submitted', id: j.id }; render(false);
   },
   undoReq(v) { job(v).request = null; render(); },
-  cantMode(v) { S.cant.mode = v; renderSheet(); },
-  cantSlot(v) { S.cant.slot = +v; renderSheet(); },
+  cantMake(v) { U.cant = { mode: 'resched', slot: 1, reason: '' }; U.sheet = 'cant:' + v; renderSheet(); },
+  cantMode(v) { U.cant.mode = v; renderSheet(); },
+  cantSlot(v) { U.cant.slot = +v; renderSheet(); },
   cantSend(v) {
-    const j = job(v), m = S.cant;
-    if (m.mode === 'resched') { const [d, t] = S._slots[m.slot]; j.request = { kind: 'resched', to: d + ' ' + t, reason: m.reason }; toast('Request sent to your admin'); }
-    else { j.status = 'declined'; j.request = null; toast('Job declined · your admin was notified'); }
-    S.sheet = null; S.cant = null; render();
+    const j = job(v), m = U.cant;
+    if (m.mode === 'resched') { const [d, t] = U.slots[m.slot]; j.request = { kind: 'resched', to: d + ' ' + t, reason: (m.reason || '').trim() }; toast('Request sent to your admin'); }
+    else { j.status = 'declined'; j.request = null; j.declineReason = (m.reason || '').trim(); S.focus = null; toast('Job declined. Your admin can assign someone else.'); }
+    U.sheet = null; U.cant = null; render();
   }
 };
 
@@ -832,25 +1091,40 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   A[a](el.dataset.v, el);
 });
+document.addEventListener('submit', (e) => {
+  const f = e.target.closest('form[data-form]'); if (!f) return;
+  e.preventDefault();
+  const fn = FORMS[f.dataset.form]; if (fn) fn(f).catch(() => { toast('Something went wrong. Try again.'); render(false); });
+});
 document.addEventListener('input', (e) => {
   const el = e.target;
-  if (el.dataset.bind && S.draft) { S.draft[el.dataset.bind] = el.value; if (el.dataset.bind === 'ticket' && S.draft.err) { S.draft.err = ''; el.style.outline = ''; } save(); }
+  if (el.dataset.pw) { pwRules(); return; }
+  if (el.dataset.bind && S.draft) { S.draft[el.dataset.bind] = el.value; const ek = { storeName: 'store', storeAddr: 'store', inst: 'price', adm: 'price' }[el.dataset.bind] || el.dataset.bind; if (S.draft.err && S.draft.err[ek]) { S.draft.err[ek] = ''; el.classList.remove('bad-field'); const g = el.closest('.group.bad-field'); if (g) { g.classList.remove('bad-field'); const n = g.nextElementSibling; if (n && n.classList.contains('foot') && n.style.color) n.remove(); } else { const n = el.nextElementSibling; if (n && n.classList.contains('foot') && n.style.color) n.remove(); } } if (el.dataset.live) updateSplit(); save(); }
   else if (el.dataset.rbind && S.view) { job(S.view.id).report[el.dataset.rbind] = el.value; save(); }
-  else if (el.dataset.abind) { S.open = S.open || {}; S.open.note = el.value; }
-  else if (el.dataset.cbind && S.cant) { S.cant.reason = el.value; }
+  else if (el.dataset.fbind && U.form) { U.form[el.dataset.fbind] = el.value; }
+  else if (el.dataset.abind) { U.note = el.value; }
+  else if (el.dataset.cbind && U.cant) { U.cant.reason = el.value; }
+  else if (el.id === 'lemail' && S.login.err) { S.login.err = ''; el.classList.remove('bad-field'); const p = el.parentNode.querySelector('.err'); if (p) p.remove(); }
 });
 document.addEventListener('change', (e) => {
   const el = e.target;
-  if (el.dataset.rerender) render();
   if (el.dataset.shot) {
     const f = el.files && el.files[0]; if (!f) return;
     const [ph, i] = el.dataset.shot.split('-');
-    const r = job(S.view.id).report;
+    const j = job(S.view.id), r = j.report;
     processPhoto(f).then((p) => {
-      r.photos[ph][+i] = p; render();
-      toast(p.ok ? 'Photo looks good' : p.issue.split(' ·')[0] + ': take it again');
+      const old = r.photos[ph][+i];
+      const k = 'ph-' + j.id + '-' + ph + '-' + i + '-' + Date.now().toString(36);
+      phPut(k, p.data);
+      if (old) phDel(old.k);
+      r.photos[ph][+i] = { k, ok: p.ok, issue: p.issue };
+      r.shots = (r.shots || 0) + 1;
+      if (ph === 'before' && r.photos.before.every((x) => x && x.ok) && r.photos.after.every((x) => !x)) toast('Before photos done. Do the work, then take the after photos.');
+      else toast(p.ok ? 'Photo looks good' : p.issue.split(' ·')[0] + ': take it again');
+      render();
     }).catch(() => toast('Couldn’t read that photo. Try again.'));
   }
+  if (el.dataset.bind === 'date' && S.draft) render();
 });
 window.addEventListener('pageshow', () => render());
 
