@@ -39,8 +39,15 @@ jobs:
             mkdir -p _site/preview
             cp -r dev/app/. _site/preview/
             # mark the test version so it is never mistaken for the live app
-            # test version: its own home screen icon and name, written straight into the page
-            sed -i 's|href="icon-180.png"|href="icon-test-180.png?v=2"|; s|href="manifest.webmanifest"|href="manifest-test.webmanifest"|; s|name="apple-mobile-web-app-title" content="Brand Butlers"|name="apple-mobile-web-app-title" content="BB Test"|; s|<title>Brand Butlers</title>|<title>BB Test</title>|' _site/preview/index.html
+            # test version: its own home screen icon and name, written straight into the page.
+            # The icon gets a file name iPhone has never seen, so no old cached icon can be reused.
+            V=$(git -C dev rev-parse --short HEAD)
+            cp dev/app/icon-test-180.png _site/preview/bbtest-180-$V.png
+            cp dev/app/icon-test-512.png _site/preview/bbtest-512-$V.png
+            cp dev/app/icon-test-180.png _site/preview/icon-180.png
+            cp dev/app/icon-test-512.png _site/preview/icon-512.png
+            sed -i "s|href=\"icon-180.png\"|href=\"bbtest-180-$V.png\"|; s|href=\"manifest.webmanifest\"|href=\"manifest-test.webmanifest\"|; s|name=\"apple-mobile-web-app-title\" content=\"Brand Butlers\"|name=\"apple-mobile-web-app-title\" content=\"BB Test\"|; s|<title>Brand Butlers</title>|<title>BB Test</title>|; s|'icon-test-180.png'|'bbtest-180-$V.png'|" _site/preview/index.html
+            sed -i "s|icon-test-512.png|bbtest-512-$V.png|; s|icon-test-180.png|bbtest-180-$V.png|" _site/preview/manifest-test.webmanifest
           fi
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
