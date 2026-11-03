@@ -203,6 +203,7 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 <div id="app" class="app"></div>
 <div id="overlay"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 (function () {
 'use strict';
@@ -244,48 +245,135 @@ const longToday = () => { const d = new Date(); return ['Sunday', 'Monday', 'Tue
 const hhmm = (t) => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
 const fmtDur = (ms) => { const m = Math.round(ms / 60000); return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + (m % 60) + 'm'; };
 
-/* ---------- saved state (this phone) ---------- */
+/* ---------- server (Supabase) ---------- */
+const SB_URL = 'https://gipkzcpaqlyiqawgunhu.supabase.co';
+const SB_KEY = 'sb_publishable_9IN9GEfSh-8ovaTEmGVo_w_n2W91RBW';
 const PREVIEW = /\/preview\//.test(location.pathname);
-const KEY = PREVIEW ? 'bb-app-preview-v4' : 'bb-app-v4';
 if (PREVIEW) document.title = 'Brand Butlers (test)';
+const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { storageKey: PREVIEW ? 'bb-auth-preview' : 'bb-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
 const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/* only view preferences are kept on the phone; all data lives on the server */
+const KEY = PREVIEW ? 'bb-prefs-preview-v5' : 'bb-prefs-v5';
+const PREF_KEYS = ['lastEmail', 'role', 'tab', 'region', 'period', 'insRegion', 'insPeriod', 'earnPeriod', 'split'];
 function fresh() {
   return {
-    v: 4,
-    users: [{ id: 'u-owner', email: OWNER_EMAIL, name: '', phone: '', c: 0, admin: true, installer: true, salt: '', hash: '', mustSet: true, reset: false, created: Date.now() }],
-    jobs: [], stores: [], split: [40, 10],
-    me: null, lastEmail: '', role: 'admin', tab: 'overview', region: 0, period: 2, insRegion: 0, insPeriod: 2, earnPeriod: 2,
-    view: null, step: 1, phase: 'before', login: { step: 'email', email: '', err: '', pending: null }, draft: null
+    v: 5, users: [], jobs: [], stores: [], me: null, loading: true, choosing: false,
+    lastEmail: '', role: 'admin', tab: 'overview', region: 0, period: 2, insRegion: 0, insPeriod: 2, earnPeriod: 2, split: [40, 10],
+    view: null, step: 1, phase: 'before', login: { step: 'email', email: '', err: '', acc: null }, draft: null
   };
 }
-let S;
-try { S = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { S = null; }
-if (!S || S.v !== 4) S = fresh();
-const U = { sheet: null, form: null, err: '', confirm: null, cant: null, note: '', slots: null };
-let warnedFull = false;
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { if (!warnedFull) { warnedFull = true; toast('This phone is out of space for the app'); } } }
+let S = fresh();
+try { const p = JSON.parse(localStorage.getItem(KEY) || 'null'); if (p) PREF_KEYS.forEach((k) => { if (p[k] !== undefined) S[k] = p[k]; }); } catch (e) { /* defaults */ }
+const U = { sheet: null, form: null, err: '', confirm: null, cant: null, note: '', slots: null, admins: [] };
+function save() { try { const o = {}; PREF_KEYS.forEach((k) => { o[k] = S[k]; }); localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { /* private mode */ } }
 
-/* photos and signatures live in IndexedDB (much more room than localStorage) */
-const PH = new Map();
-let dbp = null;
-function idb() { if (!dbp) dbp = new Promise((res) => { try { const r = indexedDB.open(PREVIEW ? 'bb-photos-preview' : 'bb-photos', 1); r.onupgradeneeded = () => r.result.createObjectStore('p'); r.onsuccess = () => res(r.result); r.onerror = () => res(null); } catch (e) { res(null); } }); return dbp; }
-async function phPut(k, v) { PH.set(k, v); const db = await idb(); if (!db) return; try { db.transaction('p', 'readwrite').objectStore('p').put(v, k); } catch (e) { /* kept in memory */ } }
-async function phGet(k) { if (PH.has(k)) return PH.get(k); const db = await idb(); if (!db) return null; return new Promise((res) => { try { const q = db.transaction('p').objectStore('p').get(k); q.onsuccess = () => { if (q.result) PH.set(k, q.result); res(q.result || null); }; q.onerror = () => res(null); } catch (e) { res(null); } }); }
-async function phDel(k) { PH.delete(k); const db = await idb(); if (!db) return; try { db.transaction('p', 'readwrite').objectStore('p').delete(k); } catch (e) { /* ignore */ } }
-const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-const pimg = (k, alt) => `<img data-pk="${esc(k)}" alt="${esc(alt || '')}" src="${PH.get(k) || BLANK}">`;
-function hydrate() { document.querySelectorAll('img[data-pk]').forEach((im) => { const k = im.dataset.pk; if (!PH.has(k)) phGet(k).then((v) => { if (v) im.src = v; }); }); }
+const NAMES = {};
+const ok = (r) => { if (r.error) throw r.error; return r.data; };
+const friendly = (e) => {
+  const m = (e && e.message) || '';
+  if (e && e.code === '23505') return /ticket/.test(m) ? 'A ticket with this number already exists.' : 'That already exists.';
+  if (/fetch|network|Failed/i.test(m)) return 'No connection. Check your internet and try again.';
+  return m && m.length < 140 ? m : 'Something went wrong. Try again.';
+};
+const toUser = (p) => ({ id: p.id, email: p.email, name: p.name || '', phone: p.phone || '', c: p.country, admin: p.is_admin, installer: p.is_installer, status: p.status, active: p.active, hash: p.status === 'active', reset: p.status === 'reset' });
+const toJob = (r) => ({
+  id: r.id, ticket: r.ticket, c: r.country, store: r.store_name, addr: r.address || '', installer: r.installer, second: r.second || null,
+  date: r.date, time: r.time, status: r.status, fixture: r.fixture || '', tools: r.tools || [], parts: r.parts || [], note: r.note || '', last: r.last_note || '',
+  price: r.price != null ? Number(r.price) : null, share: r.share != null ? Number(r.share) : null, split: [Number(r.inst_pct != null ? r.inst_pct : 40), Number(r.adm_pct != null ? r.adm_pct : 10)],
+  request: r.request || null, changes: r.changes || '', declineReason: r.decline_reason || '',
+  startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
+});
+const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0 });
+const toReport = (row) => { const ts = row.submitted_at ? Date.parse(row.submitted_at) : null; return Object.assign(emptyReport(), row.data || {}, { draft: row.draft, submittedTs: ts, submittedAt: ts ? hhmm(ts) : '' }); };
 
-/* ---------- passwords (PBKDF2, only a salted hash is stored) ---------- */
-const enc = new TextEncoder();
-const b64 = (buf) => btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
-const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
-async function derive(pw, salt) {
-  const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
-  return b64(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 150000 }, key, 256));
+async function loadAll() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { S.me = null; return; }
+  const meRow = ok(await sb.from('profiles').select('*').eq('auth_id', session.user.id).maybeSingle());
+  if (!meRow || !meRow.active) { await sb.auth.signOut(); S.me = null; return; }
+  const me = toUser(meRow); S.me = me.id;
+  let jobs, reports;
+  if (me.admin) {
+    const [ps, st, js, rs] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*')]);
+    S.users = ok(ps).map(toUser); S.stores = ok(st).map((s) => ({ id: s.id, c: s.country, name: s.name, addr: s.address })); jobs = ok(js); reports = ok(rs);
+  } else {
+    const [js, rs] = await Promise.all([sb.rpc('my_jobs'), sb.from('reports').select('*')]);
+    S.users = [me]; S.stores = []; jobs = ok(js); reports = ok(rs);
+    jobs.forEach((j) => { if (j.installer) NAMES[j.installer] = j.installer_name; if (j.second) NAMES[j.second] = j.second_name; });
+  }
+  const keep = S.view && S.view.kind === 'report' ? job(S.view.id) : null;
+  const rmap = {}; reports.forEach((r) => { rmap[r.job_id] = r; });
+  S.jobs = jobs.map((r) => { const j = toJob(r); if (rmap[j.id]) j.report = toReport(rmap[j.id]); return j; });
+  if (keep && keep.report) { const j = job(keep.id); if (j) j.report = keep.report; }
+  if (!me.installer) S.role = 'admin';
+  if (!me.admin) S.role = 'installer';
 }
-async function setPw(u, pw) { const s = crypto.getRandomValues(new Uint8Array(16)); u.salt = b64(s); u.hash = await derive(pw, s); u.mustSet = false; u.reset = false; }
-async function checkPw(u, pw) { if (!u.hash) return false; return (await derive(pw, unb64(u.salt))) === u.hash; }
+let loadingNow = null;
+function refresh() { if (!loadingNow) loadingNow = loadAll().finally(() => { loadingNow = null; }); return loadingNow; }
+async function boot() {
+  S.loading = true; render(false);
+  try { await loadAll(); } catch (e) { toast('Couldn’t reach the server. Check your connection.'); }
+  S.loading = false;
+  render(false);
+}
+const quietRefresh = () => {
+  if (!S.me || S.loading || S.choosing || document.hidden || U.sheet) return;
+  if (S.view && S.view.kind === 'report') return;
+  const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+  refresh().then(() => render()).catch(() => { /* try again later */ });
+};
+setInterval(quietRefresh, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) quietRefresh(); });
+
+async function callFn(name, body) {
+  const { data: { session } } = await sb.auth.getSession();
+  const headers = { 'Content-Type': 'application/json', apikey: SB_KEY };
+  if (session) headers.Authorization = 'Bearer ' + session.access_token;
+  let res;
+  try { res = await fetch(SB_URL + '/functions/v1/' + name, { method: 'POST', headers, body: JSON.stringify(body) }); }
+  catch (e) { throw new Error('No connection. Check your internet and try again.'); }
+  let out = {}; try { out = await res.json(); } catch (e) { /* empty */ }
+  if (!res.ok || out.error) throw new Error(out.error || out.msg || 'Something went wrong. Try again.');
+  return out;
+}
+
+/* photos and signatures: private storage, one folder per job; shown through short-lived links */
+const PH = new Map(), PHT = new Map(), PEND = new Map();
+function phPut(k, dataUrl) {
+  PH.set(k, dataUrl); PHT.set(k, Infinity);
+  const p = fetch(dataUrl).then((r) => r.blob())
+    .then((b) => sb.storage.from('photos').upload(k, b, { upsert: true, contentType: b.type }))
+    .then((r) => { if (r.error) throw r.error; })
+    .finally(() => { PEND.delete(k); });
+  PEND.set(k, p);
+  p.catch(() => toast('A photo didn’t upload. Check your connection and retake it.'));
+  return p;
+}
+async function phGet(k) {
+  if (PH.has(k) && (PHT.get(k) || 0) > Date.now()) return PH.get(k);
+  const r = await sb.storage.from('photos').createSignedUrl(k, 3600);
+  if (r.error || !r.data) return null;
+  PH.set(k, r.data.signedUrl); PHT.set(k, Date.now() + 50 * 60000);
+  return r.data.signedUrl;
+}
+function phDel(k) { PH.delete(k); PHT.delete(k); sb.storage.from('photos').remove([k]).then(() => {}, () => {}); }
+const sigKey = (j) => j.id + '/signature.png';
+const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const pimg = (k, alt) => `<img data-pk="${esc(k)}" alt="${esc(alt || '')}" src="${(PHT.get(k) || 0) > Date.now() ? PH.get(k) : BLANK}">`;
+function hydrate() { document.querySelectorAll('img[data-pk]').forEach((im) => { const k = im.dataset.pk; if (!((PHT.get(k) || 0) > Date.now())) phGet(k).then((v) => { if (v) im.src = v; }); }); }
+
+/* report drafts are saved to the server as you go */
+const RQ = new Map();
+const REPORT_KEYS = ['init', 'contact', 'contactRole', 'parts', 'extra', 'comments', 'nextNote', 'problem', 'probType', 'probText', 'photos', 'checks', 'signed', 'shots'];
+function queueReport(j, now) {
+  if (!j || !j.report || !j.report.draft) return Promise.resolve();
+  clearTimeout(RQ.get(j.id));
+  const run = () => { RQ.delete(j.id); const data = {}; REPORT_KEYS.forEach((k) => { data[k] = j.report[k]; }); return sb.from('reports').upsert({ job_id: j.id, data, updated_at: new Date().toISOString() }).then((r) => { if (r.error) throw r.error; }); };
+  if (now) return run();
+  RQ.set(j.id, setTimeout(() => { run().catch(() => toast('Not saved yet: check your connection')); }, 700));
+  return Promise.resolve();
+}
 
 /* ---------- helpers ---------- */
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -295,9 +383,9 @@ const initials = (n) => String(n || '?').replace(/@.*/, '').split(/[\s._-]+/).fi
 const job = (id) => S.jobs.find((j) => j.id === id);
 const userBy = (id) => S.users.find((u) => u.id === id);
 const meU = () => userBy(S.me);
-const nameOf = (id) => { const u = userBy(id); return u ? (u.name || u.email) : 'Removed user'; };
+const nameOf = (id) => { const u = userBy(id); return u ? (u.name || u.email) : (NAMES[id] || 'Removed user'); };
 const validEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
-const installers = (c) => S.users.filter((u) => u.installer).sort((a, b) => ((a.c === c ? 0 : 1) - (b.c === c ? 0 : 1)) || (a.name || a.email).localeCompare(b.name || b.email));
+const installers = (c) => S.users.filter((u) => u.installer && u.active).sort((a, b) => ((a.c === c ? 0 : 1) - (b.c === c ? 0 : 1)) || (a.name || a.email).localeCompare(b.name || b.email));
 const storesFor = (c) => S.stores.filter((s) => s.c === c).sort((a, b) => a.name.localeCompare(b.name));
 const flag = (c, w = 20, h = 14) => { const f = C[c].flag; return `<svg width="${w}" height="${h}" viewBox="0 0 22 16" aria-hidden="true" style="border-radius:2px;flex-shrink:0;box-shadow:0 0 0 0.5px rgba(0,0,0,0.2)"><rect width="22" height="16" fill="${f[0]}"/><rect x="6" width="4" height="16" fill="${f[1]}"/><rect y="6" width="22" height="4" fill="${f[1]}"/><rect x="7" width="2" height="16" fill="${f[2]}"/><rect y="7" width="22" height="2" fill="${f[2]}"/></svg>`; };
 const nordicMark = (w = 24, h = 16) => `<svg width="${w}" height="${h}" viewBox="0 0 30 20" aria-hidden="true"><rect width="16" height="11" rx="1.5" fill="#BA0C2F"/><rect x="4.4" width="2.9" height="11" fill="#fff"/><rect y="4.1" width="16" height="2.9" fill="#fff"/><rect x="5.1" width="1.5" height="11" fill="#00205B"/><rect y="4.8" width="16" height="1.5" fill="#00205B"/><g transform="translate(7 4.5)"><rect width="16" height="11" rx="1.5" fill="#006AA7" stroke="#fff" stroke-width="0.8"/><rect x="4.4" width="2.9" height="11" fill="#FECC02"/><rect y="4.1" width="16" height="2.9" fill="#FECC02"/></g><g transform="translate(14 9)"><rect width="16" height="11" rx="1.5" fill="#C8102E" stroke="#fff" stroke-width="0.8"/><rect x="4.4" width="2.9" height="11" fill="#fff"/><rect y="4.1" width="16" height="2.9" fill="#fff"/></g></svg>`;
@@ -332,7 +420,7 @@ const effStatus = (j) => (j.status === 'scheduled' && Date.now() > jobTs(j) + 30
 const OPEN = ['scheduled', 'progress', 'overdue', 'changes', 'declined'];
 const pillFor = (j) => j.request && j.request.kind === 'resched' && j.status === 'scheduled' ? '<span class="pill p-or">Reschedule asked</span>' : `<span class="pill ${STATUS[effStatus(j)][1]}">${STATUS[effStatus(j)][0]}</span>`;
 const inPeriod = (j, p) => { const n = Math.abs(dayDiff(j.date)); return p === 0 ? n === 0 : p === 1 ? n <= 7 : n <= 31; };
-const shareOf = (j) => (Number(j.price) || 0) * (j.split ? j.split[0] : 40) / 100 / (j.second ? 2 : 1);
+const shareOf = (j) => j.share != null ? j.share : (Number(j.price) || 0) * (j.split ? j.split[0] : 40) / 100 / (j.second ? 2 : 1);
 const money = (c, n) => C[c].cur + ' ' + fmt(n);
 const sumByCur = (pairs) => { const m = {}; pairs.forEach(([c, n]) => { m[C[c].cur] = (m[C[c].cur] || 0) + n; }); return Object.keys(m).map((k) => k + ' ' + fmt(m[k])); };
 
@@ -354,26 +442,25 @@ const overlay = document.getElementById('overlay');
 let tabBarEl = null;
 
 function render(keepScroll = true) {
-  const me = meU();
-  if (S.me && (!me || me.mustSet)) { S.me = null; S.view = null; U.sheet = null; }
   const y = window.scrollY;
   let html = '';
-  if (!S.me) html = viewLogin();
+  if (S.loading) html = `<div class="login"><div class="lhero">${LOGO(76)}<h1 class="lname">Brand Butlers</h1><p class="ltag">Loading…</p></div></div>`;
+  else if (!S.me || S.choosing) html = viewLogin();
   else if (S.view) html = viewSub();
   else html = S.role === 'admin' ? viewAdmin() : viewInstaller();
   app.innerHTML = html;
-  app.classList.toggle('noTabs', !S.me || !!S.view);
+  app.classList.toggle('noTabs', !S.me || S.choosing || S.loading || !!S.view);
   renderTabs();
   renderSheet();
   hydrate();
-  if (S.view && S.view.kind === 'report' && S.step === 3) setupSig();
+  if (S.view && S.view.kind === 'report') { if (S.step === 3) setupSig(); queueReport(job(S.view.id)); }
   window.scrollTo(0, keepScroll ? y : 0);
   save();
 }
 
 function renderTabs() {
   if (tabBarEl) { tabBarEl.remove(); tabBarEl = null; }
-  if (!S.me || S.view) return;
+  if (!S.me || S.choosing || S.loading || S.view) return;
   const tabs = S.role === 'admin'
     ? [['overview', 'Overview'], ['new', 'New ticket'], ['approvals', 'Approvals'], ['team', 'Team'], ['insights', 'Insights']]
     : [['jobs', 'Jobs'], ['earnings', 'Earnings']];
@@ -393,7 +480,7 @@ function viewLogin() {
   const L = S.login;
   const hero = `<div class="lhero">${LOGO(76)}<h1 class="lname">Brand Butlers</h1><p class="ltag">Fixture installation and reporting</p>${PREVIEW ? '<span class="pill p-or">Test version</span>' : ''}</div>`;
   const err = L.err ? `<p class="err" role="alert">${esc(L.err)}</p>` : '';
-  const pending = userBy(L.pending);
+  const pending = L.acc;
   if (L.step === 'create' && pending) {
     const u = pending;
     return `<div class="login">${hero}<form class="lcard" data-form="create" novalidate>
@@ -566,7 +653,7 @@ function adminApprovals() {
 
 function statusPill(u) { return u.hash ? '' : u.reset ? '<span class="pill p-or">Password reset</span>' : '<span class="pill p-or">Invited</span>'; }
 function adminTeam() {
-  const list = S.users.slice().sort((a, b) => (a.id === S.me ? -1 : b.id === S.me ? 1 : (a.name || a.email).localeCompare(b.name || b.email)));
+  const list = S.users.filter((u) => u.active).sort((a, b) => (a.id === S.me ? -1 : b.id === S.me ? 1 : (a.name || a.email).localeCompare(b.name || b.email)));
   let h = header('Team', 'Accounts and access');
   h += `<div style="margin-top:16px"><button type="button" class="btn" data-a="addPerson">+ Add person</button></div>`;
   h += `<h2 class="sec">Accounts · ${list.length}</h2><div class="group">${list.map((u) => `<button type="button" class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px" data-a="openUser" data-v="${u.id}"><span class="avatar" style="margin:2px 0 0;width:38px;height:38px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub" style="word-break:break-all">${esc(u.email)}</span><span class="tags">${flag(u.c, 16, 11)}${u.admin ? '<span class="pill p-blue">Admin</span>' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}${statusPill(u)}</span></span><span style="align-self:center">${I.chev}</span></button>`).join('')}</div>`;
@@ -665,7 +752,8 @@ function viewSub() {
 }
 function navbar(left, title, right, extra = '') { return `<div class="navbar">${left}<span class="t">${esc(title)}</span>${right || '<span></span>'}${extra}</div>`; }
 function ensureReport(j) {
-  if (!j.report) j.report = { draft: true, contact: '', contactRole: 'Store manager', parts: j.parts.map((p) => [p, 0]), extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0 };
+  if (!j.report) j.report = Object.assign(emptyReport(), { draft: true });
+  if (!j.report.init) { j.report.parts = j.parts.map((p) => [p, 0]); j.report.init = true; }
   return j.report;
 }
 function reportFlow(j) {
@@ -732,7 +820,7 @@ function approvalDetail(j) {
   const parts = r.parts.filter(([, q]) => q > 0);
   h += `<h2 class="sec">Parts replaced</h2><div class="group">${parts.length ? parts.map(([p, q]) => `<div class="row"><span class="grow">${esc(p)}</span><span class="val num">× ${q}</span></div>`).join('') : '<div class="row muted">None</div>'}</div>`;
   if (r.comments) h += `<h2 class="sec">Comments</h2><div class="group"><div class="row" style="font-size:15px;line-height:21px">${esc(r.comments)}</div></div>`;
-  h += `<h2 class="sec">Store sign-off</h2><div class="card" style="gap:6px;padding:14px"><div style="background:#FFFFFF;border-radius:10px;padding:6px;align-self:stretch">${r.signed ? pimg('sig-' + j.id, 'Signature').replace('<img', '<img style="height:110px;width:100%;object-fit:contain;display:block"') : ''}</div><span class="muted" style="font-size:13px">${esc(r.contact)} · ${esc(r.contactRole)} · submitted ${esc(r.submittedAt || '')}</span></div>`;
+  h += `<h2 class="sec">Store sign-off</h2><div class="card" style="gap:6px;padding:14px"><div style="background:#FFFFFF;border-radius:10px;padding:6px;align-self:stretch">${r.signed ? pimg(sigKey(j), 'Signature').replace('<img', '<img style="height:110px;width:100%;object-fit:contain;display:block"') : ''}</div><span class="muted" style="font-size:13px">${esc(r.contact)} · ${esc(r.contactRole)} · submitted ${esc(r.submittedAt || '')}</span></div>`;
   if (j.status === 'waiting') {
     h += `<h2 class="sec">Note to ${esc(first(nameOf(j.installer)))}</h2><textarea id="anote" class="box" data-abind="1" placeholder="Only needed if you ask for changes">${esc(U.note)}</textarea>`;
     h += `<div class="btn2" style="margin-top:20px"><button type="button" class="btn sec" data-a="askChanges" data-v="${j.id}">Ask for changes</button><button type="button" class="btn" data-a="approve" data-v="${j.id}">Approve</button></div>`;
@@ -790,7 +878,7 @@ function renderSheet() {
       ${U.err ? `<p class="err" role="alert">${esc(U.err)}</p>` : ''}
       <button class="btn" type="submit" id="pwgo" disabled>Save new password</button></form>`;
   } else if (kind === 'forgot') {
-    const admins = S.users.filter((u) => u.admin && u.name);
+    const admins = U.admins.map((a) => ({ name: a.name, c: a.country, phone: '' }));
     body = `<div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 4px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--blue-bg)">${I.key('var(--blue)')}</span><b style="font-size:20px">Forgot your password?</b><span class="muted" style="font-size:15px;line-height:21px">Ask a Brand Butlers admin to reset it. They do it under Team in the app. The next time you sign in here, you'll create a new password.</span></div>
       ${admins.length ? `<span class="cap">Admins</span><div class="group">${admins.map((u) => `<div class="row"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(u.name)}</span><span class="grow"><span>${esc(u.name)}</span><span class="sub">${C[u.c].name}${u.phone ? ' · ' + esc(u.phone) : ''}</span></span>${u.phone ? `<a class="ico" style="width:34px;height:34px;background:var(--green)" href="tel:${esc(u.phone.replace(/\s/g, ''))}" aria-label="Call ${esc(u.name)}">${I.phone('#FFFFFF', 15)}</a>` : ''}</div>`).join('')}</div>` : ''}
       <button type="button" class="btn sec" data-a="closeSheet">OK</button>`;
@@ -847,7 +935,7 @@ function setupSig() {
   const blank = () => { ctx.clearRect(0, 0, rect.width, rect.height); guide(); };
   blank();
   let empty = !r.signed;
-  if (r.signed) phGet('sig-' + j.id).then((v) => { if (!v) return; const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, rect.width, rect.height); im.src = v; });
+  if (r.signed) phGet(sigKey(j)).then((v) => { if (!v) return; const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, rect.width, rect.height); im.src = v; });
   else { ctx.fillStyle = 'rgba(128,128,128,0.75)'; ctx.font = '15px -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Sign here with a finger', rect.width / 2, rect.height / 2 - 6); }
   ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = ink;
   let drawing = false, drew = false;
@@ -861,7 +949,7 @@ function setupSig() {
   const end = () => {
     if (!drawing) return; drawing = false;
     if (drew) {
-      phPut('sig-' + j.id, cv.toDataURL('image/png'));
+      phPut(sigKey(j), cv.toDataURL('image/png'));
       r.signed = true; save();
       const btn = document.querySelector('[data-a="submitReport"]');
       if (btn) { const ok = r.checks.every(Boolean); btn.disabled = !ok; btn.textContent = ok ? 'Finalize and submit' : 'Finish the checklist'; }
@@ -915,106 +1003,136 @@ function noCrypto() { return !(window.crypto && crypto.subtle); }
 /* =================================================================== */
 /* ACTIONS                                                             */
 /* =================================================================== */
-function signIn(u) {
-  S.lastEmail = u.email;
-  S.login = { step: 'email', email: '', err: '', pending: null };
-  S.region = u.c; S.insRegion = u.c; S.view = null; S.draft = null; S.focus = null;
-  if (u.admin && u.installer) { S.login = { step: 'workspace', email: '', err: '', pending: u.id }; render(false); return; }
-  S.me = u.id; S.role = u.admin ? 'admin' : 'installer'; S.tab = u.admin ? 'overview' : 'jobs';
+async function afterSignIn() {
+  await loadAll();
+  const me = meU();
+  if (!me) { S.login = { step: 'email', email: S.login.email, err: 'This account has no access. Ask a Brand Butlers admin.', acc: null }; render(false); return; }
+  S.lastEmail = me.email; S.region = me.c; S.insRegion = me.c; S.view = null; S.draft = null; S.focus = null;
+  if (me.admin && me.installer) { S.choosing = true; S.login = { step: 'workspace', email: '', err: '', acc: { email: me.email, name: me.name, status: 'active' } }; }
+  else { S.choosing = false; S.role = me.admin ? 'admin' : 'installer'; S.tab = me.admin ? 'overview' : 'jobs'; S.login = { step: 'email', email: '', err: '', acc: null }; }
   render(false);
 }
 const FORMS = {
   async email(f) {
     const e = (f.querySelector('#lemail').value || '').trim().toLowerCase();
     if (!validEmail(e)) { S.login.err = 'Enter your email address.'; S.login.email = e; render(false); return; }
-    const u = S.users.find((x) => x.email === e);
-    if (!u) { S.login = { step: 'email', email: e, err: 'There is no account for this email. Ask a Brand Butlers admin to add you.', pending: null }; render(false); return; }
-    S.login = { step: u.mustSet || !u.hash ? 'create' : 'password', email: e, err: '', pending: u.id };
+    busy(f, 'Checking…');
+    let st;
+    try { st = ok(await sb.rpc('account_status', { p_email: e })); }
+    catch (err) { S.login = { step: 'email', email: e, err: friendly(err), acc: null }; render(false); return; }
+    if (!st || st.status === 'none') { S.login = { step: 'email', email: e, err: 'There is no account for this email. Ask a Brand Butlers admin to add you.', acc: null }; render(false); return; }
+    S.login = { step: st.status === 'active' ? 'password' : 'create', email: e, err: '', acc: { email: e, name: st.name || '', status: st.status, reset: st.status === 'reset' } };
     render(false);
-    const nx = document.getElementById(u.name ? (u.mustSet || !u.hash ? 'pw1' : 'lpw') : 'cname'); if (nx) nx.focus();
+    const nx = document.getElementById(st.status === 'active' ? 'lpw' : (st.name ? 'pw1' : 'cname')); if (nx) nx.focus();
   },
   async create(f) {
-    const u = userBy(S.login.pending); if (!u) return;
+    const a = S.login.acc; if (!a) return;
     const nm = f.querySelector('#cname');
     if (nm && !nm.value.trim()) { S.login.err = 'Enter your full name.'; render(false); return; }
     if (!pwRules()) return;
-    if (noCrypto()) { S.login.err = 'This browser can’t store passwords safely. Open the app in Safari.'; render(false); return; }
+    const pw = document.getElementById('pw1').value;
     busy(f, 'Creating…');
-    if (nm) u.name = nm.value.trim().replace(/\s+/g, ' ');
-    await setPw(u, document.getElementById('pw1').value);
-    save(); signIn(u);
-    toast('Password created. Welcome, ' + first(u.name) + '!');
+    try { await callFn('account', { action: 'claim', email: a.email, password: pw, name: nm ? nm.value : '' }); }
+    catch (err) { S.login.err = err.message; render(false); return; }
+    const r = await sb.auth.signInWithPassword({ email: a.email, password: pw });
+    if (r.error) { S.login = { step: 'password', email: a.email, err: 'Your password is saved. Sign in with it.', acc: Object.assign({}, a, { status: 'active' }) }; render(false); return; }
+    await afterSignIn();
+    const me = meU(); if (me) toast('Password created. Welcome, ' + first(me.name) + '!');
   },
   async password(f) {
-    const u = userBy(S.login.pending); if (!u) return;
+    const a = S.login.acc; if (!a) return;
     const pw = f.querySelector('#lpw').value;
     if (!pw) { S.login.err = 'Enter your password.'; render(false); return; }
-    if (noCrypto()) { S.login.err = 'This browser can’t check passwords. Open the app in Safari.'; render(false); return; }
     busy(f, 'Signing in…');
-    if (await checkPw(u, pw)) signIn(u);
-    else { S.login.err = 'That password isn’t right. Try again, or tap Forgot password.'; render(false); const el = document.getElementById('lpw'); if (el) el.focus(); }
+    const r = await sb.auth.signInWithPassword({ email: a.email, password: pw });
+    if (r.error) {
+      S.login.err = /invalid/i.test(r.error.message) ? 'That password isn’t right. Try again, or tap Forgot password.' : friendly(r.error);
+      render(false); const el = document.getElementById('lpw'); if (el) el.focus(); return;
+    }
+    await afterSignIn();
   },
   async chpw(f) {
-    const u = meU();
-    if (!(await checkPw(u, f.querySelector('#cp0').value))) { U.err = 'Your current password isn’t right.'; renderSheet(); return; }
+    const me = meU();
     if (!pwRules()) return;
     busy(f, 'Saving…');
-    await setPw(u, document.getElementById('pw1').value); save();
+    const r1 = await sb.auth.signInWithPassword({ email: me.email, password: f.querySelector('#cp0').value });
+    if (r1.error) { U.err = 'Your current password isn’t right.'; renderSheet(); return; }
+    const r2 = await sb.auth.updateUser({ password: document.getElementById('pw1').value });
+    if (r2.error) { U.err = friendly(r2.error); renderSheet(); return; }
     U.sheet = null; U.err = ''; renderSheet(); toast('Password changed');
   }
 };
+/* run a server change, reload, redraw */
+async function act(fn, okMsg) {
+  try { await fn(); await refresh(); render(); if (okMsg) toast(typeof okMsg === 'function' ? okMsg() : okMsg); return true; }
+  catch (e) { toast(friendly(e)); render(); return false; }
+}
+const upd = (id, patch) => sb.from('jobs').update(patch).eq('id', id).then(ok);
 const A = {
-  loginBack() { S.login = { step: 'email', email: S.login.email || '', err: '', pending: null }; render(false); },
-  enter(v) { const u = userBy(S.login.pending); if (!u) return; S.me = u.id; S.role = v; S.tab = v === 'admin' ? 'overview' : 'jobs'; S.login = { step: 'email', email: '', err: '', pending: null }; render(false); },
+  loginBack() { S.choosing = false; S.login = { step: 'email', email: S.login.email || '', err: '', acc: null }; render(false); },
+  enter(v) { if (!S.me) return; S.choosing = false; S.role = v; S.tab = v === 'admin' ? 'overview' : 'jobs'; S.login = { step: 'email', email: '', err: '', acc: null }; render(false); },
   togglePw(v, el) { const f = el.closest('form'); const ins = f.querySelectorAll('input[type="password"], input[data-shown]'); const show = el.textContent.trim() === 'Show'; ins.forEach((i) => { i.type = show ? 'text' : 'password'; if (show) i.dataset.shown = '1'; else delete i.dataset.shown; }); el.textContent = show ? 'Hide' : 'Show'; },
   tab(v) { S.tab = v; S.view = null; U.confirm = null; render(false); },
   set(v, el) { S[el.dataset.k] = Number(v); render(); },
-  sheet(v) { U.sheet = v; U.err = ''; U.confirm = null; renderSheet(); },
+  sheet(v) {
+    U.sheet = v; U.err = ''; U.confirm = null; renderSheet();
+    if (v === 'forgot') sb.rpc('admin_names').then((r) => { U.admins = r.data || []; if (U.sheet === 'forgot') renderSheet(); }, () => {});
+  },
   closeSheet() { U.sheet = null; U.cant = null; U.err = ''; U.confirm = null; renderSheet(); },
   confirm(v) { U.confirm = v || null; if (U.sheet) renderSheet(); else render(); },
   switchRole(v) { const me = meU(); if (v === 'admin' && !me.admin) return; if (v === 'installer' && !me.installer) return; const fromSubmit = S.view && S.view.kind === 'submitted'; S.role = v; S.tab = v === 'admin' ? (fromSubmit ? 'approvals' : 'overview') : 'jobs'; S.view = null; U.sheet = null; render(false); },
-  signOut() { S.me = null; S.view = null; U.sheet = null; S.draft = null; S.login = { step: 'email', email: '', err: '', pending: null }; render(false); },
+  async signOut() { await sb.auth.signOut().catch(() => {}); const keep = S.lastEmail; S = Object.assign(fresh(), { loading: false, lastEmail: keep }); PREF_KEYS.forEach((k) => { if (k !== 'lastEmail') { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); if (p[k] !== undefined) S[k] = p[k]; } catch (e) { /* defaults */ } } }); PH.clear(); PHT.clear(); U.sheet = null; render(false); },
   chpw() { U.sheet = 'chpw'; U.err = ''; renderSheet(); },
   copy(v) { const done = () => toast('Number copied'); try { navigator.clipboard.writeText(v).then(done, () => toast(v)); } catch (e) { toast(v); } },
 
-  // team
+  // team (through the admin server function)
   addPerson() { U.form = { name: '', email: '', phone: '', c: meU().c, admin: false, installer: true }; U.err = ''; U.sheet = 'add'; renderSheet(); const el = document.getElementById('fname'); if (el) el.focus(); },
   openUser(v) { const u = userBy(v); U.form = { id: u.id, name: u.name, email: u.email, phone: u.phone || '', c: u.c, admin: u.admin, installer: u.installer }; U.err = ''; U.confirm = null; U.sheet = 'user:' + u.id; renderSheet(); },
   fset(v, el) { U.form[el.dataset.k] = Number(v); renderSheet(); },
   ftog(v, el) { const k = el.dataset.k; U.form[k] = !U.form[k]; renderSheet(); },
-  savePerson() {
+  async savePerson() {
     const f = U.form; const name = (f.name || '').trim().replace(/\s+/g, ' '); const email = (f.email || '').trim().toLowerCase();
     const fail = (m) => { U.err = m; renderSheet(); };
     if (!name) return fail('Enter a name.');
     if (!validEmail(email)) return fail('Enter a valid email address.');
-    if (S.users.some((u) => u.email === email && u.id !== f.id)) return fail('Someone already has this email.');
     if (!f.admin && !f.installer) return fail('Give at least admin or installer access.');
     if (f.id === S.me && !f.admin) return fail('You can’t remove your own admin access.');
-    if (f.id && !f.admin && userBy(f.id).admin && S.users.filter((u) => u.admin).length === 1) return fail('There must be at least one admin.');
-    if (f.id) {
-      const u = userBy(f.id); const emailChanged = u.email !== email;
-      Object.assign(u, { name, email, phone: (f.phone || '').trim(), c: f.c, admin: f.admin, installer: f.installer });
-      if (f.id === S.me && !u.installer && S.role === 'installer') S.role = 'admin';
-      U.sheet = null; render(); toast(emailChanged ? 'Saved. ' + first(name) + ' now signs in with ' + email : 'Saved');
-    } else {
-      S.users.push({ id: uid('u'), email, name, phone: (f.phone || '').trim(), c: f.c, admin: f.admin, installer: f.installer, salt: '', hash: '', mustSet: true, reset: false, created: Date.now() });
-      U.sheet = null; render(); toast(first(name) + ' added. They create a password at first sign-in.');
-    }
+    const btns = document.querySelectorAll('.sheet [data-a="savePerson"]'); btns.forEach((b) => { b.disabled = true; });
+    try { await callFn('admin', { action: f.id ? 'update' : 'add', id: f.id, name, email, phone: f.phone, country: f.c, is_admin: f.admin, is_installer: f.installer }); }
+    catch (e) { btns.forEach((b) => { b.disabled = false; }); return fail(e.message); }
+    U.sheet = null; renderSheet();
+    await act(async () => {}, f.id ? 'Saved' : first(name) + ' added. They create a password at first sign-in.');
   },
-  resetPw(v) {
-    const u = userBy(v); u.hash = ''; u.salt = ''; u.mustSet = true; u.reset = true; U.confirm = null;
-    if (u.id === S.me) { save(); A.signOut(); toast('Password reset. Create a new one to sign in.'); return; }
-    renderSheet(); render(); toast('Password reset. ' + first(u.name || u.email) + ' creates a new one at next sign-in.');
+  async resetPw(v) {
+    const u = userBy(v);
+    try { await callFn('admin', { action: 'reset', id: v }); } catch (e) { U.err = e.message; renderSheet(); return; }
+    U.confirm = null;
+    if (v === S.me) { await A.signOut(); toast('Password reset. Create a new one to sign in.'); return; }
+    U.sheet = null; renderSheet();
+    await act(async () => {}, 'Password reset. ' + first(u.name || u.email) + ' creates a new one at next sign-in.');
   },
-  removeUser(v) { const u = userBy(v); S.users = S.users.filter((x) => x.id !== v); U.sheet = null; U.confirm = null; render(); toast((u.name || u.email) + ' removed'); },
+  async removeUser(v) {
+    const u = userBy(v);
+    try { await callFn('admin', { action: 'remove', id: v }); } catch (e) { U.err = e.message; renderSheet(); return; }
+    U.sheet = null; U.confirm = null; renderSheet();
+    await act(async () => {}, (u.name || u.email) + ' removed');
+  },
 
-  // admin
+  // admin: tickets
   openJob(v) { S.view = { kind: 'job', id: v }; U.confirm = null; render(false); },
   openApproval(v) { S.view = { kind: 'approval', id: v }; U.note = ''; render(false); },
-  setInstaller(v) { const j = job(S.view.id); j.installer = v; if (j.second === v) j.second = null; if (j.status === 'declined') { j.status = 'scheduled'; j.declineReason = ''; } render(); toast(j.store + ' assigned to ' + first(nameOf(v))); },
-  deleteJob(v) { const j = job(v); if (j.report) { ['before', 'after'].forEach((k) => j.report.photos[k].forEach((p) => p && phDel(p.k))); phDel('sig-' + j.id); } S.jobs = S.jobs.filter((x) => x.id !== v); S.view = null; U.confirm = null; render(false); toast('Ticket ' + j.ticket + ' deleted'); },
-  approveReq(v) { const j = job(v); const [d, t] = j.request.to.split(' '); j.date = d; j.time = t; j.request = null; render(); toast('Moved to ' + whenLabel(j)); },
-  denyReq(v) { const j = job(v); j.request = null; render(); toast('Kept the original time'); },
+  setInstaller(v) { const j = job(S.view.id); act(() => upd(j.id, { installer: v, second: j.second === v ? null : j.second, status: j.status === 'declined' ? 'scheduled' : j.status, decline_reason: '' }), j.store + ' assigned to ' + first(nameOf(v))); },
+  async deleteJob(v) {
+    const j = job(v);
+    const ok2 = await act(async () => {
+      const l = await sb.storage.from('photos').list(j.id, { limit: 100 });
+      if (l.data && l.data.length) await sb.storage.from('photos').remove(l.data.map((o) => j.id + '/' + o.name));
+      ok(await sb.from('jobs').delete().eq('id', j.id));
+    }, 'Ticket ' + j.ticket + ' deleted');
+    if (ok2) { S.view = null; U.confirm = null; render(false); }
+  },
+  approveReq(v) { const j = job(v); const [d, t] = j.request.to.split(' '); act(() => upd(v, { date: d, time: t, request: null }), () => 'Moved to ' + whenLabel(job(v))); },
+  denyReq(v) { act(() => upd(v, { request: null }), 'Kept the original time'); },
   draftTpl(v) { const d = S.draft; d.template = +v; d.tools = TEMPLATES[+v].tools.slice(); render(); },
   draftCountry(v) { const d = S.draft; d.c = +v; const st = storesFor(d.c); d.store = st.length ? st[0].id : 'new'; d.err = {}; render(); },
   draftStore(v) { S.draft.store = v; render(); if (v === 'new') { const el = document.getElementById('sname'); if (el) el.focus(); } },
@@ -1022,14 +1140,14 @@ const A = {
   draftSecond() { S.draft.secondOn = true; render(); },
   draftNoSecond() { S.draft.secondOn = false; S.draft.second = null; render(); },
   draftTool(v) { const t = S.draft.tools; const i = t.indexOf(v); if (i >= 0) t.splice(i, 1); else t.push(v); render(); },
-  createTicket() {
+  async createTicket(v, btn) {
     const d = S.draft; const E = {};
     const t = (d.ticket || '').trim().toUpperCase();
     if (!t) E.ticket = 'Enter the ticket number from Apple’s system.';
     else if (S.jobs.some((j) => j.ticket === t)) E.ticket = 'A ticket with this number already exists.';
     let store = null;
     if (d.store !== 'new' && storesFor(d.c).length) store = S.stores.find((s) => s.id === d.store);
-    else if ((d.storeName || '').trim()) store = { id: uid('s'), c: d.c, name: d.storeName.trim(), addr: (d.storeAddr || '').trim(), isNew: true };
+    else if ((d.storeName || '').trim()) store = { c: d.c, name: d.storeName.trim().replace(/\s+/g, ' '), addr: (d.storeAddr || '').trim(), isNew: true };
     if (!store) E.store = 'Choose a store or type its name.';
     if (!d.lead || !userBy(d.lead)) E.installer = 'Choose an installer.';
     const sp = splitNums(d);
@@ -1037,22 +1155,40 @@ const A = {
     else if (sp.inst < 0 || sp.adm < 0 || sp.bb < 0) E.price = 'The shares add up to more than 100 %.';
     d.err = E;
     if (Object.keys(E).length) { render(); toast('Fill in the marked fields'); const el = document.querySelector('.bad-field'); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
-    if (store.isNew) { delete store.isNew; S.stores.push(store); }
+    if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
     const tpl = TEMPLATES[d.template];
     const prev = S.jobs.filter((j) => j.c === d.c && j.store.toLowerCase() === store.name.toLowerCase() && j.status === 'approved' && j.report && j.report.nextNote).sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0))[0];
-    const j = { id: uid('j'), ticket: t, c: d.c, store: store.name, addr: store.addr, installer: d.lead, second: d.secondOn && d.second ? d.second : null, date: d.date || rel(0), time: d.time || '09:00', status: 'scheduled', fixture: tpl.name, tools: d.tools.slice(), parts: tpl.parts.slice(), note: (d.note || '').trim(), last: prev ? prev.report.nextNote : '', price: sp.price, split: [sp.inst, sp.adm], report: null, request: null, changes: '', createdBy: S.me, created: Date.now() };
-    S.jobs.push(j); S.split = [sp.inst, sp.adm];
-    S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2;
-    render(false);
-    toast('Ticket ' + j.ticket + ' created for ' + first(nameOf(j.installer)) + (j.second ? ' and ' + first(nameOf(j.second)) : ''));
+    const second = d.secondOn && d.second ? d.second : null;
+    const done = await act(async () => {
+      let storeId = store.id || null;
+      if (store.isNew) {
+        const existing = S.stores.find((s) => s.c === d.c && s.name.toLowerCase() === store.name.toLowerCase());
+        if (existing) storeId = existing.id;
+        else storeId = ok(await sb.from('stores').insert({ country: d.c, name: store.name, address: store.addr }).select('id').single()).id;
+      }
+      ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl.name, tools: d.tools.slice(), parts: tpl.parts.slice(), note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_pct: sp.inst, adm_pct: sp.adm, created_by: S.me }));
+    }, 'Ticket ' + t + ' created for ' + first(nameOf(d.lead)) + (second ? ' and ' + first(nameOf(second)) : ''));
+    if (done) { S.split = [sp.inst, sp.adm]; S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2; render(false); }
+    else if (btn) { btn.disabled = false; btn.textContent = 'Create ticket'; }
   },
-  approve(v) { const j = job(v); j.status = 'approved'; j.request = null; j.handledAt = Date.now(); j.handledBy = S.me; S.view = null; S.tab = 'approvals'; render(false); toast(j.store + ' approved'); },
-  askChanges(v) { const j = job(v); j.status = 'changes'; j.changes = (U.note || '').trim() || 'Please check the report and resubmit.'; j.handledAt = Date.now(); if (j.report) j.report.draft = true; S.view = null; render(false); toast('Sent back to ' + first(nameOf(j.installer))); },
+  async approve(v) { const j = job(v); if (await act(() => upd(v, { status: 'approved', request: null, handled_at: new Date().toISOString(), handled_by: S.me }), j.store + ' approved')) { S.view = null; S.tab = 'approvals'; render(false); } },
+  async askChanges(v) {
+    const j = job(v); const note = (U.note || '').trim() || 'Please check the report and resubmit.';
+    if (await act(async () => { await upd(v, { status: 'changes', changes: note, handled_at: new Date().toISOString(), handled_by: S.me }); ok(await sb.from('reports').update({ draft: true }).eq('job_id', v)); }, 'Sent back to ' + first(nameOf(j.installer)))) { S.view = null; render(false); }
+  },
 
   // installer
   focusJob(v) { S.focus = v; render(false); },
-  startReport(v) { const j = job(v); if (j.status === 'scheduled') { j.status = 'progress'; j.startedAt = Date.now(); } ensureReport(j); S.view = { kind: 'report', id: v }; S.step = j.status === 'changes' ? 2 : 1; S.phase = 'before'; S.focus = v; render(false); },
-  closeView() { S.view = null; U.confirm = null; render(false); },
+  async startReport(v, btn) {
+    const j = job(v);
+    if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
+    try {
+      if (j.status === 'scheduled' || !j.report) { ok(await sb.rpc('job_start', { p_job: v })); await refresh(); }
+    } catch (e) { toast(friendly(e)); render(); return; }
+    const jj = job(v); ensureReport(jj);
+    S.view = { kind: 'report', id: v }; S.step = jj.status === 'changes' ? 2 : 1; S.phase = 'before'; S.focus = v; render(false);
+  },
+  closeView() { const was = S.view; S.view = null; U.confirm = null; if (was && was.kind === 'report') queueReport(job(was.id), true).catch(() => {}); render(false); quietRefresh(); },
   stepNext() { const j = job(S.view.id), r = j.report; if (S.step === 1 && (r.extra || '').trim()) A.partAdd(true); S.step = Math.min(3, S.step + 1); if (S.step === 2) S.phase = r.photos.before.every((p) => p && p.ok) ? 'after' : 'before'; render(false); },
   stepBack() { S.step = Math.max(1, S.step - 1); render(false); },
   rset(v, el) { const r = job(S.view.id).report; r[el.dataset.k] = el.dataset.k === 'probOpen' ? !!v : v; render(); },
@@ -1063,24 +1199,33 @@ const A = {
   probRemove() { const r = job(S.view.id).report; r.problem = null; render(); },
   phase(v) { S.phase = v; render(false); },
   check(v) { const r = job(S.view.id).report; r.checks[+v] = !r.checks[+v]; render(); },
-  sigClear() { const j = job(S.view.id); j.report.signed = false; phDel('sig-' + j.id); render(); },
-  submitReport() {
+  sigClear() { const j = job(S.view.id); j.report.signed = false; phDel(sigKey(j)); render(); },
+  async submitReport(v, btn) {
     const j = job(S.view.id), r = j.report;
     if (!r.checks.every(Boolean) || !r.signed) return;
     if (!(r.contact || '').trim()) r.contact = 'Store contact';
-    r.draft = false; r.submittedTs = Date.now(); r.submittedAt = hhmm(r.submittedTs);
-    j.status = 'waiting'; j.changes = ''; S.focus = null;
-    S.view = { kind: 'submitted', id: j.id }; render(false);
+    if (btn) { btn.disabled = true; btn.textContent = 'Uploading…'; }
+    try {
+      await Promise.all(Array.from(PEND.values()));
+      await queueReport(j, true);
+      ok(await sb.rpc('job_submit', { p_job: j.id }));
+    } catch (e) { toast(friendly(e)); if (btn) { btn.disabled = false; btn.textContent = 'Finalize and submit'; } return; }
+    r.draft = false; S.focus = null;
+    S.view = { kind: 'submitted', id: j.id };
+    await refresh().catch(() => {});
+    render(false);
   },
-  undoReq(v) { job(v).request = null; render(); },
+  undoReq(v) { act(async () => ok(await sb.rpc('job_undo_request', { p_job: v }))); },
   cantMake(v) { U.cant = { mode: 'resched', slot: 1, reason: '' }; U.sheet = 'cant:' + v; renderSheet(); },
   cantMode(v) { U.cant.mode = v; renderSheet(); },
   cantSlot(v) { U.cant.slot = +v; renderSheet(); },
-  cantSend(v) {
-    const j = job(v), m = U.cant;
-    if (m.mode === 'resched') { const [d, t] = U.slots[m.slot]; j.request = { kind: 'resched', to: d + ' ' + t, reason: (m.reason || '').trim() }; toast('Request sent to your admin'); }
-    else { j.status = 'declined'; j.request = null; j.declineReason = (m.reason || '').trim(); S.focus = null; toast('Job declined. Your admin can assign someone else.'); }
-    U.sheet = null; U.cant = null; render();
+  async cantSend(v) {
+    const m = U.cant;
+    const isR = m.mode === 'resched';
+    const call = isR ? () => sb.rpc('job_request', { p_job: v, p_to: U.slots[m.slot].join(' '), p_reason: (m.reason || '').trim() }) : () => sb.rpc('job_decline', { p_job: v, p_reason: (m.reason || '').trim() });
+    U.sheet = null; U.cant = null; renderSheet();
+    if (!isR) S.focus = null;
+    await act(async () => ok(await call()), isR ? 'Request sent to your admin' : 'Job declined. Your admin can assign someone else.');
   }
 };
 
@@ -1100,7 +1245,7 @@ document.addEventListener('input', (e) => {
   const el = e.target;
   if (el.dataset.pw) { pwRules(); return; }
   if (el.dataset.bind && S.draft) { S.draft[el.dataset.bind] = el.value; const ek = { storeName: 'store', storeAddr: 'store', inst: 'price', adm: 'price' }[el.dataset.bind] || el.dataset.bind; if (S.draft.err && S.draft.err[ek]) { S.draft.err[ek] = ''; el.classList.remove('bad-field'); const g = el.closest('.group.bad-field'); if (g) { g.classList.remove('bad-field'); const n = g.nextElementSibling; if (n && n.classList.contains('foot') && n.style.color) n.remove(); } else { const n = el.nextElementSibling; if (n && n.classList.contains('foot') && n.style.color) n.remove(); } } if (el.dataset.live) updateSplit(); save(); }
-  else if (el.dataset.rbind && S.view) { job(S.view.id).report[el.dataset.rbind] = el.value; save(); }
+  else if (el.dataset.rbind && S.view) { const jj = job(S.view.id); jj.report[el.dataset.rbind] = el.value; queueReport(jj); }
   else if (el.dataset.fbind && U.form) { U.form[el.dataset.fbind] = el.value; }
   else if (el.dataset.abind) { U.note = el.value; }
   else if (el.dataset.cbind && U.cant) { U.cant.reason = el.value; }
@@ -1114,7 +1259,7 @@ document.addEventListener('change', (e) => {
     const j = job(S.view.id), r = j.report;
     processPhoto(f).then((p) => {
       const old = r.photos[ph][+i];
-      const k = 'ph-' + j.id + '-' + ph + '-' + i + '-' + Date.now().toString(36);
+      const k = j.id + '/' + ph + '-' + i + '-' + Date.now().toString(36) + '.jpg';
       phPut(k, p.data);
       if (old) phDel(old.k);
       r.photos[ph][+i] = { k, ok: p.ok, issue: p.issue };
@@ -1122,13 +1267,13 @@ document.addEventListener('change', (e) => {
       if (ph === 'before' && r.photos.before.every((x) => x && x.ok) && r.photos.after.every((x) => !x)) toast('Before photos done. Do the work, then take the after photos.');
       else toast(p.ok ? 'Photo looks good' : p.issue.split(' ·')[0] + ': take it again');
       render();
-    }).catch(() => toast('Couldn’t read that photo. Try again.'));
+    }).catch(() => toast('Couldn\u2019t read that photo. Try again.'));
   }
   if (el.dataset.bind === 'date' && S.draft) render();
 });
-window.addEventListener('pageshow', () => render());
+window.addEventListener('pageshow', (e) => { if (e.persisted) quietRefresh(); });
 
-render(false);
+boot();
 })();
 </script>
 </body>
