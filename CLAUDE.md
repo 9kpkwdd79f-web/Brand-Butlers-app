@@ -15,11 +15,12 @@
 - Project `brand-butlers` (ref `gipkzcpaqlyiqawgunhu`, region eu-north-1), used by the test version. Connected through the Supabase connector.
 - Tables: profiles (who may sign in, roles, status invited/reset/active/removed), stores, jobs, reports (draft data as JSON), templates (fixture templates: name, tools, parts) and tools (the shared tools list). Templates and tools are made by admins in New ticket and shared by all admins; there are no built-in ones. Private storage bucket `photos`, one folder per job.
 - Row level security: admins see everything; installers only reach their jobs through `my_jobs()` (their share, never the price) and the `job_*` functions. Check with `get_advisors` after schema changes.
+- Video library: table `videos` + private bucket `videos` (`<id>/video.<ext>`, `<id>/poster.jpg`, max 50 MB). Admins upload under Manage → Videos and assign videos to templates and tickets (`video_ids`). Installers get them via `my_jobs()` / `my_videos()`; the button is always called "Video instructions". Migration `video_library`.
 - All amounts are in Danish kroner (DKK) for every country.
 - Sign-in is email + password only (Mathias decided against Sign in with Apple on 3 Nov 2026). Admins add the email first; the person then creates a password and confirms name and country.
 - Edge functions: `account` (claim = first password / after reset, with name + country) and `admin` (add, update, reset, remove people; admins only).
 - Trigger `guard_new_login` on auth.users: only emails in active profiles can get a login.
-- The schema and functions are the migrations `core_schema`, `functions_storage_seed`, `apple_sign_in` (now only the login guard and account_status with country) and `templates_and_tools` in the project; read them with `list_migrations` / `get_edge_function` before changing anything.
+- The schema and functions are the migrations `core_schema`, `functions_storage_seed`, `apple_sign_in` (now only the login guard and account_status with country), `templates_and_tools` and `video_library` in the project; read them with `list_migrations` / `get_edge_function` before changing anything.
 - Before the first live deploy on Supabase: create a separate live project so test data never mixes with real data, and point the live build at it.
 
 ## Parked ideas

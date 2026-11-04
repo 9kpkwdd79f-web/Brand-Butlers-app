@@ -196,6 +196,19 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 .who span.e { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .update { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); top: calc(10px + env(safe-area-inset-top, 0px)); border: none; border-radius: 999px; background: var(--blue); color: #FFFFFF; padding: 10px 18px; display: flex; flex-direction: column; align-items: center; gap: 1px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); font-size: 15px; }
 .update span { font-size: 12px; opacity: 0.9; }
+.vthumb { position: relative; width: 72px; height: 46px; border-radius: 8px; overflow: hidden; background: #1C1C1E; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.vthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vthumb .noposter { display: flex; }
+.vthumb .vlen { position: absolute; right: 4px; bottom: 3px; background: rgba(0,0,0,0.7); color: #fff; font-size: 10px; font-weight: 600; padding: 1px 4px; border-radius: 4px; }
+.vbtn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; border: none; background: none; padding: 0; text-align: left; color: var(--fg); }
+.vinstr { width: 100%; display: flex; align-items: center; gap: 12px; border: none; border-radius: 14px; background: var(--blue-bg); padding: 10px 14px 10px 10px; text-align: left; color: var(--fg); }
+.vinstr b { font-size: 16px; color: var(--blue-fg); }
+.vinstr .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.vinstr .sub { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player { position: relative; background: #000; border-radius: 12px; overflow: hidden; flex-shrink: 0; }
+.player video { width: 100%; max-height: 62vh; display: block; background: #000; }
+.bar { height: 8px; border-radius: 4px; background: var(--fill2); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--blue); transition: width .2s; }
 .vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .logo { display: block; flex-shrink: 0; }
 .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
@@ -283,7 +296,7 @@ const KEY = PREVIEW ? 'bb-prefs-preview-v5' : 'bb-prefs-v5';
 const PREF_KEYS = ['lastEmail', 'role', 'tab', 'region', 'period', 'insRegion', 'insPeriod', 'earnPeriod', 'split'];
 function fresh() {
   return {
-    v: 5, users: [], jobs: [], stores: [], templates: [], tools: [], me: null, loading: true, choosing: false,
+    v: 5, users: [], jobs: [], stores: [], templates: [], tools: [], videos: [], manage: 'people', me: null, loading: true, choosing: false,
     lastEmail: '', role: 'admin', tab: 'overview', region: 0, period: 2, insRegion: 0, insPeriod: 2, earnPeriod: 2, split: [40, 10],
     view: null, step: 1, phase: 'before', login: { step: 'email', email: '', err: '', acc: null }, draft: null
   };
@@ -307,8 +320,13 @@ const toJob = (r) => ({
   date: r.date, time: r.time, status: r.status, fixture: r.fixture || '', tools: r.tools || [], parts: r.parts || [], note: r.note || '', last: r.last_note || '',
   price: r.price != null ? Number(r.price) : null, share: r.share != null ? Number(r.share) : null, split: [Number(r.inst_pct != null ? r.inst_pct : 40), Number(r.adm_pct != null ? r.adm_pct : 10)],
   request: r.request || null, changes: r.changes || '', declineReason: r.decline_reason || '',
-  startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
+  videos: r.video_ids || [], startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
 });
+const toVideo = (v) => ({ id: v.id, title: v.title, notes: v.notes || '', path: v.path, poster: v.poster || '', duration: v.duration != null ? Number(v.duration) : null, size: v.size != null ? Number(v.size) : null });
+const videoBy = (id) => S.videos.find((v) => v.id === id);
+const fmtLen = (sec) => { if (!sec && sec !== 0) return ''; const m = Math.floor(sec / 60), x = Math.round(sec % 60); return m + ':' + String(x).padStart(2, '0'); };
+const fmtSize = (b) => (b ? (b / 1048576 < 10 ? (b / 1048576).toFixed(1) : Math.round(b / 1048576)) + ' MB' : '');
+const VIDEO_MAX = 50 * 1024 * 1024;
 const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0 });
 const toReport = (row) => { const ts = row.submitted_at ? Date.parse(row.submitted_at) : null; return Object.assign(emptyReport(), row.data || {}, { draft: row.draft, submittedTs: ts, submittedAt: ts ? hhmm(ts) : '' }); };
 
@@ -324,13 +342,14 @@ async function loadAll() {
   const me = toUser(meRow); S.me = me.id;
   let jobs, reports;
   if (me.admin) {
-    const [ps, st, js, rs, tp, tl] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*')]);
-    S.templates = ok(tp).map((t) => ({ id: t.id, name: t.name, tools: t.tools || [], parts: t.parts || [] })).sort((a, b) => a.name.localeCompare(b.name));
+    const [ps, st, js, rs, tp, tl, vd] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*'), sb.from('videos').select('*')]);
+    S.templates = ok(tp).map((t) => ({ id: t.id, name: t.name, tools: t.tools || [], parts: t.parts || [], videos: t.video_ids || [] })).sort((a, b) => a.name.localeCompare(b.name));
+    S.videos = ok(vd).map(toVideo).sort((a, b) => a.title.localeCompare(b.title));
     S.tools = ok(tl).map((t) => ({ id: t.id, name: t.name })).sort((a, b) => a.name.localeCompare(b.name));
     S.users = ok(ps).map(toUser); S.stores = ok(st).map((s) => ({ id: s.id, c: s.country, name: s.name, addr: s.address })); jobs = ok(js); reports = ok(rs);
   } else {
-    const [js, rs] = await Promise.all([sb.rpc('my_jobs'), sb.from('reports').select('*')]);
-    S.users = [me]; S.stores = []; jobs = ok(js); reports = ok(rs);
+    const [js, rs, vd] = await Promise.all([sb.rpc('my_jobs'), sb.from('reports').select('*'), sb.rpc('my_videos')]);
+    S.users = [me]; S.stores = []; jobs = ok(js); reports = ok(rs); S.videos = (vd.data || []).map(toVideo);
     jobs.forEach((j) => { if (j.installer) NAMES[j.installer] = j.installer_name; if (j.second) NAMES[j.second] = j.second_name; });
   }
   const keep = S.view && S.view.kind === 'report' ? job(S.view.id) : null;
@@ -392,7 +411,16 @@ function phDel(k) { PH.delete(k); PHT.delete(k); sb.storage.from('photos').remov
 const sigKey = (j) => j.id + '/signature.png';
 const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const pimg = (k, alt) => `<img data-pk="${esc(k)}" alt="${esc(alt || '')}" src="${(PHT.get(k) || 0) > Date.now() ? PH.get(k) : BLANK}">`;
-function hydrate() { document.querySelectorAll('img[data-pk]').forEach((im) => { const k = im.dataset.pk; if (!((PHT.get(k) || 0) > Date.now())) phGet(k).then((v) => { if (v) im.src = v; }); }); }
+const VU = new Map();
+async function vidUrl(path) {
+  const c = VU.get(path); if (c && c.t > Date.now()) return c.u;
+  const r = await sb.storage.from('videos').createSignedUrl(path, 3600);
+  if (r.error || !r.data) return null;
+  VU.set(path, { u: r.data.signedUrl, t: Date.now() + 50 * 60000 }); return r.data.signedUrl;
+}
+const posterImg = (v, cls) => v && v.poster ? `<img class="${cls || ''}" data-vk="${esc(v.poster)}" alt="" src="${(VU.get(v.poster) || {}).u || BLANK}">` : `<span class="${cls || ''} noposter">${I.play}</span>`;
+function hydrate() {
+  document.querySelectorAll('img[data-vk]').forEach((im) => { const k = im.dataset.vk; const c = VU.get(k); if (!(c && c.t > Date.now())) vidUrl(k).then((u) => { if (u) im.src = u; }); }); document.querySelectorAll('img[data-pk]').forEach((im) => { const k = im.dataset.pk; if (!((PHT.get(k) || 0) > Date.now())) phGet(k).then((v) => { if (v) im.src = v; }); }); }
 
 /* report drafts are saved to the server as you go */
 const RQ = new Map();
@@ -433,6 +461,7 @@ const I = {
   cam: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   flagP: (c = 'currentColor') => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>`,
   dir: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-8z"/></svg>',
+  play: '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.55)"/><path d="M10 8l6 4-6 4z" fill="#fff"/></svg>',
   key: (c = 'currentColor') => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></svg>`
 };
 const TABICON = {
@@ -496,7 +525,7 @@ function renderTabs() {
   if (tabBarEl) { tabBarEl.remove(); tabBarEl = null; }
   if (!S.me || S.choosing || S.loading || S.view) return;
   const tabs = S.role === 'admin'
-    ? [['overview', 'Overview'], ['new', 'New ticket'], ['approvals', 'Approvals'], ['team', 'Team'], ['insights', 'Insights']]
+    ? [['overview', 'Overview'], ['new', 'New ticket'], ['approvals', 'Approvals'], ['team', 'Manage'], ['insights', 'Insights']]
     : [['jobs', 'Jobs'], ['earnings', 'Earnings']];
   const waiting = S.jobs.filter((j) => j.status === 'waiting').length;
   tabBarEl = document.createElement('nav'); tabBarEl.className = 'tabbar'; tabBarEl.setAttribute('aria-label', 'Tabs');
@@ -624,7 +653,7 @@ function adminOverview() {
 function newDraft() {
   const me = meU(); const c = me.c;
   const st = storesFor(c); const ins = installers(c);
-  return { ticket: '', template: null, tplName: '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: [], c, store: st.length ? st[0].id : 'new', storeName: '', storeAddr: '', lead: ins.length === 1 ? ins[0].id : null, second: null, secondOn: false, date: new Date().getHours() >= 17 ? rel(1) : rel(0), time: new Date().getHours() >= 17 ? '09:00' : String(new Date().getHours() + 1).padStart(2, '0') + ':00', tools: [], price: '', inst: String(S.split[0]), adm: String(S.split[1]), note: '', err: {} };
+  return { ticket: '', template: null, tplName: '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: [], videos: [], c, store: st.length ? st[0].id : 'new', storeName: '', storeAddr: '', lead: ins.length === 1 ? ins[0].id : null, second: null, secondOn: false, date: new Date().getHours() >= 17 ? rel(1) : rel(0), time: new Date().getHours() >= 17 ? '09:00' : String(new Date().getHours() + 1).padStart(2, '0') + ':00', tools: [], price: '', inst: String(S.split[0]), adm: String(S.split[1]), note: '', err: {} };
 }
 function splitNums(d) {
   const price = Number(String(d.price).replace(/\s/g, '').replace(',', '.')) || 0;
@@ -678,8 +707,11 @@ function adminNew() {
   h += `<h2 class="sec">Parts on site · ${d.parts.length}</h2><div class="group">${d.parts.map((p, i) => `<div class="row"><span class="grow">${esc(p)}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removePart" data-v="${i}" aria-label="Remove ${esc(p)}">Remove</button></div>`).join('')}
     <div class="row"><input id="newpart" class="inl" data-bind="newPart" data-enter="addPart" value="${esc(d.newPart)}" placeholder="Add a part the installer will replace" aria-label="Add a part" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addPart">Add</button></div></div>
     <p class="foot">The installer ticks off what they replaced and can add parts on site.</p>`;
+  h += `<h2 class="sec">Video instructions · ${d.videos.length}</h2><div class="group">${d.videos.map((id) => { const v = videoBy(id); return v ? `<div class="row"><button type="button" class="vbtn" data-a="playVideo" data-v="${v.id}">${videoRow(v)}</button><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removeDraftVideo" data-v="${v.id}">Remove</button></div>` : ''; }).join('')}
+    <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="pickVideos">+ Add from video library</button></div>
+    <p class="foot">The installer can watch these on the job card.</p>`;
   h += d.tplOpen
-    ? `<div class="card" style="gap:10px;margin-top:14px"><b>${tpl ? 'Save as template' : 'Save as a new template'}</b><span class="muted" style="font-size:15px">Saves the ${d.tools.length} ${d.tools.length === 1 ? 'tool' : 'tools'} and ${d.parts.length} ${d.parts.length === 1 ? 'part' : 'parts'} above. All admins can use it.</span><input id="tplname" class="box" style="background:var(--bg)" data-bind="tplName" data-enter="saveTemplate" value="${esc(d.tplName)}" placeholder="e.g. Apple accessory wall" aria-label="Template name" autocomplete="off" autocapitalize="sentences"><div class="btn2"><button type="button" class="btn small sec" data-a="tplOpen" data-v="">Cancel</button><button type="button" class="btn small" data-a="saveTemplate">Save template</button></div></div>`
+    ? `<div class="card" style="gap:10px;margin-top:14px"><b>${tpl ? 'Save as template' : 'Save as a new template'}</b><span class="muted" style="font-size:15px">Saves the ${d.tools.length} ${d.tools.length === 1 ? 'tool' : 'tools'}, ${d.parts.length} ${d.parts.length === 1 ? 'part' : 'parts'} and ${d.videos.length} ${d.videos.length === 1 ? 'video' : 'videos'} above. All admins can use it.</span><input id="tplname" class="box" style="background:var(--bg)" data-bind="tplName" data-enter="saveTemplate" value="${esc(d.tplName)}" placeholder="e.g. Apple accessory wall" aria-label="Template name" autocomplete="off" autocapitalize="sentences"><div class="btn2"><button type="button" class="btn small sec" data-a="tplOpen" data-v="">Cancel</button><button type="button" class="btn small" data-a="saveTemplate">Save template</button></div></div>`
     : `<button type="button" class="btn sec" style="margin-top:14px" data-a="tplOpen" data-v="1">${tpl ? 'Update or save as template' : 'Save as template'}</button>`;
   const sp = splitNums(d); const perInst = d.secondOn && d.second ? 2 : 1;
   h += `<h2 class="sec">Price and split</h2><div class="group${E.price ? ' bad-field' : ''}"><label class="row" for="dprice"><span class="grow">Ticket price</span><span class="muted">${cur}</span><input id="dprice" class="inl num" inputmode="decimal" data-bind="price" data-live="1" value="${esc(d.price)}" placeholder="0" style="flex:0 0 96px;text-align:right;font-weight:600"></label>
@@ -712,9 +744,28 @@ function adminApprovals() {
 }
 
 function statusPill(u) { return u.hash ? '' : u.reset ? '<span class="pill p-or">Password reset</span>' : '<span class="pill p-or">Invited</span>'; }
+function vidButton(j) {
+  const vs = j.videos.map(videoBy).filter(Boolean); if (!vs.length) return '';
+  const total = vs.reduce((t, v) => t + (v.duration || 0), 0);
+  return `<button type="button" class="vinstr" data-a="playJob" data-v="${j.id}"><span class="vthumb">${posterImg(vs[0])}</span><span class="grow"><b>Video instructions</b><span class="sub">${total ? fmtLen(total) + ' · ' : ''}${vs.length === 1 ? esc(vs[0].title) : vs.length + ' videos'}</span></span>${I.play.replace('rgba(0,0,0,0.55)', 'var(--blue)')}</button>`;
+}
+function videoRow(v, extra) {
+  const uses = S.jobs.filter((j) => j.videos.includes(v.id)).length, tu = S.templates.filter((t) => t.videos.includes(v.id)).length;
+  return `<span class="vthumb">${posterImg(v)}${v.duration ? `<span class="vlen">${fmtLen(v.duration)}</span>` : ''}</span><span class="grow"><span style="font-weight:500">${esc(v.title)}</span><span class="sub">${[uses ? uses + (uses === 1 ? ' ticket' : ' tickets') : '', tu ? tu + (tu === 1 ? ' template' : ' templates') : '', !uses && !tu ? 'Not used yet' : ''].filter(Boolean).join(' · ')}${extra || ''}</span></span>`;
+}
+function adminVideos() {
+  let h = header('Manage', 'Videos for installers');
+  h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" data-a="setManage" data-v="people">People</button><button type="button" class="on" data-a="setManage" data-v="videos">Videos</button></div>`;
+  h += `<label class="btn" style="margin-top:16px;position:relative">+ Upload video<input type="file" accept="video/*" data-video-file="library" class="vh"></label>`;
+  h += `<p class="foot">Short instruction videos (up to 50 MB, about a minute) that you can add to templates and tickets. Installers watch them in the app.</p>`;
+  h += `<h2 class="sec">Library · ${S.videos.length}</h2><div class="group">${S.videos.length ? S.videos.map((v) => `<button type="button" class="row" data-a="openVideo" data-v="${v.id}">${videoRow(v)}${I.chev}</button>`).join('') : '<div class="row muted">No videos yet. Upload the first one above.</div>'}</div>`;
+  return h;
+}
 function adminTeam() {
+  if (S.manage === 'videos') return adminVideos();
   const list = S.users.filter((u) => u.active).sort((a, b) => (a.id === S.me ? -1 : b.id === S.me ? 1 : (a.name || a.email).localeCompare(b.name || b.email)));
-  let h = header('Team', 'Accounts and access');
+  let h = header('Manage', 'Accounts and access');
+  h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" class="on" data-a="setManage" data-v="people">People</button><button type="button" data-a="setManage" data-v="videos">Videos</button></div>`;
   h += `<div style="margin-top:16px"><button type="button" class="btn" data-a="addPerson">+ Add person</button></div>`;
   h += `<h2 class="sec">Accounts · ${list.length}</h2><div class="group">${list.map((u) => `<button type="button" class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px" data-a="openUser" data-v="${u.id}"><span class="avatar" style="margin:2px 0 0;width:38px;height:38px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub" style="word-break:break-all">${esc(u.email)}</span><span class="tags">${flag(u.c, 16, 11)}${u.admin ? '<span class="pill p-blue">Admin</span>' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}${statusPill(u)}</span></span><span style="align-self:center">${I.chev}</span></button>`).join('')}</div>`;
   h += `<p class="foot">New people create their own password the first time they sign in. If someone forgets theirs, open their account and tap Reset password.</p>`;
@@ -779,6 +830,7 @@ function jobCard(j) {
     <div class="btn2">${j.addr ? `<a class="btn small sec" href="https://maps.apple.com/?q=${encodeURIComponent(j.store + ', ' + j.addr)}" target="_blank" rel="noopener">${I.dir} Directions</a>` : '<span></span>'}<button type="button" class="btn small sec" data-a="sheet" data-v="support:${j.c}">${I.phone()} Support</button></div>
     ${j.tools.length ? `<div class="split"><span class="cap">Bring with you</span><div class="grid2">${j.tools.map((t) => `<span style="display:flex;align-items:center;gap:8px;font-size:15px">${I.tick('var(--green)', 16)}${esc(t)}</span>`).join('')}</div></div>` : ''}
     ${j.parts.length ? `<div class="split"><span class="cap">Parts on site</span><div class="chips">${j.parts.map((p) => `<span class="pill p-grey" style="font-size:13px;padding:5px 10px;font-weight:500">${esc(p)}</span>`).join('')}</div></div>` : ''}
+    ${j.videos.some(videoBy) ? vidButton(j) : ''}
     ${j.note ? `<div class="split"><span class="cap">Note from admin</span><span style="font-size:15px;line-height:21px;color:var(--fg2)">${esc(j.note)}</span></div>` : ''}
     ${j.last ? `<div class="note"><b>From the last visit</b>${esc(j.last)}</div>` : ''}
     <button type="button" class="row" style="border-radius:12px;border:none;background:var(--bg)" data-a="sheet" data-v="support:${j.c}"><span class="avatar" style="margin:0;width:32px;height:32px;background:var(--green-bg);color:var(--green)">${initials(c.support[0])}</span><span class="grow"><span style="font-size:15px;font-weight:500">${c.support[0]}</span><span class="sub num">Support in ${c.name} · ${c.support[1]}</span></span><span class="ico" style="width:32px;height:32px;background:var(--blue)">${I.msg('#FFFFFF', 15)}</span><span class="ico" style="width:32px;height:32px;background:var(--green)">${I.phone('#FFFFFF', 15)}</span></button>
@@ -827,6 +879,7 @@ function reportFlow(j) {
   let h = navbar(left, j.store, right, prog);
   if (st === 1) {
     h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 1 of 3</span><h1 style="font-size:28px;line-height:34px">Contact and parts</h1></div>`;
+    if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
     h += `<h2 class="sec">Who did you speak with?</h2><div class="group"><label class="row" for="rcontact"><span class="lbl">Name</span><input id="rcontact" class="inl" data-rbind="contact" value="${esc(r.contact)}" placeholder="Full name" autocomplete="off" autocapitalize="words"></label><div class="row" style="flex-wrap:wrap">${['Store manager', 'Department lead', 'Staff'].map((x) => `<button type="button" class="chip ${r.contactRole === x ? 'on' : ''}" data-a="rset" data-k="contactRole" data-v="${x}">${x}</button>`).join('')}</div></div>`;
     h += `<h2 class="sec">Parts replaced</h2><div class="group">${r.parts.map(([p, q], i) => `<div class="row"><button type="button" style="flex:1;display:flex;align-items:center;gap:12px;border:none;background:none;padding:0;text-align:left;min-height:44px" data-a="partToggle" data-v="${i}" aria-pressed="${q > 0}"><span class="check ${q > 0 ? 'on' : ''}">${I.tick()}</span><span>${esc(p)}</span></button>${q > 0 ? `<div class="step"><button type="button" aria-label="Fewer" data-a="partQty" data-v="${i}" data-d="-1">−</button><span class="num">${q}</span><button type="button" aria-label="More" data-a="partQty" data-v="${i}" data-d="1">+</button></div>` : ''}</div>`).join('')}
       <div class="row"><input id="rextra" class="inl" data-rbind="extra" value="${esc(r.extra)}" placeholder="${r.parts.length ? 'Add another part' : 'Add a part you replaced'}" aria-label="Add a part"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="partAdd">Add</button></div></div>
@@ -897,6 +950,7 @@ function jobDetail(j) {
   h += EDITABLE.includes(j.status)
     ? `<div style="margin-top:14px"><button type="button" class="btn" data-a="editJob" data-v="${j.id}">Edit ticket</button></div>`
     : `<p class="foot" style="margin-top:12px">This ticket can\u2019t be edited because the report has been submitted.</p>`;
+  if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
   if (j.parts.length) h += `<h2 class="sec">Parts on site</h2><div class="group"><div class="row" style="font-size:15px">${j.parts.map(esc).join(', ')}</div></div>`;
   if (j.tools.length) h += `<h2 class="sec">Tools</h2><div class="group"><div class="row" style="font-size:15px">${j.tools.map(esc).join(', ')}</div></div>`;
   if (j.note) h += `<h2 class="sec">Note</h2><div class="group"><div class="row" style="font-size:15px">${esc(j.note)}</div></div>`;
@@ -964,6 +1018,35 @@ function renderSheet() {
       <span class="cap">Password</span>${pwBlock}
       <button type="button" class="btn" data-a="savePerson">Save changes</button>
       ${canRemove ? (U.confirm === 'remove' ? `<div class="card" style="gap:10px"><b>Remove ${esc(u.name || u.email)}?</b><span class="muted" style="font-size:15px">They can no longer sign in. Their past jobs and reports stay.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="removeUser" data-v="${u.id}">Remove</button></div></div>` : `<button type="button" class="link" style="color:var(--red)" data-a="confirm" data-v="remove">Remove account</button>`) : ''}`;
+  } else if (kind === 'play') {
+    const v = videoBy(arg); const list = (U.playList || []).map(videoBy).filter(Boolean);
+    body = `${sheetHead('Video instructions', 'Close')}${v ? `<b style="font-size:17px;margin:0 4px">${esc(v.title)}</b>` : ''}<div class="player"><video id="vplayer" controls playsinline preload="metadata"${v && v.poster && VU.get(v.poster) ? ` poster="${VU.get(v.poster).u}"` : ''}></video><span id="vwait" class="muted" style="position:absolute;inset:auto 0 45%;text-align:center;color:#fff">Loading video…</span></div>
+      ${v && v.notes ? `<div class="group"><div class="row" style="font-size:15px;line-height:21px;white-space:pre-line">${esc(v.notes)}</div></div>` : ''}
+      ${list.length > 1 ? `<span class="cap">All videos for this job</span><div class="group">${list.map((x, i) => `<button type="button" class="row" data-a="playVideo" data-v="${x.id}" aria-current="${x.id === arg}"><span class="vthumb">${posterImg(x)}${x.duration ? `<span class="vlen">${fmtLen(x.duration)}</span>` : ''}</span><span class="grow"><span style="font-weight:${x.id === arg ? 700 : 500}">${i + 1}. ${esc(x.title)}</span>${x.id === arg ? '<span class="sub" style="color:var(--blue)">Playing</span>' : ''}</span></button>`).join('')}</div>` : ''}`;
+  } else if (kind === 'video') {
+    const v = videoBy(arg); if (!v) { U.sheet = null; overlay.innerHTML = ''; return; }
+    const usedJ = S.jobs.filter((j) => j.videos.includes(v.id)).length, usedT = S.templates.filter((t) => t.videos.includes(v.id)).length;
+    body = `${sheetHead('Video', 'Close', 'Save', 'saveVideo')}<div class="player"><video id="vplayer" controls playsinline preload="metadata"></video></div>
+      <div class="group"><label class="row" for="vtitle"><span class="lbl">Title</span><input id="vtitle" class="inl" data-fbind="title" value="${esc(U.form.title)}" autocomplete="off"></label></div>
+      <textarea class="box" data-fbind="notes" placeholder="Short notes or steps shown under the video (optional)" style="min-height:90px">${esc(U.form.notes)}</textarea>
+      <p class="foot" style="margin:0 4px">${[v.duration ? fmtLen(v.duration) : '', fmtSize(v.size), usedJ ? 'on ' + usedJ + (usedJ === 1 ? ' ticket' : ' tickets') : '', usedT ? 'in ' + usedT + (usedT === 1 ? ' template' : ' templates') : ''].filter(Boolean).join(' · ')}</p>
+      ${U.err ? `<p class="err">${esc(U.err)}</p>` : ''}
+      <button type="button" class="btn" data-a="saveVideo">Save</button>
+      ${U.confirm === 'delvideo' ? `<div class="card" style="gap:10px"><b>Delete \u201c${esc(v.title)}\u201d?</b><span class="muted" style="font-size:15px">It's removed from the library${usedJ || usedT ? ` and from ${[usedJ ? usedJ + (usedJ === 1 ? ' ticket' : ' tickets') : '', usedT ? usedT + (usedT === 1 ? ' template' : ' templates') : ''].filter(Boolean).join(' and ')}` : ''}.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="deleteVideo" data-v="${v.id}">Delete</button></div></div>` : `<button type="button" class="link" style="color:var(--red)" data-a="confirm" data-v="delvideo">Delete video</button>`}`;
+  } else if (kind === 'upload') {
+    const f = U.form; const busy = f.progress != null;
+    body = `${sheetHead('Upload video', busy ? '' : 'Cancel')}
+      <div class="row" style="border-radius:12px;border:none"><span class="vthumb">${f.posterUrl ? `<img src="${f.posterUrl}" alt="">` : `<span class="noposter">${I.play}</span>`}${f.duration ? `<span class="vlen">${fmtLen(f.duration)}</span>` : ''}</span><span class="grow"><span style="font-size:15px;word-break:break-all">${esc(f.fileName)}</span><span class="sub">${fmtSize(f.size)}</span></span></div>
+      <div class="group"><label class="row" for="vtitle"><span class="lbl">Title</span><input id="vtitle" class="inl" data-fbind="title" value="${esc(f.title)}" placeholder="e.g. Fitting the header sign" autocomplete="off" autocapitalize="sentences" ${busy ? 'disabled' : ''}></label></div>
+      <textarea class="box" data-fbind="notes" placeholder="Short notes or steps shown under the video (optional)" style="min-height:80px" ${busy ? 'disabled' : ''}>${esc(f.notes)}</textarea>
+      ${U.err ? `<p class="err">${esc(U.err)}</p>` : ''}
+      ${busy ? `<div class="bar"><span style="width:${Math.round(f.progress * 100)}%"></span></div><p class="foot" style="text-align:center;margin:0">Uploading… ${Math.round(f.progress * 100)} %. Keep the app open.</p>` : `<button type="button" class="btn" data-a="uploadVideo">Upload to library</button>`}`;
+  } else if (kind === 'pickvideos') {
+    const d = S.draft;
+    body = `${sheetHead('Video library', 'Close', 'Done', 'closeSheet')}
+      <label class="btn sec" style="position:relative">+ Upload new video<input type="file" accept="video/*" data-video-file="pick" class="vh"></label>
+      <div class="group">${S.videos.length ? S.videos.map((v) => { const on = d.videos.includes(v.id); return `<button type="button" class="row" aria-pressed="${on}" data-a="toggleDraftVideo" data-v="${v.id}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span>${videoRow(v)}</button>`; }).join('') : '<div class="row muted">The library is empty. Upload the first video above.</div>'}</div>
+      <p class="foot" style="margin:0 4px">Videos you upload here are saved to the library for all admins.</p>`;
   } else if (kind === 'support') {
     const c = C[+arg];
     body = `<div style="text-align:center;display:flex;flex-direction:column;gap:2px;padding:4px"><b>${esc(c.support[0])}</b><span class="muted num" style="font-size:15px;user-select:all">${esc(c.support[1])}</span><span class="muted" style="font-size:13px">Support in ${c.name}</span></div>
@@ -984,7 +1067,46 @@ function renderSheet() {
       <span class="cap">Reason</span><textarea id="creason" class="box" data-cbind="1" placeholder="Short note for your admin" style="min-height:64px">${esc(m.reason)}</textarea>
       <button type="button" class="btn ${m.mode === 'decline' ? 'red' : ''}" data-a="cantSend" data-v="${j.id}">${m.mode === 'resched' ? 'Send request to admin' : 'Decline job'}</button>`;
   }
+  if (kind === 'play' || kind === 'video') setTimeout(() => loadPlayer(arg), 0);
   overlay.innerHTML = `<div class="scrim"><button type="button" class="close" aria-label="Close" data-a="closeSheet"></button><div class="sheet" role="dialog" aria-modal="true"><span class="grab"></span>${body}</div></div>`;
+}
+
+function loadPlayer(id) {
+  const v = videoBy(id); const el = document.getElementById('vplayer'); if (!v || !el) return;
+  vidUrl(v.path).then((u) => {
+    const w = document.getElementById('vwait');
+    if (!u) { if (w) w.textContent = 'Couldn\u2019t load the video. Check your connection.'; return; }
+    el.src = u; el.addEventListener('loadeddata', () => { if (w) w.remove(); }, { once: true });
+    el.addEventListener('error', () => { if (w) w.textContent = 'This phone can\u2019t play this video format.'; }, { once: true });
+    if (U.sheet && U.sheet.startsWith('play')) el.play().catch(() => { if (w) w.remove(); });
+  });
+  if (v.poster) vidUrl(v.poster).then((u) => { if (u && !el.getAttribute('poster')) el.setAttribute('poster', u); });
+}
+/* read length and a preview picture from a video file before uploading */
+function videoMeta(file) {
+  return new Promise((res) => {
+    const v = document.createElement('video'); v.preload = 'metadata'; v.muted = true; v.playsInline = true;
+    const url = URL.createObjectURL(file); let done = false;
+    const finish = (blob) => { if (done) return; done = true; const d = isFinite(v.duration) ? v.duration : null; URL.revokeObjectURL(url); res({ duration: d, poster: blob }); };
+    v.onloadedmetadata = () => { try { v.currentTime = Math.min(1, (v.duration || 2) / 3); } catch (e) { finish(null); } };
+    v.onseeked = () => { try { const sc = Math.min(1, 480 / Math.max(v.videoWidth || 1, v.videoHeight || 1)); const c = document.createElement('canvas'); c.width = Math.max(1, Math.round((v.videoWidth || 320) * sc)); c.height = Math.max(1, Math.round((v.videoHeight || 180) * sc)); c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); c.toBlob((b) => finish(b), 'image/jpeg', 0.75); } catch (e) { finish(null); } };
+    v.onerror = () => finish(null); setTimeout(() => finish(null), 8000);
+    v.src = url;
+  });
+}
+/* upload with progress (big files), straight to storage */
+async function uploadWithProgress(bucket, path, blob, type, onProgress) {
+  const { data: { session } } = await sb.auth.getSession();
+  return new Promise((res, rej) => {
+    const x = new XMLHttpRequest();
+    x.open('POST', SB_URL + '/storage/v1/object/' + bucket + '/' + path.split('/').map(encodeURIComponent).join('/'));
+    x.setRequestHeader('Authorization', 'Bearer ' + (session ? session.access_token : ''));
+    x.setRequestHeader('apikey', SB_KEY); x.setRequestHeader('x-upsert', 'true'); x.setRequestHeader('Content-Type', type);
+    x.upload.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total); };
+    x.onload = () => (x.status >= 200 && x.status < 300 ? res() : rej(new Error(x.status === 413 ? 'The video is too big. Keep it under 50 MB.' : 'Upload failed. Try again.')));
+    x.onerror = () => rej(new Error('No connection. Check your internet and try again.'));
+    x.send(blob);
+  });
 }
 
 /* ---------- signature ---------- */
@@ -1146,7 +1268,7 @@ const A = {
     U.sheet = v; U.err = ''; U.confirm = null; renderSheet();
     if (v === 'forgot') sb.rpc('admin_names').then((r) => { U.admins = r.data || []; if (U.sheet === 'forgot') renderSheet(); }, () => {});
   },
-  closeSheet() { U.sheet = null; U.cant = null; U.err = ''; U.confirm = null; renderSheet(); },
+  closeSheet() { const pv = document.getElementById('vplayer'); if (pv) { try { pv.pause(); } catch (e) { /* ignore */ } } if (U.sheet === 'upload' && U.form && U.form.progress != null) return; if (U.sheet === 'upload' && U.form && U.form.back === 'pick') { U.sheet = 'pickvideos'; U.form = null; renderSheet(); return; } U.sheet = null; U.cant = null; U.err = ''; U.confirm = null; renderSheet(); },
   confirm(v) { U.confirm = v || null; if (U.sheet) renderSheet(); else render(); },
   switchRole(v) { const me = meU(); if (v === 'admin' && !me.admin) return; if (v === 'installer' && !me.installer) return; const fromSubmit = S.view && S.view.kind === 'submitted'; S.role = v; S.tab = v === 'admin' ? (fromSubmit ? 'approvals' : 'overview') : 'jobs'; S.view = null; U.sheet = null; render(false); },
   async signOut() { await sb.auth.signOut().catch(() => {}); const keep = S.lastEmail; S = Object.assign(fresh(), { loading: false, lastEmail: keep }); PREF_KEYS.forEach((k) => { if (k !== 'lastEmail') { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); if (p[k] !== undefined) S[k] = p[k]; } catch (e) { /* defaults */ } } }); PH.clear(); PHT.clear(); U.sheet = null; render(false); },
@@ -1192,12 +1314,54 @@ const A = {
     const tpl = S.templates.find((t) => t.name === j.fixture);
     const st = S.stores.find((x) => x.id === j.storeId) || S.stores.find((x) => x.c === j.c && x.name.toLowerCase() === j.store.toLowerCase());
     S.stash = S.draft;
-    S.draft = { editId: j.id, ticket: j.ticket, template: tpl ? tpl.id : null, tplName: tpl ? tpl.name : '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: j.parts.slice(), c: j.c,
+    S.draft = { editId: j.id, ticket: j.ticket, template: tpl ? tpl.id : null, tplName: tpl ? tpl.name : '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: j.parts.slice(), videos: j.videos.slice(), c: j.c,
       store: st ? st.id : 'new', storeName: st ? '' : j.store, storeAddr: st ? '' : j.addr, lead: j.installer, second: j.second, secondOn: !!j.second, date: j.date, time: j.time,
       tools: j.tools.slice(), price: String(j.price), inst: String(j.split[0]), adm: String(j.split[1]), note: j.note, err: {} };
     S.view = { kind: 'edit', id: j.id }; U.confirm = null; render(false);
   },
   cancelEdit() { const id = S.draft && S.draft.editId; S.draft = S.stash || null; S.stash = null; S.view = id ? { kind: 'job', id } : null; render(false); },
+  setManage(v) { S.manage = v; render(false); },
+  playVideo(v) { if (!(U.playList || []).includes(v)) U.playList = [v]; U.sheet = 'play:' + v; renderSheet(); },
+  playJob(v) { const j = job(v); U.playList = j.videos.filter(videoBy); if (U.playList.length) { U.sheet = 'play:' + U.playList[0]; renderSheet(); } },
+  openVideo(v) { const x = videoBy(v); U.form = { id: v, title: x.title, notes: x.notes }; U.err = ''; U.confirm = null; U.sheet = 'video:' + v; renderSheet(); },
+  async saveVideo() {
+    const f = U.form; const title = (f.title || '').trim(); if (!title) { U.err = 'Give the video a title.'; renderSheet(); return; }
+    U.sheet = null; renderSheet();
+    await act(async () => ok(await sb.from('videos').update({ title, notes: (f.notes || '').trim() }).eq('id', f.id)), 'Video saved');
+  },
+  async deleteVideo(v) {
+    const x = videoBy(v); U.sheet = null; U.confirm = null; renderSheet();
+    await act(async () => {
+      for (const j of S.jobs.filter((j) => j.videos.includes(v))) ok(await sb.from('jobs').update({ video_ids: j.videos.filter((i) => i !== v) }).eq('id', j.id));
+      for (const t of S.templates.filter((t) => t.videos.includes(v))) ok(await sb.from('templates').update({ video_ids: t.videos.filter((i) => i !== v) }).eq('id', t.id));
+      ok(await sb.from('videos').delete().eq('id', v));
+      await sb.storage.from('videos').remove([x.path].concat(x.poster ? [x.poster] : []));
+    }, '\u201c' + x.title + '\u201d deleted');
+    if (S.draft) S.draft.videos = S.draft.videos.filter((i) => i !== v);
+  },
+  pickVideos() { U.sheet = 'pickvideos'; U.err = ''; renderSheet(); },
+  toggleDraftVideo(v) { const d = S.draft; const i = d.videos.indexOf(v); if (i >= 0) d.videos.splice(i, 1); else d.videos.push(v); renderSheet(); render(); },
+  removeDraftVideo(v) { S.draft.videos = S.draft.videos.filter((i) => i !== v); render(); },
+  async uploadVideo() {
+    const f = U.form; const title = (f.title || '').trim();
+    if (!title) { U.err = 'Give the video a title.'; renderSheet(); const el = document.getElementById('vtitle'); if (el) el.focus(); return; }
+    U.err = ''; f.progress = 0; renderSheet();
+    const id = (crypto.randomUUID ? crypto.randomUUID() : uid('v'));
+    const ext = (f.file.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4';
+    const type = f.file.type || (ext === 'mov' ? 'video/quicktime' : 'video/mp4');
+    const path = id + '/video.' + ext;
+    try {
+      let last = 0;
+      await uploadWithProgress('videos', path, f.file, type, (p) => { f.progress = p; if (p - last > 0.02 || p === 1) { last = p; renderSheet(); } });
+      let poster = null;
+      if (f.posterBlob) { poster = id + '/poster.jpg'; await uploadWithProgress('videos', poster, f.posterBlob, 'image/jpeg'); }
+      ok(await sb.from('videos').insert({ id, title, notes: (f.notes || '').trim(), path, poster, duration: f.duration, size: f.size, created_by: S.me }));
+    } catch (e) { f.progress = null; U.err = friendly(e); renderSheet(); return; }
+    const back = f.back; if (f.posterUrl) URL.revokeObjectURL(f.posterUrl);
+    await refresh().catch(() => {});
+    if (back === 'pick' && S.draft) { S.draft.videos.push(id); U.sheet = 'pickvideos'; } else U.sheet = null;
+    U.form = null; renderSheet(); render(); toast('\u201c' + title + '\u201d added to the library');
+  },
   openJob(v) { S.view = { kind: 'job', id: v }; U.confirm = null; render(false); },
   openApproval(v) { S.view = { kind: 'approval', id: v }; U.note = ''; render(false); },
   setInstaller(v) { const j = job(S.view.id); act(() => upd(j.id, { installer: v, second: j.second === v ? null : j.second, status: j.status === 'declined' ? 'scheduled' : j.status, decline_reason: '' }), j.store + ' assigned to ' + first(nameOf(v))); },
@@ -1212,13 +1376,13 @@ const A = {
   },
   approveReq(v) { const j = job(v); const [d, t] = j.request.to.split(' '); act(() => upd(v, { date: d, time: t, request: null }), () => 'Moved to ' + whenLabel(job(v))); },
   denyReq(v) { act(() => upd(v, { request: null }), 'Kept the original time'); },
-  draftTpl(v) { const d = S.draft; U.confirm = null; if (d.template === v) { d.template = null; render(); return; } const t = S.templates.find((x) => x.id === v); d.template = v; d.tools = t.tools.slice(); d.parts = t.parts.slice(); d.tplName = t.name; render(); },
+  draftTpl(v) { const d = S.draft; U.confirm = null; if (d.template === v) { d.template = null; render(); return; } const t = S.templates.find((x) => x.id === v); d.template = v; d.tools = t.tools.slice(); d.parts = t.parts.slice(); d.videos = t.videos.slice(); d.tplName = t.name; render(); },
   tplOpen(v) { const d = S.draft; d.tplOpen = !!v; if (v && !d.tplName) { const t = S.templates.find((x) => x.id === d.template); d.tplName = t ? t.name : ''; } render(); if (v) { const el = document.getElementById('tplname'); if (el) el.focus(); } },
   async saveTemplate() {
     const d = S.draft; const name = (d.tplName || '').trim().replace(/\s+/g, ' ');
     if (!name) { toast('Give the template a name'); const el = document.getElementById('tplname'); if (el) el.focus(); return; }
     const ex = S.templates.find((t) => t.name.toLowerCase() === name.toLowerCase());
-    const rowData = { name, tools: d.tools.slice(), parts: d.parts.slice(), updated_at: new Date().toISOString() };
+    const rowData = { name, tools: d.tools.slice(), parts: d.parts.slice(), video_ids: d.videos.slice(), updated_at: new Date().toISOString() };
     const done = await act(async () => {
       if (ex) ok(await sb.from('templates').update(rowData).eq('id', ex.id));
       else ok(await sb.from('templates').insert(Object.assign(rowData, { created_by: S.me })));
@@ -1278,7 +1442,7 @@ const A = {
       const id = d.editId;
       const saved = await act(async () => {
         const storeId = await resolveStore();
-        const patch = { ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, date: d.date || j0.date, time: d.time || j0.time, fixture: tpl ? tpl.name : (S.templates.some((x) => x.name === j0.fixture) ? '' : j0.fixture), tools: d.tools.slice(), parts: d.parts.slice(), note: (d.note || '').trim(), price: sp.price, inst_pct: sp.inst, adm_pct: sp.adm };
+        const patch = { ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, date: d.date || j0.date, time: d.time || j0.time, fixture: tpl ? tpl.name : (S.templates.some((x) => x.name === j0.fixture) ? '' : j0.fixture), tools: d.tools.slice(), parts: d.parts.slice(), video_ids: d.videos.slice(), note: (d.note || '').trim(), price: sp.price, inst_pct: sp.inst, adm_pct: sp.adm };
         if (!lockInstaller) { patch.installer = d.lead; patch.second = second; if (j0.status === 'declined' && d.lead !== j0.installer) { patch.status = 'scheduled'; patch.decline_reason = ''; } }
         if (j0.date !== patch.date || j0.time !== patch.time) patch.request = null;
         ok(await sb.from('jobs').update(patch).eq('id', id));
@@ -1290,7 +1454,7 @@ const A = {
     const prev = S.jobs.filter((j) => j.c === d.c && j.store.toLowerCase() === store.name.toLowerCase() && j.status === 'approved' && j.report && j.report.nextNote).sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0))[0];
     const done = await act(async () => {
       const storeId = await resolveStore();
-      ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl ? tpl.name : '', tools: d.tools.slice(), parts: d.parts.slice(), note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_pct: sp.inst, adm_pct: sp.adm, created_by: S.me }));
+      ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl ? tpl.name : '', tools: d.tools.slice(), parts: d.parts.slice(), video_ids: d.videos.slice(), note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_pct: sp.inst, adm_pct: sp.adm, created_by: S.me }));
     }, 'Ticket ' + t + ' created for ' + first(nameOf(d.lead)) + (second ? ' and ' + first(nameOf(second)) : ''));
     if (done) { S.split = [sp.inst, sp.adm]; S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2; render(false); }
     else if (btn) { btn.disabled = false; btn.textContent = 'Create ticket'; }
@@ -1381,6 +1545,15 @@ document.addEventListener('input', (e) => {
 });
 document.addEventListener('change', (e) => {
   const el = e.target;
+  if (el.dataset.videoFile) {
+    const file = el.files && el.files[0]; const back = el.dataset.videoFile; el.value = ''; if (!file) return;
+    if (file.size > VIDEO_MAX) { toast('The video is ' + fmtSize(file.size) + '. Keep it under 50 MB, about a minute.'); return; }
+    const base = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
+    U.form = { file, fileName: file.name, size: file.size, title: /^(IMG|MOV|VID|trim)\b/i.test(base) ? '' : base, notes: '', back, progress: null, duration: null, posterBlob: null, posterUrl: '' };
+    U.err = ''; U.sheet = 'upload'; renderSheet();
+    videoMeta(file).then((m) => { if (U.sheet !== 'upload' || !U.form || U.form.file !== file) return; U.form.duration = m.duration; U.form.posterBlob = m.poster; if (m.poster) U.form.posterUrl = URL.createObjectURL(m.poster); renderSheet(); const t = document.getElementById('vtitle'); if (t && !t.value) t.focus(); });
+    return;
+  }
   if (el.dataset.shot) {
     const f = el.files && el.files[0]; if (!f) return;
     const [ph, i] = el.dataset.shot.split('-');
