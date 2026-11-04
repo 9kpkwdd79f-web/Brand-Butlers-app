@@ -1211,6 +1211,11 @@ function makePlayer(host, v, edit, opts = {}) {
   P.setEdit = (E) => { P.E = E; P.lastKey = null; applyAudio(); };
   P.destroy = () => { P.destroyed = true; cancelAnimationFrame(P.raf); try { el.pause(); el.removeAttribute('src'); el.load(); } catch (e) { /* ignore */ } if (P.ctx) P.ctx.close().catch(() => {}); };
   P.setSrc = (url) => {
+    // louder than 100 % needs the browser's audio engine, which needs this for online files
+    if (opts.boost && !/^blob:/.test(url)) {
+      el.crossOrigin = 'anonymous';
+      el.addEventListener('error', () => { if (P.destroyed || !el.crossOrigin) return; opts.boost = false; el.removeAttribute('crossorigin'); el.src = url; }, { once: true });
+    }
     el.src = url;
     el.addEventListener('loadedmetadata', () => {
       msg.style.display = 'none';
@@ -1241,7 +1246,7 @@ function loadPlayer(id) {
   const v = videoBy(id); const host = document.getElementById('vhost'); if (!v || !host) return;
   if (VIEWER) VIEWER.destroy();
   const autoplay = !!(U.sheet && U.sheet.startsWith('play'));
-  VIEWER = makePlayer(host, v, v.edit, { autoplay });
+  VIEWER = makePlayer(host, v, v.edit, { autoplay, boost: !!(v.edit && v.edit.volume > 1) });
   vidUrl(v.path).then((u) => {
     if (!u) { const m = host.querySelector('.ep-msg'); if (m) m.textContent = 'Couldn’t load the video. Check your connection.'; return; }
     VIEWER.setSrc(u);
