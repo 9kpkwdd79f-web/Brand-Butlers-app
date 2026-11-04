@@ -8,6 +8,7 @@
   `POST /repos/9kpkwdd79f-web/Brand-Butlers-app/actions/workflows/deploy.yml/dispatches {"ref":"main"}` (only `main` may publish; keep `.github/workflows/deploy.yml` the same on both branches)
   (one run publishes both branches) and wait for it to finish before reporting.
 - The deploy script stamps `const BUILD = '__BUILD__'` in each copy with that branch's commit; open apps compare it with the published page and show "New version available". Keep that line in `app/index.html`.
+- Desktop layout: admins on screens 1024 px and wider get `body.desk` (sidebar, Overview dashboard with table + side panel, Approvals list + report panel). Built in the DESKTOP LAYOUT block (`isDesk`, `renderSide`, `overviewDesk`, `approvalsDesk`, `deskPanel`). Phones and the installer view are unchanged; keep desktop-only styling under `body.desk` / desktop functions.
 - Never put NaaUt on the report. Client is always Apple.
 - Rollback: revert the last merge on `main`, push, dispatch.
 

@@ -234,6 +234,73 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 input[type="range"] { width: 100%; accent-color: var(--blue); }
 .bar { height: 8px; border-radius: 4px; background: var(--fill2); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--blue); transition: width .2s; }
+/* ---------- desktop (admins on wide screens) ---------- */
+body.desk { padding-left: 0; padding-right: 0; }
+body.desk .app { max-width: 900px; margin: 0 auto 0 248px; padding: 28px 40px 60px; }
+body.desk .app.dwide { max-width: 1480px; }
+body.desk .head .avatar { display: none; }
+body.desk .navbar { margin: 0 -40px; padding: 14px 40px; top: 0; }
+body.desk .tabbar { display: none; }
+body.desk h1 { font-size: 32px; line-height: 38px; }
+body.desk button.row:hover, body.desk .chip:hover { filter: brightness(0.97); }
+body.desk .btn:hover { filter: brightness(1.06); }
+body.desk .scrim { justify-content: center; align-items: center; padding: 24px; }
+body.desk .scrim .close { position: absolute; inset: 0; }
+body.desk .sheet { position: relative; width: 540px; max-width: 100%; border-radius: 18px; max-height: 88vh; padding: 14px 20px 22px; box-shadow: 0 24px 60px rgba(0,0,0,0.3); }
+body.desk .sheet .grab { display: none; }
+body.desk .toast { left: calc(50% + 124px); bottom: 30px; }
+.side { position: fixed; left: 0; top: 0; bottom: 0; width: 248px; z-index: 25; background: var(--card); border-right: 0.5px solid var(--sep); padding: 22px 14px 16px; display: flex; flex-direction: column; gap: 18px; }
+.sbrand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
+.sbrand b { display: block; font-size: 16px; }
+.sbrand span { font-size: 12px; color: var(--muted); }
+.snav { display: flex; flex-direction: column; gap: 2px; }
+.side .nav { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: none; border-radius: 10px; background: none; color: var(--fg); font-size: 15px; font-weight: 500; text-align: left; }
+.side .nav svg { width: 21px; height: 21px; flex-shrink: 0; color: var(--muted); }
+.side .nav:hover { background: var(--fill); }
+.side .nav.on { background: var(--blue-bg); color: var(--blue-fg); font-weight: 600; }
+.side .nav.on svg { color: var(--blue); }
+.sbadge { margin-left: auto; min-width: 22px; height: 22px; border-radius: 11px; background: var(--redbtn); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+.sfoot { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+.sacct { display: flex; align-items: center; gap: 10px; border: none; background: var(--bg); border-radius: 12px; padding: 10px; text-align: left; color: var(--fg); }
+.sacct .grow { display: flex; flex-direction: column; min-width: 0; }
+.sacct b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sacct span span { font-size: 12px; color: var(--muted); }
+.sacct:hover { background: var(--fill); }
+.dhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-top: 4px; }
+.dtools { display: flex; align-items: center; gap: 12px; }
+.dseg button { min-height: 40px !important; flex-direction: row !important; gap: 6px !important; font-size: 12px !important; }
+.kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-top: 22px; }
+.kpi { background: var(--card); border: 1.5px solid transparent; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; text-align: left; color: var(--fg); }
+.kpi:hover { border-color: var(--sep); }
+.kpi.on { border-color: var(--blue); }
+.kpi .k { font-size: 13px; color: var(--muted); font-weight: 500; }
+.kpi .v { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+.ell { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dmain { min-width: 0; }
+.dgrid { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 24px; align-items: start; margin-top: 22px; }
+.dgrid.ap { grid-template-columns: 380px minmax(0, 1fr); }
+.dright { position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; border-radius: 16px; }
+.dtbar { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+.dsearch { flex: 1 1 100%; min-width: 200px; height: 40px !important; font-size: 15px !important; }
+.tbl { table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border-radius: 14px; overflow: hidden; font-size: 14px; }
+.tbl th { text-align: left; font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; padding: 12px 14px; border-bottom: 0.5px solid var(--sep); }
+.tbl td { padding: 12px 14px; border-bottom: 0.5px solid var(--sep); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr.r { cursor: pointer; }
+.tbl tr.r:hover td { background: var(--fill); }
+.tbl tr.sel td { background: var(--blue-bg); }
+.tbl tr.r:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.dpanel { background: var(--card); border-radius: 16px; padding: 4px 18px 20px; }
+.dpanel .group, .dpanel .shot, .dpanel textarea.box, .dpanel .card { background: var(--bg); }
+.dpanel .row { background: transparent; }
+.dphead { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--card); padding: 12px 0 8px; z-index: 2; border-bottom: 0.5px solid var(--sep); margin-bottom: 4px; }
+.dpx { width: 32px; height: 32px; border-radius: 16px; border: none; background: var(--fill); color: var(--fg2); font-size: 14px; }
+.dpx:hover { background: var(--fill2); }
+.dgrid.ap .dpanel .stack:has(> .shot) { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dtbar .seg { grid-auto-columns: auto; }
+.dtbar .seg button { font-size: 13px; }
+.rsel { background: var(--blue-bg) !important; }
+.dside .alert { background: var(--card); }
 .vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .logo { display: block; flex-shrink: 0; }
 .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
@@ -541,6 +608,9 @@ function render(keepScroll = true) {
   else if (S.view) html = viewSub();
   else html = S.role === 'admin' ? viewAdmin() : viewInstaller();
   app.innerHTML = html;
+  const desk = isDesk();
+  document.body.classList.toggle('desk', desk);
+  app.classList.toggle('dwide', desk && !S.view && ['overview', 'approvals'].includes(S.tab));
   app.classList.toggle('noTabs', !S.me || S.choosing || S.loading || !!S.view);
   renderTabs();
   renderSheet();
@@ -553,6 +623,7 @@ function render(keepScroll = true) {
 
 function renderTabs() {
   if (tabBarEl) { tabBarEl.remove(); tabBarEl = null; }
+  if (isDesk()) { tabBarEl = renderSide(); document.body.appendChild(tabBarEl); return; }
   if (!S.me || S.choosing || S.loading || S.view) return;
   const tabs = S.role === 'admin'
     ? [['overview', 'Overview'], ['new', 'New ticket'], ['approvals', 'Approvals'], ['team', 'Manage'], ['insights', 'Insights']]
@@ -668,6 +739,7 @@ function adminOverview() {
   overdue.forEach((j) => { const u = userBy(j.installer); alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--red-bg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--redbtn)" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">Not started · overdue</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)} was due ${esc(whenLabel(j))}. ${esc(first(nameOf(j.installer)))} hasn't started the report.</span></span></div><div class="btn2"><button type="button" class="btn small sec" data-a="openJob" data-v="${j.id}">Change installer</button>${u && u.phone ? `<button type="button" class="btn small" data-a="sheet" data-v="call:${u.id}">Call ${esc(first(u.name))}</button>` : `<button type="button" class="btn small" data-a="openJob" data-v="${j.id}">Open ticket</button>`}</div></div>`); });
   declined.forEach((j) => alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--red-bg)">${I.flagP('var(--redbtn)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${esc(nameOf(j.installer))} declined a job</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)}, ${esc(whenLabel(j))}</span>${j.declineReason ? `<span class="muted" style="font-size:13px">“${esc(j.declineReason)}”</span>` : ''}</span></div><button type="button" class="btn small" data-a="openJob" data-v="${j.id}">Assign someone else</button></div>`));
   requests.forEach((j) => { const [d, t] = j.request.to.split(' '); alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--orange-bg)">${small(TABICON.jobs, 'var(--orange)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${esc(nameOf(j.installer))} asked to reschedule</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)}, ${esc(whenLabel(j))} → ${esc(whenLabel({ date: d, time: t }))}</span>${j.request.reason ? `<span class="muted" style="font-size:13px">“${esc(j.request.reason)}”</span>` : ''}</span></div><div class="btn2"><button type="button" class="btn small sec" data-a="denyReq" data-v="${j.id}">Keep time</button><button type="button" class="btn small" data-a="approveReq" data-v="${j.id}">Approve</button></div></div>`); });
+  if (isDesk()) return overviewDesk({ R, nordic, scope, inP, alerts });
   h += alerts.length ? `<div class="stack" style="margin-top:10px">${alerts.join('')}</div>` : `<div class="banner" style="margin-top:10px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 16)}Nothing needs your attention in ${nordic ? 'the Nordics' : C[R].name}</div>`;
   if (nordic) {
     h += `<h2 class="sec">By country</h2><div class="group">${[0, 1, 2, 3].map((c) => { const mine = S.jobs.filter((j) => j.c === c && inPeriod(j, S.period)); const td = mine.filter((j) => OPEN.includes(effStatus(j))).length; const dn = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).length; return `<button type="button" class="row" data-a="set" data-k="region" data-v="${c}">${flag(c, 28, 20)}<span class="grow"><span>${C[c].name}</span><span class="sub">Support: ${C[c].support[0]}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end"><b class="num" style="font-size:15px">${td} to do</b><span class="num" style="font-size:13px;color:var(--green)">${dn} done</span></span>${I.chev}</button>`; }).join('')}</div>`;
@@ -765,6 +837,7 @@ function updateSplit() {
 }
 
 function adminApprovals() {
+  if (isDesk()) return approvalsDesk();
   const waiting = S.jobs.filter((j) => j.status === 'waiting');
   const recent = S.jobs.filter((j) => j.status === 'approved' || j.status === 'changes').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0)).slice(0, 20);
   let h = header('Approvals', 'Before anything reaches Apple');
@@ -831,6 +904,80 @@ function adminInsights() {
   return h;
 }
 
+/* =================================================================== */
+/* DESKTOP LAYOUT (admins on wide screens only; phones are unchanged)  */
+/* =================================================================== */
+const DESK_MQ = window.matchMedia('(min-width: 1024px)');
+const isDesk = () => DESK_MQ.matches && !!S.me && !S.choosing && !S.loading && S.role === 'admin';
+let PANEL_MODE = false;
+function showJob(id) { if (isDesk()) { S.view = null; S.panel = { kind: 'job', id }; } else S.view = { kind: 'job', id }; }
+
+function renderSide() {
+  const me = meU();
+  const waiting = S.jobs.filter((j) => j.status === 'waiting').length;
+  const items = [['overview', 'Overview'], ['new', 'New ticket'], ['approvals', 'Approvals'], ['team', 'Manage'], ['insights', 'Insights']];
+  const el = document.createElement('aside'); el.className = 'side'; el.setAttribute('aria-label', 'Main menu');
+  el.innerHTML = `<div class="sbrand">${LOGO(36)}<div><b>Brand Butlers</b><span>${PREVIEW ? 'Test version' : 'Fixture reporting'}</span></div></div>
+    <nav class="snav">${items.map(([k, l]) => `<button type="button" class="nav ${S.tab === k && (!S.view || S.view.kind === 'edit') ? 'on' : ''}" data-a="tab" data-v="${k}" ${S.tab === k ? 'aria-current="page"' : ''}>${TABICON[k]}<span>${l}</span>${k === 'approvals' && waiting ? `<span class="sbadge">${waiting}</span>` : ''}</button>`).join('')}</nav>
+    <div class="sfoot">${me.installer ? `<button type="button" class="nav" data-a="switchRole" data-v="installer">${TABICON.jobs}<span>Installer view</span></button>` : ''}
+      <button type="button" class="sacct" data-a="sheet" data-v="account"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(me.name || me.email)}</span><span class="grow"><b>${esc(me.name || me.email)}</b><span>${C[me.c].name} · Admin</span></span></button></div>`;
+  return el;
+}
+
+function deskTable(rows, nordic) {
+  if (!rows.length) return `<div class="empty" style="padding:22px"><span>No tickets match.</span></div>`;
+  const SHORT = { scheduled: 'Scheduled', progress: 'In progress', overdue: 'Overdue', waiting: 'Waiting', approved: 'Approved', changes: 'Changes asked', declined: 'Declined' };
+  const pill = (j) => j.request && j.request.kind === 'resched' && j.status === 'scheduled' ? '<span class="pill p-or">Reschedule</span>' : `<span class="pill ${STATUS[effStatus(j)][1]}">${SHORT[effStatus(j)]}</span>`;
+  return `<table class="tbl"><colgroup><col style="width:118px"><col><col style="width:136px"><col style="width:118px"><col style="width:104px"></colgroup><thead><tr><th>When</th><th>Store \u00b7 ticket</th><th>Installer</th><th>Status</th><th style="text-align:right">Price</th></tr></thead><tbody>${rows.map((j) => {
+    const sel = S.panel && S.panel.id === j.id;
+    const act = ['waiting', 'approved'].includes(j.status) && j.report && !j.report.draft ? 'openApproval' : 'openJob';
+    return `<tr class="r${sel ? ' sel' : ''}" data-a="${act}" data-v="${j.id}" tabindex="0"><td class="num">${esc(whenLabel(j))}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0">${nordic ? flag(j.c, 18, 13) : ''}<div style="min-width:0"><b class="ell" style="font-weight:600">${esc(j.store)}</b><div class="muted ell" style="font-size:12px">${esc(j.ticket)}${j.addr ? ' \u00b7 ' + esc(j.addr) : ''}</div></div></div></td><td><span class="ell">${who(j)}</span></td><td>${pill(j)}</td><td class="num" style="text-align:right;white-space:nowrap">${money(j.c, Number(j.price) || 0)}</td></tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+function deskPanel() {
+  const p = S.panel; const j = p && job(p.id);
+  if (!j) { S.panel = null; return ''; }
+  PANEL_MODE = true;
+  let inner = '';
+  try { inner = p.kind === 'approval' ? approvalDetail(j) : jobDetail(j); } finally { PANEL_MODE = false; }
+  return `<div class="dpanel"><div class="dphead"><span class="cap">${p.kind === 'approval' ? 'Report' : 'Ticket'}</span><span style="display:flex;gap:6px">${p.kind === 'approval' && j.status === 'waiting' ? `<button type="button" class="btn small sec" style="width:auto;padding:0 14px;height:32px" data-a="askChanges" data-v="${j.id}">Ask for changes</button><button type="button" class="btn small" style="width:auto;padding:0 16px;height:32px;background:var(--green)" data-a="approve" data-v="${j.id}">Approve</button>` : ''}${p.kind === 'job' && EDITABLE.includes(j.status) ? `<button type="button" class="btn small" style="width:auto;padding:0 14px;height:32px" data-a="editJob" data-v="${j.id}">Edit</button>` : ''}<button type="button" class="dpx" data-a="closePanel" aria-label="Close">✕</button></span></div>${inner}</div>`;
+}
+
+function overviewDesk(ctx) {
+  const { R, nordic, scope, inP, alerts } = ctx;
+  const q = (S.q || '').trim().toLowerCase(); const F = S.statusF || 'all';
+  const inF = (j) => { const st = effStatus(j); if (F === 'todo') return ['scheduled', 'overdue', 'declined', 'changes'].includes(st); if (F === 'progress') return st === 'progress'; if (F === 'waiting') return st === 'waiting'; if (F === 'approved') return st === 'approved'; return true; };
+  const rows = inP.filter(inF).filter((j) => !q || [j.store, j.addr, j.ticket, nameOf(j.installer), j.second ? nameOf(j.second) : ''].join(' ').toLowerCase().includes(q))
+    .sort((a, b) => { const ao = OPEN.includes(effStatus(a)), bo = OPEN.includes(effStatus(b)); return ao !== bo ? (ao ? -1 : 1) : ao ? jobTs(a) - jobTs(b) : jobTs(b) - jobTs(a); });
+  const cnt = (f) => inP.filter((j) => { const st = effStatus(j); return f(st); }).length;
+  const kpis = [['To do', cnt((s) => ['scheduled', 'overdue', 'declined', 'changes'].includes(s)), 'var(--fg)', 'todo'], ['In progress', cnt((s) => s === 'progress'), 'var(--orange)', 'progress'], ['Waiting for approval', scope.filter((j) => j.status === 'waiting').length, 'var(--blue)', 'waiting'], ['Approved', cnt((s) => s === 'approved'), 'var(--green)', 'approved'], ['Overdue now', scope.filter((j) => effStatus(j) === 'overdue').length, 'var(--red)', 'todo']];
+  let h = `<div class="dhead"><div><div class="date">${esc(longToday())}</div><h1>Overview</h1></div><div class="dtools"><div style="width:440px">${regionSeg('region', R).replace('seg tall', 'seg tall dseg')}</div><button type="button" class="btn" style="width:auto;padding:0 20px" data-a="tab" data-v="new">+ New ticket</button></div></div>`;
+  h += `<div class="kpis">${kpis.map(([l, n, col, f]) => `<button type="button" class="kpi${F === f && f !== 'todo' ? ' on' : ''}" data-a="setStatusF" data-v="${F === f ? 'all' : f}"><span class="k">${l}</span><span class="v num" style="color:${n ? col : 'var(--fg)'}">${n}</span></button>`).join('')}</div>`;
+  const left = `<div class="dtbar"><input class="box dsearch" id="dsearch" data-desk-search="1" value="${esc(S.q || '')}" placeholder="Search store, ticket or installer" aria-label="Search" autocomplete="off">
+      <div class="seg" style="flex:0 0 auto">${[['all', 'All'], ['todo', 'To do'], ['progress', 'In progress'], ['waiting', 'Waiting'], ['approved', 'Approved']].map(([k, l]) => `<button type="button" class="${F === k ? 'on' : ''}" style="padding:4px 12px" data-a="setStatusF" data-v="${k}">${l}</button>`).join('')}</div>
+      <div class="seg" style="flex:0 0 auto">${['Day', 'Week', 'Month'].map((l, i) => `<button type="button" class="${S.period === i ? 'on' : ''}" style="padding:4px 12px" data-a="set" data-k="period" data-v="${i}">${l}</button>`).join('')}</div></div>
+    ${deskTable(rows, nordic)}<p class="foot">${rows.length} ${rows.length === 1 ? 'ticket' : 'tickets'} · ${['today', 'this week', 'this month'][S.period]}${nordic ? ' · all countries' : ' · ' + C[R].name}. Click a row to open it on the right.</p>`;
+  const right = S.panel ? deskPanel() : `<div class="dside"><h2 class="sec" style="margin-top:0">Needs attention</h2>${alerts.length ? `<div class="stack">${alerts.join('')}</div>` : `<div class="banner" style="background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 16)}Nothing needs your attention</div>`}
+    ${nordic ? `<h2 class="sec">By country</h2><div class="group">${[0, 1, 2, 3].map((c) => { const mine = S.jobs.filter((j) => j.c === c && inPeriod(j, S.period)); const td = mine.filter((j) => OPEN.includes(effStatus(j))).length; const dn = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).length; return `<button type="button" class="row" data-a="set" data-k="region" data-v="${c}">${flag(c, 28, 20)}<span class="grow"><span>${C[c].name}</span><span class="sub">Support: ${C[c].support[0]}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end"><b class="num" style="font-size:15px">${td} to do</b><span class="num" style="font-size:13px;color:var(--green)">${dn} done</span></span></button>`; }).join('')}</div>`
+      : `<h2 class="sec">${C[R].name}</h2><div class="group"><div class="row">${flag(R, 28, 20)}<span class="grow"><span>Support: ${C[R].support[0]}</span><span class="sub">${C[R].support[1]} · ${C[R].cur}</span></span></div></div>`}</div>`;
+  h += `<div class="dgrid"><div class="dmain">${left}</div><div class="dright">${right}</div></div>`;
+  return h;
+}
+
+function approvalsDesk() {
+  const waiting = S.jobs.filter((j) => j.status === 'waiting').sort((a, b) => ((a.report && a.report.submittedTs) || 0) - ((b.report && b.report.submittedTs) || 0));
+  const recent = S.jobs.filter((j) => j.status === 'approved' || j.status === 'changes').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0)).slice(0, 20);
+  if (!S.panel && waiting.length) S.panel = { kind: 'approval', id: waiting[0].id };
+  const item = (j) => `<button type="button" class="row${S.panel && S.panel.id === j.id ? ' rsel' : ''}" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(nameOf(j.installer))} · ${esc(whenLabel(j))}</span></span>${j.report && j.report.problem ? '<span class="pill p-red">Problem</span>' : j.status !== 'waiting' ? pillFor(j) : ''}</button>`;
+  let h = `<div class="dhead"><div><div class="date">Before anything reaches Apple</div><h1>Approvals</h1></div></div>`;
+  h += `<div class="dgrid ap"><div class="dmain"><h2 class="sec" style="margin-top:0">Waiting · ${waiting.length}</h2><div class="group">${waiting.length ? waiting.map(item).join('') : '<div class="row muted">All caught up.</div>'}</div>
+    <h2 class="sec">Recently handled</h2><div class="group">${recent.length ? recent.map(item).join('') : '<div class="row muted">Nothing yet.</div>'}</div></div>
+    <div class="dright">${S.panel ? deskPanel() : '<div class="empty"><b>Nothing to review</b><span>New reports show up here as soon as installers submit them.</span></div>'}</div></div>`;
+  return h;
+}
+DESK_MQ.addEventListener('change', () => { if (S.me) render(); });
+
 /* ---------- installer ---------- */
 function myJobs() { return S.jobs.filter((j) => (j.installer === S.me || j.second === S.me) && j.status !== 'declined'); }
 function viewInstaller() {
@@ -893,7 +1040,7 @@ function viewSub() {
   if (v.kind === 'submitted') return submitted(j);
   return '';
 }
-function navbar(left, title, right, extra = '') { return `<div class="navbar">${left}<span class="t">${esc(title)}</span>${right || '<span></span>'}${extra}</div>`; }
+function navbar(left, title, right, extra = '') { if (PANEL_MODE) return ''; return `<div class="navbar">${left}<span class="t">${esc(title)}</span>${right || '<span></span>'}${extra}</div>`; }
 function ensureReport(j) {
   if (!j.report) j.report = Object.assign(emptyReport(), { draft: true });
   if (!j.report.init) { j.report.parts = j.parts.map((p) => [p, 0]); j.report.init = true; }
@@ -1538,7 +1685,7 @@ const A = {
   loginBack() { S.choosing = false; S.login = { step: 'email', email: S.login.email || '', err: '', acc: null }; render(false); },
   enter(v) { if (!S.me) return; S.choosing = false; S.role = v; S.tab = v === 'admin' ? 'overview' : 'jobs'; S.login = { step: 'email', email: '', err: '', acc: null }; render(false); },
   togglePw(v, el) { const f = el.closest('form'); const ins = f.querySelectorAll('input[type="password"], input[data-shown]'); const show = el.textContent.trim() === 'Show'; ins.forEach((i) => { i.type = show ? 'text' : 'password'; if (show) i.dataset.shown = '1'; else delete i.dataset.shown; }); el.textContent = show ? 'Hide' : 'Show'; },
-  tab(v) { if (S.view && S.view.kind === 'veditor') edClose(); if (S.view && S.view.kind === 'edit') { S.draft = S.stash || null; S.stash = null; } S.tab = v; S.view = null; U.confirm = null; render(false); },
+  tab(v) { S.panel = null; if (S.view && S.view.kind === 'veditor') edClose(); if (S.view && S.view.kind === 'edit') { S.draft = S.stash || null; S.stash = null; } S.tab = v; S.view = null; U.confirm = null; render(false); },
   set(v, el) { S[el.dataset.k] = Number(v); render(); },
   sheet(v) {
     U.sheet = v; U.err = ''; U.confirm = null; renderSheet();
@@ -1595,7 +1742,7 @@ const A = {
       tools: j.tools.slice(), price: String(j.price), inst: String(j.split[0]), adm: String(j.split[1]), note: j.note, err: {} };
     S.view = { kind: 'edit', id: j.id }; U.confirm = null; render(false);
   },
-  cancelEdit() { const id = S.draft && S.draft.editId; S.draft = S.stash || null; S.stash = null; S.view = id ? { kind: 'job', id } : null; render(false); },
+  cancelEdit() { const id = S.draft && S.draft.editId; S.draft = S.stash || null; S.stash = null; if (id) showJob(id); else S.view = null; render(false); },
   setManage(v) { S.manage = v; render(false); },
   editVideo(v) { const x = videoBy(v); U.sheet = null; renderSheet(); edClose(); ED = { id: v, v: x, E: normEdit(x.edit, x.duration), dur: x.duration || 0, t: 0, sel: 0, tab: 'cut', hist: [], thumbs: [], blob: null, P: null, saved: JSON.stringify(normEdit(x.edit, x.duration)) }; S.view = { kind: 'veditor', id: v }; render(false); },
   edTab(v) { ED.tab = v; edPanel(); },
@@ -1691,8 +1838,10 @@ const A = {
     if (back === 'pick' && S.draft) { S.draft.videos.push(id); U.sheet = 'pickvideos'; } else U.sheet = null;
     U.form = null; renderSheet(); render(); toast('\u201c' + title + '\u201d added to the library');
   },
-  openJob(v) { S.view = { kind: 'job', id: v }; U.confirm = null; render(false); },
-  openApproval(v) { S.view = { kind: 'approval', id: v }; U.note = ''; render(false); },
+  openJob(v) { U.confirm = null; if (isDesk()) { S.panel = { kind: 'job', id: v }; render(); return; } S.view = { kind: 'job', id: v }; render(false); },
+  closePanel() { S.panel = null; render(); },
+  setStatusF(v) { S.statusF = v; render(); },
+  openApproval(v) { U.note = ''; if (isDesk()) { S.panel = { kind: 'approval', id: v }; render(); return; } S.view = { kind: 'approval', id: v }; render(false); },
   setInstaller(v) { const j = job(S.view.id); act(() => upd(j.id, { installer: v, second: j.second === v ? null : j.second, status: j.status === 'declined' ? 'scheduled' : j.status, decline_reason: '' }), j.store + ' assigned to ' + first(nameOf(v))); },
   async deleteJob(v) {
     const j = job(v);
@@ -1776,7 +1925,7 @@ const A = {
         if (j0.date !== patch.date || j0.time !== patch.time) patch.request = null;
         ok(await sb.from('jobs').update(patch).eq('id', id));
       }, 'Ticket ' + t + ' updated');
-      if (saved) { S.draft = S.stash || null; S.stash = null; S.view = { kind: 'job', id }; render(false); }
+      if (saved) { S.draft = S.stash || null; S.stash = null; showJob(id); render(false); }
       else if (btn) { btn.disabled = false; btn.textContent = 'Save changes'; }
       return;
     }
@@ -1788,10 +1937,10 @@ const A = {
     if (done) { S.split = [sp.inst, sp.adm]; S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2; render(false); }
     else if (btn) { btn.disabled = false; btn.textContent = 'Create ticket'; }
   },
-  async approve(v) { const j = job(v); if (await act(() => upd(v, { status: 'approved', request: null, handled_at: new Date().toISOString(), handled_by: S.me }), j.store + ' approved')) { S.view = null; S.tab = 'approvals'; render(false); } },
+  async approve(v) { const j = job(v); if (await act(() => upd(v, { status: 'approved', request: null, handled_at: new Date().toISOString(), handled_by: S.me }), j.store + ' approved')) { S.view = null; if (isDesk()) S.panel = null; S.tab = 'approvals'; render(false); } },
   async askChanges(v) {
     const j = job(v); const note = (U.note || '').trim() || 'Please check the report and resubmit.';
-    if (await act(async () => { await upd(v, { status: 'changes', changes: note, handled_at: new Date().toISOString(), handled_by: S.me }); ok(await sb.from('reports').update({ draft: true }).eq('job_id', v)); }, 'Sent back to ' + first(nameOf(j.installer)))) { S.view = null; render(false); }
+    if (await act(async () => { await upd(v, { status: 'changes', changes: note, handled_at: new Date().toISOString(), handled_by: S.me }); ok(await sb.from('reports').update({ draft: true }).eq('job_id', v)); }, 'Sent back to ' + first(nameOf(j.installer)))) { S.view = null; if (isDesk() && S.tab === 'approvals') S.panel = null; render(false); }
   },
 
   // installer
@@ -1854,6 +2003,13 @@ document.addEventListener('click', (e) => {
   A[a](el.dataset.v, el);
 });
 document.addEventListener('keydown', (e) => {
+  if (isDesk()) {
+    const t = e.target; const typing = /INPUT|TEXTAREA|SELECT/.test(t.tagName);
+    if ((e.key === 'Enter' || e.key === ' ') && t.matches && t.matches('tr[data-a]')) { e.preventDefault(); t.click(); return; }
+    if (!typing && e.key === 'Escape' && S.panel && !U.sheet) { A.closePanel(); return; }
+    if (!typing && !U.sheet && !S.view && (e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey) { A.tab('new'); return; }
+    if (!typing && !U.sheet && !S.view && e.key === '/') { const n = document.getElementById('dsearch'); if (n) { e.preventDefault(); n.focus(); } return; }
+  }
   const el = e.target; if (e.key !== 'Enter' || !el.dataset || !el.dataset.enter || !A[el.dataset.enter]) return;
   e.preventDefault(); A[el.dataset.enter]();
 });
@@ -1864,6 +2020,7 @@ document.addEventListener('submit', (e) => {
 });
 document.addEventListener('input', (e) => {
   const el = e.target;
+  if (el.dataset.deskSearch) { S.q = el.value; const pos = el.selectionStart; render(); const n = document.getElementById('dsearch'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } } return; }
   if (el.dataset.pw) { pwRules(); return; }
   if (el.dataset.edtext != null && ED) { ED.E.texts[+el.dataset.edtext].text = el.value; ED.P.setEdit(ED.E); return; }
   if (el.dataset.edvol && ED) { ED.E.volume = Number(el.value) / 100; const lab = document.getElementById('edvolv'); if (lab) lab.textContent = el.value + ' %'; ED.P.setEdit(ED.E); return; }
