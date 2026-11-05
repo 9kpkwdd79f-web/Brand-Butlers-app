@@ -154,6 +154,7 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 .ph .bad { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 8px; background: #A04800; color: #FFFFFF; font-size: 12px; font-weight: 600; }
 .take { position: absolute; inset: 0; border: 1.5px dashed var(--chev); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--blue); font-size: 13px; font-weight: 600; background: var(--card); cursor: pointer; }
 .take input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.ph .take svg { position: static; width: 30px; height: 30px; }
 .retake { position: relative; display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px; border-radius: 10px; background: var(--fill); color: var(--blue); font-size: 15px; font-weight: 600; cursor: pointer; }
 .retake input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .where { width: 52px; height: 52px; flex-shrink: 0; background: var(--fill); border-radius: 10px; }
@@ -330,6 +331,23 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 .peh.nw { left: 0; top: 0; cursor: nwse-resize; } .peh.ne { left: 100%; top: 0; cursor: nesw-resize; } .peh.se { left: 100%; top: 100%; cursor: nwse-resize; } .peh.sw { left: 0; top: 100%; cursor: nesw-resize; }
 .peh.n { left: 50%; top: 0; cursor: ns-resize; } .peh.s { left: 50%; top: 100%; cursor: ns-resize; } .peh.e { left: 100%; top: 50%; cursor: ew-resize; } .peh.w { left: 0; top: 50%; cursor: ew-resize; }
 .pebox.locked .peh.n, .pebox.locked .peh.s, .pebox.locked .peh.e, .pebox.locked .peh.w { display: none; }
+
+.xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.xtile { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #1C1C1E; }
+.xopen { position: absolute; inset: 0; border: none; padding: 0; background: none; display: block; width: 100%; }
+.xopen img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.xnone { position: absolute; inset: 0; background: #2C2C2E; }
+.xplay { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; }
+.xtile .vlen { position: absolute; right: 5px; bottom: 5px; background: rgba(0,0,0,0.7); color: #fff; font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 4px; }
+.xdel { position: absolute; top: 5px; right: 5px; width: 26px; height: 26px; border-radius: 13px; border: none; background: rgba(0,0,0,0.6); color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.xprog { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.3); overflow: hidden; }
+.xprog span { display: block; height: 100%; background: #fff; transition: width .2s; }
+.xadd { background: var(--card); border: 2px dashed var(--sep); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--blue); font-size: 12px; font-weight: 600; text-align: center; line-height: 15px; cursor: pointer; }
+.xadd svg { width: 26px; height: 26px; }
+
+.xinstr { position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 30; display: flex; align-items: center; gap: 8px; border: none; border-radius: 999px; background: var(--blue); color: #fff; font-size: 15px; font-weight: 600; padding: 10px 16px 10px 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.28); }
+.xinstr svg { width: 22px; height: 22px; }
+.xinstr .xic { min-width: 22px; height: 22px; border-radius: 11px; background: rgba(255,255,255,0.25); font-size: 12px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
 /* ---------- desktop (admins on wide screens) ---------- */
 body.desk { padding-left: 0; padding-right: 0; }
 body.desk .app { max-width: 900px; margin: 0 auto 0 248px; padding: 28px 40px 60px; }
@@ -526,7 +544,7 @@ function picToJpeg(file, max, q) {
     im.src = url;
   });
 }
-const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0 });
+const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0, extras: [] });
 const toReport = (row) => { const ts = row.submitted_at ? Date.parse(row.submitted_at) : null; return Object.assign(emptyReport(), row.data || {}, { draft: row.draft, submittedTs: ts, submittedAt: ts ? hhmm(ts) : '' }); };
 
 async function loadAll() {
@@ -623,7 +641,7 @@ function hydrate() {
 
 /* report drafts are saved to the server as you go */
 const RQ = new Map();
-const REPORT_KEYS = ['init', 'contact', 'contactRole', 'parts', 'extra', 'comments', 'nextNote', 'problem', 'probType', 'probText', 'photos', 'checks', 'signed', 'shots'];
+const REPORT_KEYS = ['init', 'contact', 'contactRole', 'parts', 'extra', 'comments', 'nextNote', 'problem', 'probType', 'probText', 'photos', 'checks', 'signed', 'shots', 'extras'];
 function queueReport(j, now) {
   if (!j || !j.report || !j.report.draft) return Promise.resolve();
   clearTimeout(RQ.get(j.id));
@@ -1334,6 +1352,7 @@ function reportFlow(j) {
     const ph = S.phase;
     const done = (k) => r.photos[k].filter((p) => p && p.ok).length;
     h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 2 of 3</span><h1 style="font-size:28px;line-height:34px">Photos</h1><p class="muted" style="margin:6px 0 0;font-size:15px;line-height:21px">${ph === 'before' ? 'Take these four before you start work. Each photo is checked for light and sharpness.' : 'Retake each angle when you are done. Your before photo is the guide, so every pair lines up.'}</p></div>`;
+    if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
     h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Phase"><button type="button" class="${ph === 'before' ? 'on' : ''}" data-a="phase" data-v="before">Before · ${done('before')}/4</button><button type="button" class="${ph === 'after' ? 'on' : ''}" data-a="phase" data-v="after">After · ${done('after')}/4</button></div>`;
     h += `<div class="stack" style="margin-top:14px;gap:12px">${ANGLES.map((a, i) => {
       const mine = r.photos[ph][i];
@@ -1342,17 +1361,23 @@ function reportFlow(j) {
       const top = ph === 'before' ? `<div class="slot1">${slot}</div>` : `<div class="pair">${r.photos.before[i] ? `<div class="ph">${pimg(r.photos.before[i].k, 'Before: ' + a.t)}<span class="tag">Your before</span></div>` : `<div class="ph" style="display:flex;align-items:center;justify-content:center"><span class="muted" style="font-size:13px;padding:8px;text-align:center">Take the before photo first</span></div>`}${slot}</div>`;
       return `<div class="shot">${top}<div style="display:flex;gap:12px;align-items:flex-start"><svg class="where" viewBox="0 0 52 52" role="img" aria-label="Where to stand"><rect x="13" y="6" width="26" height="6" rx="1.5" fill="var(--fg)"/><polygon points="${a.cone}" fill="var(--blue)" fill-opacity="0.2"/><circle cx="${a.pos[0]}" cy="${a.pos[1]}" r="4" fill="var(--blue)"/></svg><div style="flex:1;display:flex;flex-direction:column;gap:3px"><b>${i + 1} · ${a.t}</b><span class="muted" style="font-size:15px;line-height:20px">${a.h}</span>${mine ? `<label class="retake" style="align-self:flex-start;margin-top:6px">Retake<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label>` : ''}</div></div></div>`;
     }).join('')}</div>`;
+    h += extrasBlock(j, true);
     const left = 8 - done('before') - done('after');
     h += `<div style="margin-top:20px" class="stack">${ph === 'before' && done('before') === 4 && done('after') < 4 ? '<button type="button" class="btn" data-a="phase" data-v="after">Done with work — take after photos</button>' : `<button type="button" class="btn" data-a="stepNext" ${left ? 'disabled' : ''}>${left ? left + (left === 1 ? ' photo' : ' photos') + ' left' : 'Continue to sign-off'}</button>`}</div>`;
   } else {
     const ok = r.checks.every(Boolean) && r.signed;
     h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 3 of 3</span><h1 style="font-size:28px;line-height:34px">Check and sign</h1></div>`;
+    if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
     h += `<div class="banner" style="margin-top:14px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 18)}Photo check passed: all 8 are bright and sharp enough</div>`;
     h += `<h2 class="sec">Before you leave <span class="num">${r.checks.filter(Boolean).length} of 4</span></h2><div class="group">${CHECKS.map((c, i) => `<button type="button" class="row" aria-pressed="${r.checks[i]}" data-a="check" data-v="${i}"><span class="check g ${r.checks[i] ? 'on' : ''}">${I.tick()}</span>${c}</button>`).join('')}</div>`;
     h += `<h2 class="sec">Store sign-off <button type="button" class="link" style="font-size:13px;padding:0" data-a="sigClear">Clear</button></h2><div class="card" style="gap:8px;padding:14px"><span style="font-size:15px;line-height:20px;color:var(--fg2)">Hand the phone to ${esc(r.contact || 'the store contact')} to confirm the work is done.</span><canvas class="sig" id="sig" aria-label="Signature pad, sign with your finger"></canvas><span class="muted" style="font-size:13px">${esc(r.contact || 'Store contact')} · ${esc(r.contactRole)}</span></div>`;
+    if ((r.extras || []).length || xupFor(j).length) h += `<div class="row" style="margin-top:12px;border-radius:12px;border:none"><span class="grow"><span>${countExtras(r.extras || [])} attached</span><span class="sub">${xupFor(j).length ? 'Still uploading. Keep the app open.' : 'The admin sees them with the report.'}</span></span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="stepBack">Change</button></div>`;
     h += `<h2 class="sec">What happens next</h2><div class="group"><div class="row"><span class="grow"><span>An admin approves it first</span><span class="sub">Then it goes to Apple. You'll see it here if anything needs changing.</span></span></div></div>`;
     h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="submitReport" ${ok ? '' : 'disabled'}>${!r.checks.every(Boolean) ? 'Finish the checklist' : !r.signed ? 'Sign to finalize' : 'Finalize and submit'}</button></div>`;
   }
+  // instructions stay one tap away while taking photos and signing off
+  const vs = st >= 2 ? j.videos.map(videoBy).filter(Boolean) : [];
+  if (vs.length) h += `<div style="height:64px"></div><button type="button" class="xinstr" data-a="playJob" data-v="${j.id}">${I.play.replace('rgba(0,0,0,0.55)', 'rgba(255,255,255,0.25)')}<span>Instructions</span><span class="xic">${vs.length}</span></button>`;
   return h;
 }
 function submitted(j) {
@@ -1372,6 +1397,7 @@ function approvalDetail(j) {
   const chk = (ok, t, s) => `<div class="row"><span class="ico" style="width:30px;height:30px;background:${ok ? 'var(--green-bg)' : 'var(--red-bg)'}">${ok ? I.tick('var(--green)', 14) : I.flagP('var(--redbtn)')}</span><span class="grow"><span style="font-size:15px;font-weight:600">${t}</span><span class="sub">${s}</span></span></div>`;
   h += `<h2 class="sec">Checks</h2><div class="group">${chk(r.signed, 'Signed by the store', esc(r.contact) + ' · ' + esc(r.contactRole))}${chk(photosOk, '8 photos passed the check', 'Bright and sharp enough')}${chk(r.checks.every(Boolean), 'Checklist complete', '4 of 4 before leaving')}${r.problem ? chk(false, 'Problem reported', esc(r.problem.type) + '. ' + esc(r.problem.text)) : ''}</div>`;
   h += `<h2 class="sec">Before and after</h2><div class="stack">${ANGLES.map((a, i) => `<div class="shot" style="padding:10px;gap:8px"><b style="font-size:13px">${i + 1} · ${a.t}</b><div class="pair"><div class="ph">${r.photos.before[i] ? pimg(r.photos.before[i].k, 'Before') : ''}<span class="tag">Before</span></div><div class="ph">${r.photos.after[i] ? pimg(r.photos.after[i].k, 'After') : ''}<span class="tag">After</span></div></div></div>`).join('')}</div>`;
+  if ((r.extras || []).length) h += extrasBlock(j, false);
   const parts = r.parts.filter(([, q]) => q > 0);
   h += `<h2 class="sec">Parts replaced</h2><div class="group">${parts.length ? parts.map(([p, q]) => `<div class="row"><span class="grow">${esc(p)}</span><span class="val num">× ${q}</span></div>`).join('') : '<div class="row muted">None</div>'}</div>`;
   if (r.comments) h += `<h2 class="sec">Comments</h2><div class="group"><div class="row" style="font-size:15px;line-height:21px">${esc(r.comments)}</div></div>`;
@@ -1426,7 +1452,16 @@ function renderSheet() {
   const [kind, arg] = String(U.sheet).split(':');
   const me = meU();
   let body = '';
-  if (kind === 'account' && me) {
+  if (kind === 'extra') {
+    const [jid, ix] = String(arg).split('|'); const j = job(jid); const x = j && j.report && (j.report.extras || [])[+ix];
+    if (!x) { U.sheet = null; overlay.innerHTML = ''; return; }
+    const list = j.report.extras; const canDel = j.report.draft && S.role === 'installer';
+    body = `${sheetHead(x.kind === 'video' ? 'Video' : 'Photo', 'Close')}
+      <div class="picview">${x.kind === 'video' ? `<video data-pv="${esc(x.k)}" controls playsinline preload="metadata" style="width:100%;max-height:62vh;display:block;background:#000"></video>` : pimg(x.k, 'Extra photo')}</div>
+      ${list.length > 1 ? `<div class="btn2"><button type="button" class="btn small sec" data-a="sheet" data-v="extra:${jid}|${+ix - 1}" ${+ix === 0 ? 'disabled' : ''}>\u2039 Previous</button><button type="button" class="btn small" data-a="sheet" data-v="extra:${jid}|${+ix + 1}" ${+ix === list.length - 1 ? 'disabled' : ''}>Next \u203a</button></div><p class="foot" style="text-align:center;margin:0">${+ix + 1} of ${list.length}</p>` : ''}
+      ${canDel ? `<button type="button" class="btn sec" style="color:var(--red)" data-a="extraDel" data-v="${+ix}">Remove from report</button>` : ''}`;
+    setTimeout(() => { hydrate(); const vd = overlay.querySelector('video[data-pv]'); if (vd) { phGet(vd.dataset.pv).then((u) => { if (u) vd.src = u; }); if (x.poster) phGet(x.poster).then((u) => { if (u) vd.poster = u; }); } }, 0);
+  } else if (kind === 'account' && me) {
     body = `<div style="display:flex;align-items:center;gap:12px;padding:8px 4px"><span class="avatar" style="width:48px;height:48px;border-radius:24px;margin:0">${initials(me.name || me.email)}</span><div style="display:flex;flex-direction:column;min-width:0"><b>${esc(me.name)}</b><span class="muted" style="font-size:13px;word-break:break-all">${esc(me.email)}</span></div></div>
       ${me.admin && me.installer ? `<div class="group">${['admin', 'installer'].map((r) => `<button type="button" class="row" data-a="switchRole" data-v="${r}"><span class="grow"><span>${r === 'admin' ? 'Admin workspace' : 'Installer workspace'}</span><span class="sub">${r === 'admin' ? 'Tickets, approvals, team and insights' : 'Jobs, reports and earnings'}</span></span>${S.role === r ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}</div>` : ''}
       <div class="group"><button type="button" class="row" data-a="chpw"><span class="grow">Change password</span>${I.chev}</button><button type="button" class="row" data-a="signOut"><span class="grow" style="color:var(--red)">Sign out</span></button></div>
@@ -1981,6 +2016,47 @@ function processPhoto(file) {
   });
 }
 
+
+/* ---------- extra photos and videos on a report (optional, any number) ---------- */
+const XUP = new Map(); // uploads in progress: key -> { jid, p, poster }
+const xupFor = (j) => Array.from(XUP.entries()).filter(([, x]) => x.jid === j.id);
+const countExtras = (xs) => { const nv = xs.filter((x) => x.kind === 'video').length, np = xs.length - nv; return [np ? np + (np === 1 ? ' extra photo' : ' extra photos') : '', nv ? nv + (nv === 1 ? ' video' : ' videos') : ''].filter(Boolean).join(' and '); };
+function extrasBlock(j, edit) {
+  const r = j.report; const xs = r.extras || []; const up = edit ? xupFor(j) : [];
+  const tile = (x, i) => `<div class="xtile"><button type="button" class="xopen" data-a="sheet" data-v="extra:${j.id}|${i}" aria-label="Open ${x.kind === 'video' ? 'video' : 'photo'} ${i + 1}">${x.kind === 'video' ? (x.poster ? pimg(x.poster, '') : '<span class="xnone"></span>') + `<span class="xplay">${I.play}</span>${x.dur ? `<span class="vlen">${fmtLen(x.dur)}</span>` : ''}` : pimg(x.k, 'Extra photo ' + (i + 1))}</button>${edit ? `<button type="button" class="xdel" data-a="extraDel" data-v="${i}" aria-label="Remove">\u2715</button>` : ''}</div>`;
+  const pend = ([k, x]) => `<div class="xtile"><div class="xopen">${x.thumb ? `<img src="${x.thumb}" alt="">` : '<span class="xnone"></span>'}<span class="xprog"><span id="xp-${esc(k.split('/').pop().replace(/\W/g, ''))}" style="width:${Math.round(x.p * 100)}%"></span></span></div></div>`;
+  let h = `<h2 class="sec">Extra photos and videos${xs.length ? ' \u00b7 ' + xs.length : ''}${edit ? ' <span class="muted" style="text-transform:none;letter-spacing:0">optional</span>' : ''}</h2>`;
+  if (edit) h += `<p class="foot" style="margin:0 4px 8px">Add anything else worth showing: details, damage, the finished result. Pick several at once. Videos up to 50 MB.</p>`;
+  h += `<div class="xgrid">${xs.map(tile).join('')}${up.map(pend).join('')}${edit ? `<label class="xtile xadd">${I.cam}<span>Add photos<br>or videos</span><input type="file" accept="image/*,video/*" multiple data-extra="1" class="vh"></label>` : ''}</div>`;
+  return h;
+}
+async function addExtras(j, files) {
+  const r = j.report; r.extras = r.extras || [];
+  const big = files.filter((f) => /^video\//.test(f.type) && f.size > VIDEO_MAX); if (big.length) toast(big.length === 1 ? 'That video is ' + fmtSize(big[0].size) + '. Keep videos under 50 MB, about a minute.' : big.length + ' videos are over 50 MB and were left out.');
+  for (const f of files) {
+    const isVid = /^video\//.test(f.type) || /\.(mov|mp4|m4v|webm)$/i.test(f.name); const ts = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    if (!isVid) {
+      try { const p = await processPhoto(f); const k = j.id + '/extra-' + ts + '.jpg'; phPut(k, p.data); r.extras.push({ k, kind: 'image' }); queueReport(j); render(); } catch (e) { toast('Couldn\u2019t read one of the photos.'); }
+      continue;
+    }
+    if (f.size > VIDEO_MAX) continue;
+    const ext = (f.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4';
+    const k = j.id + '/extra-' + ts + '.' + ext; const pk = j.id + '/extra-' + ts + '-poster.jpg';
+    const x = { jid: j.id, p: 0, thumb: '' }; XUP.set(k, x); render();
+    const meta = videoMeta(f).then((m) => { if (m.poster) { x.thumb = URL.createObjectURL(m.poster); render(); } return m; }).catch(() => ({}));
+    const pr = (async () => {
+      const bar = () => document.getElementById('xp-' + k.split('/').pop().replace(/\W/g, ''));
+      await uploadWithProgress('photos', k, f, f.type || (ext === 'mov' ? 'video/quicktime' : 'video/mp4'), (p) => { x.p = p; const b = bar(); if (b) b.style.width = Math.round(p * 100) + '%'; });
+      const m = await meta; let poster = null;
+      if (m.poster) { const res = await sb.storage.from('photos').upload(pk, m.poster, { upsert: true, contentType: 'image/jpeg' }); if (!res.error) poster = pk; }
+      r.extras.push({ k, kind: 'video', poster, dur: m.duration ? Math.round(m.duration * 10) / 10 : null, size: f.size });
+    })();
+    PEND.set(k, pr);
+    pr.then(() => { toast('Video added to the report'); }, () => { toast('The video didn\u2019t upload. Check your connection and try again.'); })
+      .finally(() => { XUP.delete(k); PEND.delete(k); if (x.thumb) URL.revokeObjectURL(x.thumb); queueReport(j); render(); });
+  }
+}
+
 /* ---------- password field helpers ---------- */
 function pwRules() {
   const a = document.getElementById('pw1'), b = document.getElementById('pw2'); if (!a || !b) return false;
@@ -2127,6 +2203,7 @@ const A = {
   setManage(v) { S.manage = v; render(false); },
   editVideo(v) { const x = videoBy(v); U.sheet = null; renderSheet(); edClose(); ED = { id: v, v: x, E: normEdit(x.edit, x.duration), dur: x.duration || 0, t: 0, sel: 0, tab: 'cut', hist: [], thumbs: [], blob: null, P: null, saved: JSON.stringify(normEdit(x.edit, x.duration)) }; S.view = { kind: 'veditor', id: v }; render(false); },
   edTab(v) { ED.tab = v; edPanel(); },
+  extraDel(v) { const j = job(S.view.id); const r = j && j.report; if (!r || !r.draft) return; const x = r.extras[+v]; if (!x) return; r.extras.splice(+v, 1); phDel(x.k); if (x.poster) phDel(x.poster); queueReport(j); U.sheet = null; renderSheet(); render(); toast(x.kind === 'video' ? 'Video removed' : 'Photo removed'); },
   editPic(v) { const x = videoBy(v); U.sheet = null; renderSheet(); peClose(); const e = x.edit && x.edit.orig ? x.edit : null; PE = { id: v, v: x, rot: e ? e.rot || 0 : 0, crop: e && e.crop ? Object.assign({}, e.crop) : { x: 0, y: 0, w: 1, h: 1 }, aspect: e && e.aspect != null ? e.aspect : 0, img: null, hist: [] }; PE.saved = JSON.stringify([PE.rot, PE.crop]); S.view = { kind: 'peditor', id: v }; render(false); },
   peAspect(v) { pePush(); PE.aspect = Number(v); peFit(); peBox(); pePanel(); },
   peRotate(v) { pePush(); PE.rot = (PE.rot + Number(v) + 360) % 360; PE.crop = { x: 0, y: 0, w: 1, h: 1 }; if (PE.aspect) peFit(); peDraw(); pePanel(); },
@@ -2497,6 +2574,7 @@ document.addEventListener('change', (e) => {
     const files = Array.from(el.files || []); const back = el.dataset.videoFile; el.value = ''; pickFiles(files, back);
     return;
   }
+  if (el.dataset.extra) { const files = Array.from(el.files || []); el.value = ''; if (files.length && S.view) addExtras(job(S.view.id), files); return; }
   if (el.dataset.shot) {
     const f = el.files && el.files[0]; if (!f) return;
     const [ph, i] = el.dataset.shot.split('-');
