@@ -236,6 +236,100 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 input[type="range"] { width: 100%; accent-color: var(--blue); }
 .bar { height: 8px; border-radius: 4px; background: var(--fill2); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--blue); transition: width .2s; }
+
+:root { --c0: #2a78d6; --c1: #eb6834; --c2: #1baf7a; --c3: #eda100; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c0: #3987e5; --c1: #d95926; --c2: #199e70; --c3: #c98500; } }
+:root[data-theme="dark"] { --c0: #3987e5; --c1: #d95926; --c2: #199e70; --c3: #c98500; }
+.edruler { position: relative; height: 16px; margin-top: 4px; font-size: 11px; color: var(--muted); }
+.edruler span { position: absolute; top: 0; transform: translateX(-50%); }
+.edruler span:first-child { transform: none; }
+.edruler span:last-child { transform: translateX(-100%); }
+.edh { position: absolute; top: 0; bottom: 14px; width: 16px; margin-left: 0; z-index: 3; cursor: ew-resize; touch-action: none; }
+.edh.e { margin-left: -16px; }
+.edh::after { content: ""; position: absolute; left: 5px; top: 12px; bottom: 12px; width: 6px; border-radius: 3px; background: #0A84FF; box-shadow: 0 0 0 1.5px rgba(0,0,0,0.35); }
+.edh.sel::after { background: #FF9F0A; }
+.edn { width: 26px; height: 26px; border-radius: 7px; background: #0A84FF; color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.edn.sel { background: #FF9F0A; }
+kbd { font: 600 11px/1 -apple-system, system-ui, sans-serif; background: var(--fill); border-radius: 4px; padding: 2px 5px; margin: 0 1px; color: var(--fg2); }
+.edkeys { display: none; }
+body.desk .edkeys { display: block; margin-top: 16px; line-height: 22px; }
+.edcols { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 28px; margin-top: 20px; align-items: start; }
+.edright { position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; }
+body.desk .edesk .ep video { max-height: 62vh; }
+body.desk .edesk .edtl { height: 86px; }
+body.desk .edesk .ep-t { font-size: 22px; }
+.dgrid.nt { grid-template-columns: minmax(0, 1fr) 380px; margin-top: 8px; }
+.ntform { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; align-items: start; }
+.ntc { min-width: 0; }
+.ntc.full { grid-column: 1 / -1; }
+.ntc > .btn.sec { width: auto; padding: 0 20px; }
+.ntsum { padding-bottom: 18px; }
+.ntsum .group { background: var(--bg); }
+.chip.sm { min-height: 28px; font-size: 13px; padding: 0 10px; cursor: default; }
+.splitbar { display: flex; gap: 2px; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 8px; }
+.splitlab { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.splitlab b { color: var(--fg); font-weight: 600; }
+.splitlab i, .clegend i, .ctip i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+.kpis.k4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.kd { font-size: 13px; font-weight: 500; }
+.igrid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(300px, 1fr); gap: 20px; margin-top: 20px; align-items: stretch; }
+.icard { background: var(--card); border-radius: 16px; padding: 18px 22px 20px; min-width: 0; }
+.chead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ctitle { font-size: 17px; font-weight: 700; margin: 0; }
+.clegend { display: flex; gap: 14px; font-size: 13px; color: var(--fg2); flex-wrap: wrap; }
+.chart { margin-top: 14px; padding-left: 28px; }
+.cplot { position: relative; height: 260px; }
+.cgrid { position: absolute; left: 0; right: 0; border-top: 1px solid var(--sep); }
+.cgrid span { position: absolute; left: -28px; width: 22px; text-align: right; top: -8px; font-size: 11px; color: var(--muted); }
+.ccols { position: absolute; inset: 0; display: flex; gap: 6px; }
+.ccol { position: relative; flex: 1; display: flex; align-items: flex-end; justify-content: center; outline: none; border-radius: 6px; }
+.ccol:hover, .ccol:focus-visible { background: var(--fill); }
+.cstack { width: min(46px, 70%); display: flex; flex-direction: column-reverse; gap: 2px; border-radius: 4px 4px 0 0; overflow: hidden; }
+.cstack span { display: block; min-height: 2px; }
+.ctip { display: none; position: absolute; bottom: calc(100% - 40px); left: 50%; transform: translate(-50%, -100%); z-index: 4; background: #1C1C1E; color: #fff; border-radius: 10px; padding: 10px 12px; font-size: 12px; line-height: 18px; white-space: nowrap; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,0.25); pointer-events: none; }
+.ctip.rt { left: auto; right: 0; transform: translateY(-100%); }
+.ctip b { font-size: 13px; margin-bottom: 2px; }
+.ccol:hover .ctip, .ccol:focus-visible .ctip { display: flex; top: 8px; bottom: auto; }
+.cx { display: flex; gap: 6px; margin-top: 8px; }
+.cx span { flex: 1; text-align: center; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.cempty { height: 260px; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 15px; padding: 0 40px; }
+.hbars { display: flex; flex-direction: column; gap: 16px; margin-top: 18px; }
+.hb { display: grid; grid-template-columns: 110px minmax(0, 1fr) 84px; align-items: center; gap: 12px; font-size: 15px; }
+.hb b { text-align: right; }
+.hbt { display: block; height: 12px; border-radius: 6px; background: var(--fill); overflow: hidden; }
+.hbt span { display: block; height: 100%; border-radius: 6px; }
+.itbl { border-radius: 0 0 16px 16px; }
+.itbl td { padding: 10px 14px; }
+.itbl th:first-child, .itbl td:first-child { padding-left: 22px; }
+.itbl td:last-child { padding-right: 22px; }
+.dropz { display: flex; align-items: center; justify-content: center; text-align: center; margin-top: 14px; min-height: 64px; border: 2px dashed var(--sep); border-radius: 14px; color: var(--muted); font-size: 15px; cursor: pointer; position: relative; padding: 10px 20px; transition: background .15s, border-color .15s; }
+.dropz:hover { background: var(--card); }
+.dropz.over { border-color: var(--blue); background: var(--blue-bg); color: var(--blue-fg); }
+.vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; margin-top: 18px; }
+.vcard { display: flex; flex-direction: column; gap: 10px; border: 2px solid transparent; border-radius: 16px; background: var(--card); padding: 10px 10px 14px; text-align: left; color: var(--fg); cursor: pointer; min-width: 0; transition: border-color .15s, box-shadow .15s; }
+.vcard:hover { border-color: var(--blue); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+.vcthumb { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; background: #1C1C1E; }
+.vcthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vcthumb .vlen { position: absolute; right: 8px; bottom: 8px; background: rgba(0,0,0,0.72); color: #fff; font-size: 12px; font-weight: 600; padding: 2px 7px; border-radius: 6px; z-index: 2; }
+.vchov { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.vct { display: flex; flex-direction: column; gap: 3px; padding: 0 4px; min-width: 0; }
+.vct b { font-size: 16px; font-weight: 600; }
+.vct .sub { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+
+.pecols { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; margin-top: 20px; align-items: start; }
+.pestage { background: #1C1C1E; border-radius: 14px; min-height: 260px; display: flex; align-items: center; justify-content: center; padding: 12px; overflow: hidden; }
+.pewrap { position: relative; touch-action: none; -webkit-user-select: none; user-select: none; }
+.pecv { display: block; }
+.pebox { position: absolute; box-shadow: 0 0 0 9999px rgba(0,0,0,0.58); outline: 2px solid #fff; cursor: move; }
+.pebox i { position: absolute; background: rgba(255,255,255,0.35); pointer-events: none; }
+.pebox .g1, .pebox .g2 { top: 0; bottom: 0; width: 1px; } .pebox .g1 { left: 33.33%; } .pebox .g2 { left: 66.66%; }
+.pebox .g3, .pebox .g4 { left: 0; right: 0; height: 1px; } .pebox .g3 { top: 33.33%; } .pebox .g4 { top: 66.66%; }
+.peh { position: absolute; width: 28px; height: 28px; margin: -14px 0 0 -14px; z-index: 2; touch-action: none; }
+.peh::after { content: ""; position: absolute; left: 7px; top: 7px; width: 14px; height: 14px; border-radius: 4px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+.peh.nw { left: 0; top: 0; cursor: nwse-resize; } .peh.ne { left: 100%; top: 0; cursor: nesw-resize; } .peh.se { left: 100%; top: 100%; cursor: nwse-resize; } .peh.sw { left: 0; top: 100%; cursor: nesw-resize; }
+.peh.n { left: 50%; top: 0; cursor: ns-resize; } .peh.s { left: 50%; top: 100%; cursor: ns-resize; } .peh.e { left: 100%; top: 50%; cursor: ew-resize; } .peh.w { left: 0; top: 50%; cursor: ew-resize; }
+.pebox.locked .peh.n, .pebox.locked .peh.s, .pebox.locked .peh.e, .pebox.locked .peh.w { display: none; }
 /* ---------- desktop (admins on wide screens) ---------- */
 body.desk { padding-left: 0; padding-right: 0; }
 body.desk .app { max-width: 900px; margin: 0 auto 0 248px; padding: 28px 40px 60px; }
@@ -387,11 +481,11 @@ const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slic
 
 /* only view preferences are kept on the phone; all data lives on the server */
 const KEY = PREVIEW ? 'bb-prefs-preview-v5' : 'bb-prefs-v5';
-const PREF_KEYS = ['lastEmail', 'role', 'tab', 'region', 'period', 'insRegion', 'insPeriod', 'earnPeriod', 'split'];
+const PREF_KEYS = ['lastEmail', 'role', 'tab', 'region', 'period', 'insRegion', 'insPeriod', 'insDP', 'earnPeriod', 'split'];
 function fresh() {
   return {
     v: 5, users: [], jobs: [], stores: [], templates: [], tools: [], videos: [], manage: 'people', me: null, loading: true, choosing: false,
-    lastEmail: '', role: 'admin', tab: 'overview', region: 0, period: 2, insRegion: 0, insPeriod: 2, earnPeriod: 2, split: [40, 10],
+    lastEmail: '', role: 'admin', tab: 'overview', region: 0, period: 2, insRegion: 0, insPeriod: 2, insDP: 1, earnPeriod: 2, split: [40, 10],
     view: null, step: 1, phase: 'before', login: { step: 'email', email: '', err: '', acc: null }, draft: null
   };
 }
@@ -474,7 +568,7 @@ async function boot() {
 }
 const quietRefresh = () => {
   if (!S.me || S.loading || S.choosing || document.hidden || U.sheet) return;
-  if (S.view && (S.view.kind === 'report' || S.view.kind === 'veditor')) return;
+  if (S.view && (S.view.kind === 'report' || S.view.kind === 'veditor' || S.view.kind === 'peditor')) return;
   const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
   refresh().then(() => render()).catch(() => { /* try again later */ });
 };
@@ -614,6 +708,10 @@ function render(keepScroll = true) {
   let html = '';
   if (S.loading) html = `<div class="login"><div class="lhero">${LOGO(76)}<h1 class="lname">Brand Butlers</h1><p class="ltag">Loading…</p></div></div>`;
   else if (!S.me || S.choosing) html = viewLogin();
+  else if (S.view && S.view.kind === 'peditor') {
+    if (PE && PE.id === S.view.id && document.getElementById('pedit')) { renderTabs(); renderSheet(); return; }
+    html = picEditorShell();
+  }
   else if (S.view && S.view.kind === 'veditor') {
     if (ED && ED.id === S.view.id && document.getElementById('vedit')) { renderTabs(); renderSheet(); return; }
     html = editorShell();
@@ -623,13 +721,14 @@ function render(keepScroll = true) {
   app.innerHTML = html;
   const desk = isDesk();
   document.body.classList.toggle('desk', desk);
-  app.classList.toggle('dwide', desk && !S.view && ['overview', 'approvals'].includes(S.tab));
+  app.classList.toggle('dwide', desk && ((!S.view && (['overview', 'approvals', 'new', 'insights'].includes(S.tab) || (S.tab === 'team' && S.manage === 'videos'))) || (S.view && (S.view.kind === 'veditor' || S.view.kind === 'peditor'))));
   app.classList.toggle('noTabs', !S.me || S.choosing || S.loading || !!S.view);
   renderTabs();
   renderSheet();
   hydrate();
   if (S.view && S.view.kind === 'report') { if (S.step === 3) setupSig(); queueReport(job(S.view.id)); }
   if (S.view && S.view.kind === 'veditor' && ED) mountEditor();
+  if (S.view && S.view.kind === 'peditor' && PE) mountPicEditor();
   window.scrollTo(0, keepScroll ? y : 0);
   save();
 }
@@ -789,8 +888,10 @@ function adminNew() {
     ? navbar(`<button type="button" class="navbtn" data-a="cancelEdit">Cancel</button>`, 'Edit ticket', `<button type="button" class="navbtn r" data-a="createTicket">Save</button>`)
       + (editing.status !== 'scheduled' && editing.status !== 'declined' ? `<div class="banner" style="margin-top:12px;background:var(--orange-bg);color:var(--fg2)">${esc(first(nameOf(editing.installer)))} has started the report. Changes show up in their app right away.</div>` : '')
     : header('New ticket', 'Client: Apple');
+  const PT = {}; let pm = 0; const cut = (k) => { PT[k] = h.slice(pm); pm = h.length; }; cut('head');
   h += `<h2 class="sec">Apple ticket number</h2>`;
   h += `<input id="ticket" class="box num${E.ticket ? ' bad-field' : ''}" data-bind="ticket" value="${esc(d.ticket)}" placeholder="From Apple's system" autocapitalize="characters" autocomplete="off" aria-label="Apple ticket number" style="font-weight:600">${errL('ticket')}`;
+  cut('ticket');
   const tpl = S.templates.find((t) => t.id === d.template);
   h += `<h2 class="sec">Fixture template</h2>`;
   h += S.templates.length
@@ -799,12 +900,16 @@ function adminNew() {
   if (tpl) h += U.confirm === 'deltpl'
     ? `<div class="card" style="gap:10px;margin-top:10px"><b>Delete the template \u201c${esc(tpl.name)}\u201d?</b><span class="muted" style="font-size:15px">It disappears for all admins. Tickets already created keep their tools and parts.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="deleteTemplate" data-v="${tpl.id}">Delete</button></div></div>`
     : `<p class="foot">Fills in the tools and parts from \u201c${esc(tpl.name)}\u201d. You can still change them. <button type="button" class="link" style="font-size:13px;padding:0;color:var(--red)" data-a="confirm" data-v="deltpl">Delete template</button></p>`;
+  cut('tpl');
   h += `<h2 class="sec">Country</h2><div class="seg tall" role="group" aria-label="Country">${[0, 1, 2, 3].map((i) => `<button type="button" class="${d.c === i ? 'on' : ''}" aria-pressed="${d.c === i}" data-a="draftCountry" data-v="${i}">${flag(i)}${C[i].name}</button>`).join('')}</div>`;
+  cut('country');
   h += `<h2 class="sec">Store</h2><div class="group${E.store ? ' bad-field' : ''}">${stores.map((s) => `<button type="button" class="row" aria-pressed="${d.store === s.id}" data-a="draftStore" data-v="${s.id}"><span class="grow"><span>${esc(s.name)}</span><span class="sub">${esc(s.addr)}</span></span>${d.store === s.id ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}
     ${d.store === 'new' || !stores.length ? `<label class="row" for="sname"><span class="lbl">Store</span><input id="sname" class="inl" data-bind="storeName" value="${esc(d.storeName)}" placeholder="e.g. Elkjøp Storo" autocomplete="off"></label><label class="row" for="saddr"><span class="lbl">Address</span><input id="saddr" class="inl" data-bind="storeAddr" value="${esc(d.storeAddr)}" placeholder="Street, postcode, city" autocomplete="off"></label>` : `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftStore" data-v="new">+ New store</button>`}</div>${errL('store')}
     <p class="foot">${stores.length ? 'Stores you add are saved for next time.' : 'Stores you add are saved for next time. The store list from Excel can be imported later.'}</p>`;
   h += `<div class="row" style="margin-top:10px;border-radius:12px;border:none"><span class="ico" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">Support: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · the installer can call or text</span></span></div>`;
+  cut('store');
   h += `<h2 class="sec">When</h2><div class="group"><label class="row" for="ddate"><span class="lbl">Date</span><input id="ddate" class="inl" type="date" data-bind="date" value="${esc(d.date)}" style="text-align:right"></label><label class="row" for="dtime"><span class="lbl">Time</span><input id="dtime" class="inl" type="time" data-bind="time" value="${esc(d.time)}" style="text-align:right"></label></div>`;
+  cut('when');
   h += `<h2 class="sec">Installer</h2><div class="group${E.installer ? ' bad-field' : ''}">`;
   if (lockInstaller) h += `<div class="row"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(nameOf(d.lead))}</span><span class="grow"><span>${esc(nameOf(d.lead))}${d.second ? ' + ' + esc(nameOf(d.second)) : ''}</span><span class="sub">Can\u2019t be changed after the report is started</span></span></div>`;
   else if (!ins.length) h += `<div class="row"><span class="grow"><span>No installers yet</span><span class="sub">Add people with installer access under Team.</span></span><button type="button" class="btn small" style="width:auto;padding:0 14px" data-a="tab" data-v="team">Team</button></div>`;
@@ -813,28 +918,36 @@ function adminNew() {
     if (ins.length > 1) h += !d.secondOn ? `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftSecond">+ Add a second installer <span class="muted" style="font-size:13px">· rarely needed</span></button>` : `<div class="row" style="font-size:13px"><span class="grow muted">${d.second ? esc(first(nameOf(d.lead))) + ' leads and submits the report. The installer share is split.' : 'Tap who joins ' + esc(first(nameOf(d.lead)) || 'the lead') + '.'}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="draftNoSecond">Remove</button></div>`;
   }
   h += `</div>${errL('installer')}`;
+  cut('inst');
   const allTools = S.tools.map((t) => t.name); d.tools.forEach((t) => { if (!allTools.some((x) => x.toLowerCase() === t.toLowerCase())) allTools.push(t); });
   h += `<h2 class="sec">Tools to bring · ${d.tools.length}${S.tools.length ? `<button type="button" class="link" style="font-size:13px;padding:0" data-a="toolEdit">${d.toolEdit ? 'Done' : 'Edit list'}</button>` : ''}</h2><div class="group">${allTools.map((t) => { const on = d.tools.includes(t); const saved = S.tools.find((x) => x.name === t); return d.toolEdit && saved
       ? `<div class="row"><span class="grow">${esc(t)}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removeTool" data-v="${saved.id}">Remove</button></div>`
       : `<button type="button" class="row" aria-pressed="${on}" data-a="draftTool" data-v="${esc(t)}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span>${esc(t)}</button>`; }).join('')}
     <div class="row"><input id="newtool" class="inl" data-bind="newTool" data-enter="addTool" value="${esc(d.newTool)}" placeholder="${allTools.length ? 'Add a tool' : 'Add the first tool, e.g. Cordless drill'}" aria-label="Add a tool" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addTool">Add</button></div></div>
     <p class="foot">Tools you add are saved to the list for all admins.</p>`;
+  cut('tools');
   h += `<h2 class="sec">Parts on site · ${d.parts.length}</h2><div class="group">${d.parts.map((p, i) => `<div class="row"><span class="grow">${esc(p)}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removePart" data-v="${i}" aria-label="Remove ${esc(p)}">Remove</button></div>`).join('')}
     <div class="row"><input id="newpart" class="inl" data-bind="newPart" data-enter="addPart" value="${esc(d.newPart)}" placeholder="Add a part the installer will replace" aria-label="Add a part" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addPart">Add</button></div></div>
     <p class="foot">The installer ticks off what they replaced and can add parts on site.</p>`;
+  cut('parts');
   h += `<h2 class="sec">Video instructions · ${d.videos.length}</h2><div class="group">${d.videos.map((id) => { const v = videoBy(id); return v ? `<div class="row"><button type="button" class="vbtn" data-a="playVideo" data-v="${v.id}">${videoRow(v)}</button><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removeDraftVideo" data-v="${v.id}">Remove</button></div>` : ''; }).join('')}
     <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="pickVideos">+ Add videos or pictures from the library</button></div>
     <p class="foot">The installer sees these under Video instructions on the job card.</p>`;
+  cut('videos');
   h += d.tplOpen
     ? `<div class="card" style="gap:10px;margin-top:14px"><b>${tpl ? 'Save as template' : 'Save as a new template'}</b><span class="muted" style="font-size:15px">Saves the ${d.tools.length} ${d.tools.length === 1 ? 'tool' : 'tools'}, ${d.parts.length} ${d.parts.length === 1 ? 'part' : 'parts'} and ${d.videos.length} ${d.videos.length === 1 ? 'video' : 'videos'} above. All admins can use it.</span><input id="tplname" class="box" style="background:var(--bg)" data-bind="tplName" data-enter="saveTemplate" value="${esc(d.tplName)}" placeholder="e.g. Apple accessory wall" aria-label="Template name" autocomplete="off" autocapitalize="sentences"><div class="btn2"><button type="button" class="btn small sec" data-a="tplOpen" data-v="">Cancel</button><button type="button" class="btn small" data-a="saveTemplate">Save template</button></div></div>`
     : `<button type="button" class="btn sec" style="margin-top:14px" data-a="tplOpen" data-v="1">${tpl ? 'Update or save as template' : 'Save as template'}</button>`;
+  cut('tplsave');
   const sp = splitNums(d); const perInst = d.secondOn && d.second ? 2 : 1;
   h += `<h2 class="sec">Price and split</h2><div class="group${E.price ? ' bad-field' : ''}"><label class="row" for="dprice"><span class="grow">Ticket price</span><span class="muted">${cur}</span><input id="dprice" class="inl num" inputmode="decimal" data-bind="price" data-live="1" value="${esc(d.price)}" placeholder="0" style="flex:0 0 96px;text-align:right;font-weight:600"></label>
     <label class="row" for="dinst"><span class="grow">Installer${twoNames ? ' (' + esc(twoNames) + ')' : ''}<span class="sub num" id="amt-inst">${cur} ${fmt(sp.price * sp.inst / 100 / perInst)}${perInst === 2 ? ' each' : ''}</span></span><input id="dinst" class="inl num pct" inputmode="decimal" data-bind="inst" data-live="1" value="${esc(d.inst)}"><span class="muted">%</span></label>
     <label class="row" for="dadm"><span class="grow">Admin<span class="sub num" id="amt-adm">${cur} ${fmt(sp.price * sp.adm / 100)}</span></span><input id="dadm" class="inl num pct" inputmode="decimal" data-bind="adm" data-live="1" value="${esc(d.adm)}"><span class="muted">%</span></label>
     <div class="row"><span class="grow">Brand Butlers<span class="sub num" id="amt-bb">${cur} ${fmt(sp.price * sp.bb / 100)}</span></span><b class="num" id="pct-bb" style="color:${sp.bb < 0 ? 'var(--red)' : 'var(--fg)'}">${fmt(sp.bb)} %</b></div></div>${errL('price')}
     <p class="foot">The installer only sees their own share, never the full price.</p>`;
+  cut('price');
   h += `<h2 class="sec">Note for installer</h2><textarea id="dnote" class="box" data-bind="note" placeholder="Anything they should know before arriving">${esc(d.note)}</textarea>`;
+  cut('note');
+  if (isDesk()) return newDesk(d, PT, editing);
   h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="createTicket">${editing ? 'Save changes' : twoNames ? 'Create ticket for ' + esc(twoNames) : 'Create ticket'}</button></div>`;
   h += editing ? `<button type="button" class="link" style="width:100%" data-a="cancelEdit">Cancel</button>` : `<p class="foot" style="text-align:center">The job shows up in the installer's app right away.</p>`;
   return h;
@@ -870,6 +983,7 @@ function videoRow(v, extra) {
   return `<span class="vthumb">${posterImg(v)}${isPic(v) ? '<span class="vlen">Picture</span>' : effDur(v) ? `<span class="vlen">${fmtLen(effDur(v))}</span>` : ''}</span><span class="grow"><span style="font-weight:500">${esc(v.title)}${isEdited(v) ? ' <span class="pill p-blue" style="font-size:10px;padding:1px 6px">Edited</span>' : ''}</span><span class="sub">${[uses ? uses + (uses === 1 ? ' ticket' : ' tickets') : '', tu ? tu + (tu === 1 ? ' template' : ' templates') : '', !uses && !tu ? 'Not used yet' : ''].filter(Boolean).join(' · ')}${extra || ''}</span></span>`;
 }
 function adminVideos() {
+  if (isDesk()) return videosDesk();
   let h = header('Manage', 'Instructions for installers');
   h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" data-a="setManage" data-v="people">People</button><button type="button" class="on" data-a="setManage" data-v="videos">Videos & pictures</button></div>`;
   h += `<label class="btn" style="margin-top:16px;position:relative">+ Upload videos or pictures<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label>`;
@@ -882,7 +996,7 @@ function adminTeam() {
   if (S.manage === 'videos') return adminVideos();
   const list = S.users.filter((u) => u.active).sort((a, b) => (a.id === S.me ? -1 : b.id === S.me ? 1 : (a.name || a.email).localeCompare(b.name || b.email)));
   let h = header('Manage', 'Accounts and access');
-  h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" class="on" data-a="setManage" data-v="people">People</button><button type="button" data-a="setManage" data-v="videos">Videos</button></div>`;
+  h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" class="on" data-a="setManage" data-v="people">People</button><button type="button" data-a="setManage" data-v="videos">Videos & pictures</button></div>`;
   h += `<div style="margin-top:16px"><button type="button" class="btn" data-a="addPerson">+ Add person</button></div>`;
   h += `<h2 class="sec">Accounts · ${list.length}</h2><div class="group">${list.map((u) => `<button type="button" class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px" data-a="openUser" data-v="${u.id}"><span class="avatar" style="margin:2px 0 0;width:38px;height:38px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub" style="word-break:break-all">${esc(u.email)}</span><span class="tags">${flag(u.c, 16, 11)}${u.admin ? '<span class="pill p-blue">Admin</span>' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}${statusPill(u)}</span></span><span style="align-self:center">${I.chev}</span></button>`).join('')}</div>`;
   h += `<p class="foot">New people create their own password the first time they sign in. If someone forgets theirs, open their account and tap Reset password.</p>`;
@@ -890,6 +1004,7 @@ function adminTeam() {
 }
 
 function adminInsights() {
+  if (isDesk()) return insightsDesk();
   const R = S.insRegion, P = S.insPeriod, nordic = R === 4;
   const inScope = (j) => (nordic || j.c === R);
   const sc = S.jobs.filter((j) => inScope(j) && inPeriod(j, P));
@@ -991,6 +1106,140 @@ function approvalsDesk() {
   return h;
 }
 DESK_MQ.addEventListener('change', () => { if (S.me) render(); });
+
+/* ---------- desktop: new ticket ---------- */
+function newDesk(d, PT, editing) {
+  const head = editing ? PT.head : `<div class="dhead"><div><div class="date">Client: Apple</div><h1>New ticket</h1></div></div>`;
+  const cell = (x, full) => `<div class="ntc${full ? ' full' : ''}">${x}</div>`;
+  return head + `<div class="dgrid nt"><div class="dmain ntform">${cell(PT.ticket)}${cell(PT.when)}${cell(PT.tpl + PT.tplsave, true)}${cell(PT.country, true)}${cell(PT.store)}${cell(PT.inst)}${cell(PT.tools)}${cell(PT.parts)}${cell(PT.videos)}${cell(PT.note)}${cell(PT.price, true)}</div>
+    <div class="dright"><div id="ntsum" class="dpanel ntsum">${ntSummary(d, editing)}</div></div></div>`;
+}
+function ntSummary(d, editing) {
+  const stores = storesFor(d.c);
+  const st = d.store !== 'new' && stores.length ? S.stores.find((x) => x.id === d.store) : (d.storeName || '').trim() ? { name: d.storeName.trim(), addr: (d.storeAddr || '').trim() } : null;
+  const tpl = S.templates.find((t) => t.id === d.template);
+  const t = (d.ticket || '').trim().toUpperCase();
+  const sp = splitNums(d); const cur = C[d.c].cur; const per = d.secondOn && d.second ? 2 : 1;
+  const miss = [];
+  if (!t) miss.push('Apple ticket number'); else if (S.jobs.some((j) => j.ticket === t && j.id !== d.editId)) miss.push('A new ticket number (this one already exists)');
+  if (!st) miss.push('Store'); if (!d.lead) miss.push('Installer');
+  if (!(sp.price > 0)) miss.push('Ticket price'); else if (sp.inst < 0 || sp.adm < 0 || sp.bb < 0) miss.push('Shares of 100 % or less');
+  const names = d.lead ? (per === 2 ? first(nameOf(d.lead)) + ' and ' + first(nameOf(d.second)) : first(nameOf(d.lead))) : '';
+  const vs = d.videos.map(videoBy).filter(Boolean);
+  const amt = [['Installer' + (per === 2 ? 's' : ''), sp.price * sp.inst / 100, 'var(--green)'], ['Admin', sp.price * sp.adm / 100, 'var(--orange)'], ['Brand Butlers', sp.price * sp.bb / 100, 'var(--blue)']];
+  return `<div class="dphead"><span class="cap">Ticket summary</span></div>
+    <div style="padding:6px 0 2px"><b style="font-size:22px;line-height:28px;display:block">${st ? esc(st.name) : '<span class="muted">No store yet</span>'}</b><span class="muted" style="font-size:14px">${t ? esc(t) : 'No ticket number'}${tpl ? ' · ' + esc(tpl.name) : ''}</span></div>
+    <div class="group" style="margin-top:12px">
+      <div class="row"><span class="ico" style="background:var(--blue-bg)">${small(TABICON.jobs, 'var(--blue)')}</span><span class="grow"><span>${d.date ? esc(whenLabel({ date: d.date, time: d.time || '' })) : 'No date'}</span>${st && st.addr ? `<span class="sub">${esc(st.addr)}</span>` : ''}</span></div>
+      <div class="row">${d.lead ? `<span class="avatar" style="margin:0;width:32px;height:32px;font-size:12px">${initials(nameOf(d.lead))}</span><span class="grow"><span>${esc(nameOf(d.lead))}${per === 2 ? ' + ' + esc(first(nameOf(d.second))) : ''}</span><span class="sub">Gets it in the app right away</span></span>` : '<span class="grow muted">No installer chosen</span>'}</div>
+      <div class="row">${flag(d.c, 24, 17)}<span class="grow"><span>Support: ${esc(C[d.c].support[0])}</span></span></div>
+    </div>
+    <div class="chips" style="margin-top:12px"><span class="chip sm">${d.tools.length} ${d.tools.length === 1 ? 'tool' : 'tools'}</span><span class="chip sm">${d.parts.length} ${d.parts.length === 1 ? 'part' : 'parts'}</span>${vs.length ? `<span class="chip sm" style="color:var(--blue-fg);background:var(--blue-bg)">▶ ${countLabel(vs)}</span>` : ''}</div>
+    <div style="display:flex;justify-content:space-between;margin-top:16px;font-size:14px"><span class="muted">Price split</span><b class="num">${sp.price > 0 ? cur + ' ' + fmt(sp.price) : '–'}</b></div>
+    ${sp.price > 0 && sp.bb >= 0 ? `<div class="splitbar" role="img" aria-label="Price split">${amt.map(([l, v, col]) => `<span style="flex:${Math.max(v, 0)};background:${col}" title="${l}"></span>`).join('')}</div>
+      <div class="splitlab">${amt.map(([l, v, col]) => `<span><i style="background:${col}"></i>${l} <b class="num">${fmt(v)}</b></span>`).join('')}</div>` : ''}
+    ${miss.length ? `<div class="banner" style="margin-top:14px;background:var(--orange-bg);color:var(--fg2);flex-direction:column;align-items:flex-start;gap:2px"><b style="font-size:14px">Still needed</b><span style="font-size:14px">${miss.map(esc).join(' · ')}</span></div>`
+      : `<div class="banner" style="margin-top:14px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 16)}Everything filled in</div>`}
+    <button type="button" class="btn" style="margin-top:14px" data-a="createTicket">${editing ? 'Save changes' : names ? 'Create ticket for ' + esc(names) : 'Create ticket'}</button>
+    ${editing ? `<button type="button" class="link" style="width:100%" data-a="cancelEdit">Cancel</button>` : `<p class="foot" style="text-align:center;margin-bottom:0">Shortcut: N opens a new ticket from anywhere.</p>`}`;
+}
+
+/* ---------- desktop: insights with charts ---------- */
+const CCOL = ['var(--c0)', 'var(--c1)', 'var(--c2)', 'var(--c3)'];
+function isoWeek(d) { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); }
+function insightsDesk() {
+  const R = S.insRegion, nordic = R === 4; const P = S.insDP == null ? 1 : S.insDP; const days = [7, 31, 92][P]; const pName = ['week', 'month', 'quarter'][P];
+  const inScope = (j) => nordic || j.c === R;
+  const isDone = (j) => j.status === 'approved' || j.status === 'waiting';
+  const dd = (j) => dayDiff(j.date);
+  const cur = S.jobs.filter((j) => inScope(j) && isDone(j) && dd(j) <= 0 && dd(j) > -days);
+  const prev = S.jobs.filter((j) => inScope(j) && isDone(j) && dd(j) <= -days && dd(j) > -2 * days);
+  const appr = cur.filter((j) => j.status === 'approved'), apprPrev = prev.filter((j) => j.status === 'approved');
+  const rev = (a) => a.reduce((t, j) => t + (Number(j.price) || 0), 0);
+  const timed = (a) => a.filter((j) => j.startedAt && j.report && j.report.submittedTs && j.report.submittedTs > j.startedAt);
+  const avgT = (a) => { const x = timed(a); return x.length ? x.reduce((t, j) => t + (j.report.submittedTs - j.startedAt), 0) / x.length : null; };
+  const sentBack = appr.filter((j) => j.changes).length;
+  const firstOk = appr.length ? Math.round((appr.length - sentBack) / appr.length * 100) : null;
+  const delta = (a, b) => { if (!b) return '<span class="kd muted">No data the ' + pName + ' before</span>'; const p = Math.round((a - b) / b * 100); return p === 0 ? `<span class="kd muted">Same as last ${pName}</span>` : `<span class="kd" style="color:${p > 0 ? 'var(--green)' : 'var(--red)'}">${p > 0 ? '▲' : '▼'} ${Math.abs(p)} % vs last ${pName}</span>`; };
+  const tNow = avgT(cur), tPrev = avgT(prev);
+  const kpis = [
+    ['Jobs done', String(cur.length), delta(cur.length, prev.length)],
+    ['Revenue · approved', 'DKK ' + fmt(rev(appr)), delta(rev(appr), rev(apprPrev))],
+    ['Avg time on site', tNow == null ? '–' : fmtDur(tNow), tNow != null && tPrev != null ? `<span class="kd muted">${tNow <= tPrev ? '− ' : '+ '}${fmtDur(Math.abs(tNow - tPrev))} vs last ${pName}</span>` : '<span class="kd muted">From “start report” to submit</span>'],
+    ['Approved first time', firstOk == null ? '–' : firstOk + ' %', `<span class="kd muted">${sentBack} sent back for changes</span>`]];
+  let h = `<div class="dhead"><div><div class="date">Admins only</div><h1>Insights</h1></div><div class="dtools"><div style="width:440px">${regionSeg('insRegion', R).replace('seg tall', 'seg tall dseg')}</div><div class="seg" style="width:260px">${['Week', 'Month', 'Quarter'].map((l, i) => `<button type="button" class="${P === i ? 'on' : ''}" aria-pressed="${P === i}" data-a="set" data-k="insDP" data-v="${i}">${l}</button>`).join('')}</div></div></div>`;
+  h += `<div class="kpis k4">${kpis.map(([l, v, sub]) => `<div class="kpi"><span class="k">${l}</span><span class="v num">${v}</span>${sub}</div>`).join('')}</div>`;
+  // buckets: days for a week, calendar weeks otherwise
+  const t0 = today0(); const buckets = [];
+  if (P === 0) for (let i = 6; i >= 0; i--) { const dt = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() - i); buckets.push({ lab: i === 0 ? 'Today' : WD[dt.getDay()], full: i === 0 ? 'Today' : WD[dt.getDay()] + ' ' + dt.getDate() + ' ' + MO[dt.getMonth()], test: (j) => dd(j) === -i }); }
+  else { const n = P === 1 ? 5 : 13; const mon = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() - ((t0.getDay() + 6) % 7)); for (let i = n - 1; i >= 0; i--) { const a = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() - 7 * i); const b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 7); buckets.push({ lab: 'W' + isoWeek(a), full: 'Week ' + isoWeek(a) + (i === 0 ? ' (this week)' : ''), test: (j) => { const x = parseD(j.date).getTime(); return x >= a.getTime() && x < b.getTime() && dd(j) <= 0; } }); } }
+  const series = nordic ? [0, 1, 2, 3] : [R];
+  const pool = S.jobs.filter((j) => inScope(j) && isDone(j));
+  const data = buckets.map((b) => series.map((c) => pool.filter((j) => j.c === c && b.test(j)).length));
+  const maxT = Math.max(0, ...data.map((r) => r.reduce((a, x) => a + x, 0)));
+  const yMax = Math.max(4, Math.ceil(maxT / 4) * 4); const ticks = [0, 1, 2, 3, 4].map((k) => yMax * k / 4);
+  const chart = maxT === 0 ? `<div class="cempty">No finished jobs in this ${pName} yet. The chart fills in as reports come in.</div>`
+    : `<div class="chart" role="img" aria-label="Jobs done per ${P === 0 ? 'day' : 'week'}"><div class="cplot">${ticks.map((v) => `<div class="cgrid" style="bottom:${v / yMax * 100}%"><span class="num">${v}</span></div>`).join('')}
+      <div class="ccols">${data.map((r, bi) => { const tot = r.reduce((a, x) => a + x, 0); return `<div class="ccol" tabindex="0" aria-label="${esc(buckets[bi].full)}: ${tot} jobs"><div class="cstack" style="height:${tot / yMax * 100}%">${r.map((n, si) => n ? `<span style="flex:${n};background:${CCOL[series[si]]}"></span>` : '').join('')}</div>
+        <div class="ctip${bi > data.length * 0.6 ? ' rt' : ''}"><b>${esc(buckets[bi].full)} · ${tot} ${tot === 1 ? 'job' : 'jobs'}</b>${series.length > 1 ? series.map((c, si) => `<span><i style="background:${CCOL[c]}"></i>${C[c].name} ${r[si]}</span>`).join('') : ''}</div></div>`; }).join('')}</div></div>
+      <div class="cx">${buckets.map((b) => `<span>${esc(b.lab)}</span>`).join('')}</div></div>`;
+  const legend = series.length > 1 ? `<div class="clegend">${series.map((c) => `<span><i style="background:${CCOL[c]}"></i>${C[c].name}</span>`).join('')}</div>` : `<span class="muted" style="font-size:13px">${C[R].name}</span>`;
+  let side;
+  if (nordic) {
+    const rows = [0, 1, 2, 3].map((c) => ({ c, v: rev(appr.filter((j) => j.c === c)) })); const mx = Math.max(1, ...rows.map((r) => r.v));
+    side = `<h3 class="ctitle">Revenue by country</h3><div class="hbars">${rows.map((r) => `<div class="hb"><span class="hbl">${C[r.c].name}</span><span class="hbt"><span style="width:${r.v / mx * 100}%;background:${CCOL[r.c]}"></span></span><b class="num">${fmt(r.v)}</b></div>`).join('')}</div><p class="foot" style="margin:14px 0 0">Approved reports only · DKK</p>`;
+  } else {
+    const tot = rev(appr); const parts = [['Installers', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[0] / 100, 0)], ['Admin', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[1] / 100, 0)]]; parts.push(['Brand Butlers', tot - parts[0][1] - parts[1][1]]);
+    const mx = Math.max(1, ...parts.map((p) => p[1]));
+    side = `<h3 class="ctitle">Where the money goes</h3><div class="hbars">${parts.map(([l, v]) => `<div class="hb"><span class="hbl">${l}</span><span class="hbt"><span style="width:${Math.max(0, v) / mx * 100}%;background:var(--c0)"></span></span><b class="num">${fmt(v)}</b></div>`).join('')}</div><p class="foot" style="margin:14px 0 0">${C[R].name} · approved reports only · DKK ${fmt(tot)} in total</p>`;
+  }
+  h += `<div class="igrid"><div class="icard"><div class="chead"><h3 class="ctitle">Jobs done per ${P === 0 ? 'day' : 'week'}</h3>${legend}</div>${chart}</div><div class="icard">${side}</div></div>`;
+  const ins = S.users.filter((u) => u.installer && (nordic || u.c === R || cur.some((j) => j.installer === u.id || j.second === u.id)));
+  const rows = ins.map((u) => { const mine = cur.filter((j) => j.installer === u.id || j.second === u.id); const ap = mine.filter((j) => j.status === 'approved'); const tm = avgT(mine.filter((j) => j.installer === u.id)); return { u, n: mine.length, tm, fo: ap.length ? Math.round(ap.filter((j) => !j.changes).length / ap.length * 100) : null, earn: ap.reduce((t, j) => t + shareOf(j), 0) }; }).sort((a, b) => b.n - a.n || b.earn - a.earn);
+  const mxE = Math.max(1, ...rows.map((r) => r.earn));
+  h += `<div class="icard" style="margin-top:20px;padding:0"><div class="chead" style="padding:18px 22px 6px"><h3 class="ctitle">Installers</h3><span class="muted" style="font-size:13px">This ${pName} · sorted by jobs done</span></div>
+    ${rows.length ? `<table class="tbl itbl"><thead><tr><th style="width:34%">Installer</th><th style="text-align:right">Jobs</th><th style="text-align:right">Avg time</th><th style="text-align:right">First-time approval</th><th style="text-align:right">Earnings</th><th style="width:22%"></th></tr></thead><tbody>${rows.map((r) => `<tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar" style="margin:0;width:32px;height:32px;font-size:12px">${initials(r.u.name || r.u.email)}</span><span class="ell">${esc(r.u.name || r.u.email)} <span class="muted" style="font-size:12px">${C[r.u.c].k}</span></span></div></td><td class="num" style="text-align:right;font-weight:600">${r.n}</td><td class="num" style="text-align:right">${r.tm == null ? '–' : fmtDur(r.tm)}</td><td class="num" style="text-align:right">${r.fo == null ? '–' : r.fo + ' %'}</td><td class="num" style="text-align:right;font-weight:600;white-space:nowrap">DKK ${fmt(r.earn)}</td><td><span class="hbt"><span style="width:${r.earn / mxE * 100}%;background:var(--c0)"></span></span></td></tr>`).join('')}</tbody></table>` : '<p class="muted" style="padding:6px 22px 20px">No installers in this country yet.</p>'}</div>`;
+  h += `<p class="foot">Money counts approved reports only, in DKK. Hover a bar to see the exact numbers.</p>`;
+  return h;
+}
+
+/* ---------- desktop: videos & pictures library as a grid ---------- */
+function videosDesk() {
+  const F = S.libF || 'all'; const q = (S.libQ || '').trim().toLowerCase();
+  const used = (v) => S.jobs.some((j) => j.videos.includes(v.id)) || S.templates.some((t) => t.videos.includes(v.id));
+  const fl = { all: () => true, video: (v) => !isPic(v), image: isPic, used, unused: (v) => !used(v), edited: isEdited };
+  const list = S.videos.filter(fl[F] || fl.all).filter((v) => !q || (v.title + ' ' + v.notes).toLowerCase().includes(q));
+  let h = `<div class="dhead"><div><div class="date">Instructions for installers</div><h1>Videos & pictures</h1></div><div class="dtools"><div class="seg" style="width:300px" role="group" aria-label="Section"><button type="button" data-a="setManage" data-v="people">People</button><button type="button" class="on" data-a="setManage" data-v="videos">Videos & pictures</button></div><label class="btn" style="width:auto;padding:0 22px;position:relative;cursor:pointer">+ Upload<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label></div></div>`;
+  const cnt = (k) => S.videos.filter(fl[k]).length;
+  h += `<div class="dtbar" style="margin-top:20px"><input class="box dsearch" style="flex:1 1 320px" id="lsearch" data-desk-search="libQ" value="${esc(S.libQ || '')}" placeholder="Search titles and notes" aria-label="Search the library" autocomplete="off">
+    <div class="chips" style="margin:0">${[['all', 'All'], ['video', 'Videos'], ['image', 'Pictures'], ['used', 'Used'], ['unused', 'Not used yet'], ['edited', 'Edited']].map(([k, l]) => `<button type="button" class="chip ${F === k ? 'on' : ''}" aria-pressed="${F === k}" data-a="setLibF" data-v="${k}">${l} <span class="num" style="opacity:.6">${cnt(k)}</span></button>`).join('')}</div></div>`;
+  h += `<label class="dropz" data-drop="1"><input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh">Drop videos or pictures here, or click to choose · several at once · videos up to 50 MB</label>`;
+  h += list.length ? `<div class="vgrid">${list.map((v) => { const uj = S.jobs.filter((j) => j.videos.includes(v.id)).length, ut = S.templates.filter((t) => t.videos.includes(v.id)).length; return `<button type="button" class="vcard" data-a="openVideo" data-v="${v.id}"${isPic(v) ? '' : ` data-hov="${v.id}"`}><span class="vcthumb">${posterImg(v)}<span class="vlen">${isPic(v) ? 'Picture' : fmtLen(effDur(v)) || 'Video'}</span></span><span class="vct"><b class="ell">${esc(v.title)}</b><span class="sub">${[uj ? 'On ' + uj + (uj === 1 ? ' ticket' : ' tickets') : '', ut ? ut + (ut === 1 ? ' template' : ' templates') : ''].filter(Boolean).join(' · ') || 'Not used yet'}${isEdited(v) || (isPic(v) && v.edit) ? ' <span class="pill p-blue" style="font-size:10px;padding:1px 6px">Edited</span>' : ''}</span></span></button>`; }).join('')}</div>`
+    : `<div class="empty" style="margin-top:16px"><b>${S.videos.length ? 'Nothing matches' : 'The library is empty'}</b><span>${S.videos.length ? 'Try another search or filter.' : 'Drop the first videos or pictures above.'}</span></div>`;
+  h += `<p class="foot">Hover a video to preview it without sound. Click to open, edit or delete.</p>`;
+  return h;
+}
+let HOV = null;
+document.addEventListener('mouseover', (e) => {
+  if (!isDesk()) return; const card = e.target.closest && e.target.closest('[data-hov]'); if (!card || card === HOV) return;
+  HOV = card; const v = videoBy(card.dataset.hov); if (!v || card.querySelector('video')) return;
+  vidUrl(v.path).then((u) => {
+    if (!u || HOV !== card || !card.isConnected) return;
+    const vd = document.createElement('video'); vd.muted = true; vd.playsInline = true; vd.loop = true; vd.className = 'vchov'; vd.src = u;
+    const st = v.edit && v.edit.segments && v.edit.segments[0] ? v.edit.segments[0][0] : 0;
+    vd.addEventListener('loadedmetadata', () => { try { vd.currentTime = st; } catch (x) { /* ignore */ } vd.play().catch(() => {}); }, { once: true });
+    card.querySelector('.vcthumb').appendChild(vd);
+  });
+});
+document.addEventListener('mouseout', (e) => {
+  const card = e.target.closest && e.target.closest('[data-hov]'); if (!card || (e.relatedTarget && card.contains(e.relatedTarget))) return;
+  if (HOV === card) HOV = null; const vd = card.querySelector('video'); if (vd) { vd.pause(); vd.removeAttribute('src'); vd.load(); vd.remove(); }
+});
+const dropOk = () => isDesk() && !S.view && !U.sheet && S.tab === 'team' && S.manage === 'videos';
+document.addEventListener('dragover', (e) => { if (!dropOk() || !e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; const z = document.querySelector('.dropz'); if (z) z.classList.add('over'); });
+document.addEventListener('dragleave', (e) => { if (e.relatedTarget) return; const z = document.querySelector('.dropz'); if (z) z.classList.remove('over'); });
+document.addEventListener('drop', (e) => { if (!dropOk() || !e.dataTransfer || !e.dataTransfer.files.length) return; e.preventDefault(); const z = document.querySelector('.dropz'); if (z) z.classList.remove('over'); pickFiles(Array.from(e.dataTransfer.files), 'library'); });
+
 
 /* ---------- installer ---------- */
 function myJobs() { return S.jobs.filter((j) => (j.installer === S.me || j.second === S.me) && j.status !== 'declined'); }
@@ -1219,7 +1468,8 @@ function renderSheet() {
   } else if (kind === 'video') {
     const v = videoBy(arg); if (!v) { U.sheet = null; overlay.innerHTML = ''; return; }
     const usedJ = S.jobs.filter((j) => j.videos.includes(v.id)).length, usedT = S.templates.filter((t) => t.videos.includes(v.id)).length;
-    body = `${sheetHead(isPic(v) ? 'Picture' : 'Video', 'Close', 'Save', 'saveVideo')}${isPic(v) ? `<div class="picview"><img data-vk="${esc(v.path)}" alt="${esc(v.title)}" src="${(VU.get(v.path) || {}).u || BLANK}"></div>` : `<div id="vhost"></div>
+    body = `${sheetHead(isPic(v) ? 'Picture' : 'Video', 'Close', 'Save', 'saveVideo')}${isPic(v) ? `<div class="picview"><img data-vk="${esc(v.path)}" alt="${esc(v.title)}" src="${(VU.get(v.path) || {}).u || BLANK}"></div>
+      <button type="button" class="btn" style="background:#5E3CE6" data-a="editPic" data-v="${v.id}">${ICON.spark} Crop & rotate${isEdited(v) ? ' \u00b7 edited' : ''}</button>` : `<div id="vhost"></div>
       <button type="button" class="btn" style="background:#5E3CE6" data-a="editVideo" data-v="${v.id}">${ICON.spark} Edit video \u00b7 trim, text, auto edit</button>`}
       <div class="group"><label class="row" for="vtitle"><span class="lbl">Title</span><input id="vtitle" class="inl" data-fbind="title" value="${esc(U.form.title)}" autocomplete="off"></label></div>
       <textarea class="box" data-fbind="notes" placeholder="Short notes or steps shown under it (optional)" style="min-height:90px">${esc(U.form.notes)}</textarea>
@@ -1309,7 +1559,7 @@ function normEdit(e, dur) {
 }
 const editLen = (E) => E.segments.reduce((t, [a, b]) => t + Math.max(0, b - a), 0) / (E.speed || 1);
 const effDur = (v) => (v && v.edit && v.edit.segments && v.edit.segments.length && v.edit.segments[0][1] > 0 ? editLen(normEdit(v.edit, v.duration)) : v ? v.duration : null);
-const isEdited = (v) => !!(v && v.edit && v.duration && (v.edit.segments.length > 1 || v.edit.segments[0][0] > 0.05 || v.edit.segments[0][1] < v.duration - 0.05 || (v.edit.texts || []).length || v.edit.fadeIn || v.edit.fadeOut || v.edit.muted || v.edit.volume !== 1 || v.edit.speed !== 1));
+const isEdited = (v) => isPic(v) ? !!(v.edit && v.edit.orig) : !!(v && v.edit && v.duration && (v.edit.segments.length > 1 || v.edit.segments[0][0] > 0.05 || v.edit.segments[0][1] < v.duration - 0.05 || (v.edit.texts || []).length || v.edit.fadeIn || v.edit.fadeOut || v.edit.muted || v.edit.volume !== 1 || v.edit.speed !== 1));
 const ICON = {
   big: '<svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="rgba(0,0,0,0.55)"/><path d="M26 20l18 12-18 12z" fill="#fff"/></svg>',
   pp: (playing) => playing ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>' : '<svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M7 4.5l13 7.5-13 7.5z"/></svg>',
@@ -1472,10 +1722,16 @@ function autoSegments(res, dur) {
 /* ---------- the editor screen ---------- */
 let ED = null;
 function editorShell() {
+  if (isDesk()) return `<div id="vedit" class="edesk"><div class="dhead"><div><div class="date">Edit video</div><h1>${esc(ED ? ED.v.title : '')}</h1></div><div class="dtools"><button type="button" class="btn sec" style="width:auto;padding:0 22px" data-a="edCancel">Cancel</button><button type="button" class="btn" style="width:auto;padding:0 22px;background:#5E3CE6" data-a="edAuto">${ICON.spark} Auto edit</button><button type="button" class="btn" style="width:auto;padding:0 30px" data-a="edSave">Save</button></div></div><div id="edleave"></div>
+    <div class="edcols"><div class="edleft"><div id="edhost"></div><div class="edtl-wrap"><div id="edtl" class="edtl"></div><div id="edruler" class="edruler"></div><div id="edinfo" class="foot" style="margin:6px 2px 0"></div></div><div id="edauto"></div>
+      <p class="foot">Drag the clip edges to trim. Click the strip to move. Yellow bars are texts.</p></div>
+    <div class="edright"><div class="seg" id="edtabs" role="group" aria-label="Tools">${[['cut', 'Cut'], ['text', 'Text'], ['fade', 'Fade'], ['sound', 'Sound'], ['more', 'More']].map(([k, l]) => `<button type="button" data-a="edTab" data-v="${k}">${l}</button>`).join('')}</div>
+      <div id="edpanel" style="margin-top:12px"></div>
+      <p class="foot edkeys">Keyboard: <kbd>Space</kbd> play/pause \u00b7 <kbd>S</kbd> split \u00b7 <kbd>I</kbd>/<kbd>O</kbd> start/end of clip \u00b7 <kbd>Delete</kbd> cut out \u00b7 <kbd>\u2190</kbd><kbd>\u2192</kbd> step (Shift: 1 s) \u00b7 <kbd>\u2318Z</kbd> undo</p></div></div></div>`;
   return navbar(`<button type="button" class="navbtn" data-a="edCancel">Cancel</button>`, 'Edit video', `<button type="button" class="navbtn r" data-a="edSave">Save</button>`)
     + `<div id="vedit"><div id="edleave"></div><div id="edhost" style="margin-top:12px"></div>
       <button type="button" class="btn" style="margin-top:12px;background:#5E3CE6" data-a="edAuto">${ICON.spark} Auto edit</button><div id="edauto"></div>
-      <div class="edtl-wrap"><div id="edtl" class="edtl"></div><div id="edinfo" class="foot" style="margin:6px 2px 0"></div></div>
+      <div class="edtl-wrap"><div id="edtl" class="edtl"></div><div id="edruler" class="edruler"></div><div id="edinfo" class="foot" style="margin:6px 2px 0"></div></div>
       <div class="seg" id="edtabs" style="margin-top:12px" role="group" aria-label="Tools">${[['cut', 'Cut'], ['text', 'Text'], ['fade', 'Fade'], ['sound', 'Sound'], ['more', 'More']].map(([k, l]) => `<button type="button" data-a="edTab" data-v="${k}">${l}</button>`).join('')}</div>
       <div id="edpanel" style="margin-top:12px"></div><div style="height:30px"></div></div>`;
 }
@@ -1490,7 +1746,9 @@ function edTimeline() {
     + gaps.map(([a, b]) => `<div class="edgap" style="left:${pc(a)}%;width:${pc(b - a)}%"></div>`).join('')
     + ED.E.segments.map(([a, b], i) => `<div class="edseg${i === ED.sel ? ' sel' : ''}" data-seg="${i}" style="left:${pc(a)}%;width:${pc(b - a)}%"></div>`).join('')
     + (ED.E.texts || []).map((t) => `<div class="edtx" style="left:${pc(t.t0)}%;width:${pc(Math.max(0.2, t.t1 - t.t0))}%"></div>`).join('')
+    + ED.E.segments.map(([a, b], i) => `<div class="edh${i === ED.sel ? ' sel' : ''}" data-h="${i}:0" style="left:${pc(a)}%" title="Drag to trim the start"></div><div class="edh e${i === ED.sel ? ' sel' : ''}" data-h="${i}:1" style="left:${pc(b)}%" title="Drag to trim the end"></div>`).join('')
     + `<div id="edph" class="edph" style="left:${pc(ED.t || 0)}%"></div>`;
+  const ru = document.getElementById('edruler'); if (ru && ED.dur) ru.innerHTML = [0, 0.25, 0.5, 0.75, 1].map((f) => `<span style="left:${f * 100}%">${fmtLen(D * f)}</span>`).join('');
   edInfo();
 }
 function edInfo() {
@@ -1507,7 +1765,9 @@ function edPanel() {
     h = `<div class="edgrid"><button type="button" class="btn small sec" data-a="edSplit">Split here</button><button type="button" class="btn small sec" data-a="edDelete" style="color:var(--red)">Cut out clip</button>
       <button type="button" class="btn small sec" data-a="edTrim" data-v="start">Start clip here</button><button type="button" class="btn small sec" data-a="edTrim" data-v="end">End clip here</button></div>
       ${inGap ? `<button type="button" class="btn small" style="margin-top:8px" data-a="edKeepGap">Bring back this cut part</button>` : ''}
-      <p class="foot" style="margin:10px 2px 0">Tap or drag on the strip to move. Tap a blue clip to select it (orange). Dark parts are cut out and won't play.</p>`;
+      <p class="foot" style="margin:10px 2px 0">Tap or drag on the strip to move. Tap a blue clip to select it (orange), or drag its edges to trim. Dark parts are cut out and won't play.</p>
+      <span class="cap" style="display:block;margin:14px 4px 6px">Clips \u00b7 ${E.segments.length} kept \u00b7 ${fmtLen(editLen(E))} of ${fmtLen(ED.dur)}</span>
+      <div class="group">${E.segments.map(([a, b], i) => { const tx = (E.texts || []).filter((t) => t.p !== 'top' && t.text && t.t0 >= a - 0.05 && t.t0 < b).map((t) => t.text)[0]; return `<button type="button" class="row${i === ED.sel ? ' rsel' : ''}" data-a="edSelClip" data-v="${i}"><span class="edn${i === ED.sel ? ' sel' : ''}">${i + 1}</span><span class="grow"><span>${esc(tx || 'Clip ' + (i + 1))}</span><span class="sub num">${fmtLen(a)} \u2013 ${fmtLen(b)} \u00b7 ${Math.max(1, Math.round(b - a))} s</span></span></button>`; }).join('')}</div>`;
   } else if (ED.tab === 'text') {
     const list = (E.texts || []).map((t, i) => ({ t, i })).sort((a, b) => a.t.t0 - b.t.t0);
     h = `<button type="button" class="btn small" data-a="edAddText">+ Add text here</button>
@@ -1542,6 +1802,13 @@ async function mountEditor() {
   const tl = document.getElementById('edtl');
   tl.addEventListener('pointerdown', (e) => {
     const at = (ev) => { const b = tl.getBoundingClientRect(); return Math.max(0, Math.min(1, (ev.clientX - b.left) / b.width)) * (ED.dur || 0); };
+    const hd = e.target.closest('[data-h]');
+    if (hd) {
+      const [i, w] = hd.dataset.h.split(':').map(Number); ED.sel = i; edPush(); ED.P.pause(); tl.setPointerCapture(e.pointerId);
+      const mv = (ev) => { const sg = ED.E.segments[i]; if (!sg) return; const lo = w === 0 ? (i > 0 ? ED.E.segments[i - 1][1] : 0) : sg[0] + 0.3; const hi = w === 0 ? sg[1] - 0.3 : (i < ED.E.segments.length - 1 ? ED.E.segments[i + 1][0] : ED.dur); const t = Math.max(lo, Math.min(hi, Math.round(at(ev) * 10) / 10)); sg[w] = t; ED.P.seek(t); ED.t = t; edTimeline(); };
+      const up = () => { tl.removeEventListener('pointermove', mv); tl.removeEventListener('pointerup', up); edApply(); };
+      tl.addEventListener('pointermove', mv); tl.addEventListener('pointerup', up); return;
+    }
     const seg = e.target.closest('[data-seg]'); if (seg) { ED.sel = +seg.dataset.seg; }
     ED.P.pause(); ED.P.seek(at(e)); ED.t = at(e); edTimeline(); edPanel();
     tl.setPointerCapture(e.pointerId);
@@ -1550,6 +1817,101 @@ async function mountEditor() {
   });
 }
 function edClose() { if (ED) { if (ED.P) ED.P.destroy(); if (ED.blob) URL.revokeObjectURL(ED.blob); } ED = null; }
+
+
+/* ---------- picture editor: crop and rotate (the original file is kept) ---------- */
+let PE = null;
+const PE_AR = [[0, 'Free'], [16 / 9, '16:9'], [4 / 3, '4:3'], [1, 'Square'], [3 / 4, '3:4'], [9 / 16, '9:16']];
+function picEditorShell() {
+  const title = PE ? PE.v.title : '';
+  const head = isDesk()
+    ? `<div class="dhead"><div><div class="date">Edit picture</div><h1>${esc(title)}</h1></div><div class="dtools"><button type="button" class="btn sec" style="width:auto;padding:0 22px" data-a="peCancel">Cancel</button><button type="button" class="btn" style="width:auto;padding:0 30px" data-a="peSave">Save</button></div></div>`
+    : navbar(`<button type="button" class="navbtn" data-a="peCancel">Cancel</button>`, 'Crop picture', `<button type="button" class="navbtn r" data-a="peSave">Save</button>`);
+  return head + `<div id="pedit" class="pedit"><div class="pecols"><div><div id="pestage" class="pestage"><span class="muted" style="color:#aaa">Loading picture…</span></div><p class="foot" id="peinfo" style="text-align:center"></p></div><div id="pepanel"></div></div></div>`;
+}
+function pePush() { PE.hist.push(JSON.stringify({ rot: PE.rot, crop: PE.crop, aspect: PE.aspect })); if (PE.hist.length > 40) PE.hist.shift(); }
+function peClose() { if (PE && PE.url) URL.revokeObjectURL(PE.url); PE = null; }
+function peDims() { const i = PE.img; return PE.rot % 180 ? [i.naturalHeight, i.naturalWidth] : [i.naturalWidth, i.naturalHeight]; }
+function peFit() {
+  if (!PE.img) return; const [iw, ih] = peDims();
+  if (!PE.aspect) return; const k = PE.aspect * ih / iw; let w, h; if (k >= 1) { w = 1; h = 1 / k; } else { h = 1; w = k; }
+  const c = PE.crop; const cx = Math.min(Math.max(c.x + c.w / 2, w / 2), 1 - w / 2), cy = Math.min(Math.max(c.y + c.h / 2, h / 2), 1 - h / 2);
+  PE.crop = { x: cx - w / 2, y: cy - h / 2, w, h };
+}
+function peRotated(maxSide) {
+  const i = PE.img; const [iw, ih] = peDims(); const sc = Math.min(1, maxSide / Math.max(iw, ih));
+  const c = document.createElement('canvas'); c.width = Math.round(iw * sc); c.height = Math.round(ih * sc); const g = c.getContext('2d');
+  g.translate(c.width / 2, c.height / 2); g.rotate(PE.rot * Math.PI / 180);
+  const dw = (PE.rot % 180 ? c.height : c.width), dh = (PE.rot % 180 ? c.width : c.height); g.drawImage(i, -dw / 2, -dh / 2, dw, dh);
+  return c;
+}
+function peRender(maxSide) {
+  const [iw, ih] = peDims(); const cw = PE.crop.w * iw, ch = PE.crop.h * ih; const sc = Math.min(1, maxSide / Math.max(cw, ch));
+  const R = peRotated(Math.max(iw, ih)); const o = document.createElement('canvas'); o.width = Math.max(1, Math.round(cw * sc)); o.height = Math.max(1, Math.round(ch * sc));
+  o.getContext('2d').drawImage(R, PE.crop.x * iw, PE.crop.y * ih, cw, ch, 0, 0, o.width, o.height); return o;
+}
+function peDraw() {
+  const st = document.getElementById('pestage'); if (!st || !PE.img) return;
+  const [iw, ih] = peDims(); const maxW = st.clientWidth - 24, maxH = Math.min(window.innerHeight * (isDesk() ? 0.68 : 0.52), 760);
+  const sc = Math.min(maxW / iw, maxH / ih); const w = Math.round(iw * sc), h = Math.round(ih * sc);
+  const R = peRotated(Math.max(w, h) * (window.devicePixelRatio || 1));
+  st.innerHTML = `<div id="pewrap" class="pewrap" style="width:${w}px;height:${h}px"></div>`;
+  const wrap = document.getElementById('pewrap'); R.style.width = w + 'px'; R.style.height = h + 'px'; R.className = 'pecv'; wrap.appendChild(R);
+  wrap.insertAdjacentHTML('beforeend', `<div id="pebox" class="pebox"><i class="g1"></i><i class="g2"></i><i class="g3"></i><i class="g4"></i>${['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map((k) => `<span class="peh ${k}" data-ph="${k}"></span>`).join('')}</div>`);
+  peBox();
+  wrap.addEventListener('pointerdown', peDrag);
+}
+function peBox() {
+  const b = document.getElementById('pebox'); if (!b) return; const c = PE.crop;
+  b.style.left = c.x * 100 + '%'; b.style.top = c.y * 100 + '%'; b.style.width = c.w * 100 + '%'; b.style.height = c.h * 100 + '%';
+  b.classList.toggle('locked', !!PE.aspect);
+  const [iw, ih] = peDims(); const info = document.getElementById('peinfo');
+  if (info) info.textContent = `${Math.round(c.w * iw)} × ${Math.round(c.h * ih)} px · drag the box to move it, the corners to resize`;
+}
+function peDrag(e) {
+  const wrap = document.getElementById('pewrap'); const r = wrap.getBoundingClientRect();
+  const hd = e.target.closest('[data-ph]'); const k = hd ? hd.dataset.ph : e.target.closest('#pebox') ? 'move' : null; if (!k) return;
+  e.preventDefault(); pePush(); wrap.setPointerCapture(e.pointerId);
+  const s0 = Object.assign({}, PE.crop), x0 = e.clientX, y0 = e.clientY; const [iw, ih] = peDims(); const kk = PE.aspect ? PE.aspect * ih / iw : 0; const MIN = 0.06;
+  const mv = (ev) => {
+    const dx = (ev.clientX - x0) / r.width, dy = (ev.clientY - y0) / r.height; let { x, y, w, h } = s0;
+    if (k === 'move') { x = Math.min(Math.max(0, x + dx), 1 - w); y = Math.min(Math.max(0, y + dy), 1 - h); }
+    else if (kk) {
+      // corners keep the chosen shape; the opposite corner stays put
+      const L = k.includes('w'), T = k.includes('n'); let nw = Math.max(MIN, w + (L ? -dx : dx)); let nh = nw / kk;
+      const maxW = L ? x + w : 1 - x, maxH = T ? y + h : 1 - y; if (nw > maxW) { nw = maxW; nh = nw / kk; } if (nh > maxH) { nh = maxH; nw = nh * kk; }
+      x = L ? x + w - nw : x; y = T ? y + h - nh : y; w = nw; h = nh;
+    } else {
+      if (k.includes('w')) { const nx = Math.min(Math.max(0, x + dx), x + w - MIN); w = w + (x - nx); x = nx; }
+      if (k.includes('e')) w = Math.min(Math.max(MIN, w + dx), 1 - x);
+      if (k.includes('n')) { const ny = Math.min(Math.max(0, y + dy), y + h - MIN); h = h + (y - ny); y = ny; }
+      if (k.includes('s')) h = Math.min(Math.max(MIN, h + dy), 1 - y);
+    }
+    PE.crop = { x, y, w, h }; peBox();
+  };
+  const up = () => { wrap.removeEventListener('pointermove', mv); wrap.removeEventListener('pointerup', up); pePanel(); };
+  wrap.addEventListener('pointermove', mv); wrap.addEventListener('pointerup', up);
+}
+function pePanel() {
+  const p = document.getElementById('pepanel'); if (!p) return;
+  p.innerHTML = `${PE.leaving ? `<div class="banner" style="margin-bottom:12px;background:var(--orange-bg);color:var(--fg2)"><span style="flex:1">Leave without saving?</span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="peStay">Keep editing</button><button type="button" class="link" style="font-size:15px;padding:4px;color:var(--red)" data-a="peCancel">Leave</button></div>` : ''}
+    <span class="cap" style="display:block;margin:0 4px 6px">Shape</span><div class="chips" style="margin:0">${PE_AR.map(([a, l]) => `<button type="button" class="chip ${Math.abs(PE.aspect - a) < 0.001 ? 'on' : ''}" data-a="peAspect" data-v="${a}">${l}</button>`).join('')}</div>
+    <span class="cap" style="display:block;margin:16px 4px 6px">Rotate</span><div class="edgrid"><button type="button" class="btn small sec" data-a="peRotate" data-v="-90">↺ Left</button><button type="button" class="btn small sec" data-a="peRotate" data-v="90">Right ↻</button></div>
+    <div style="display:flex;gap:8px;margin-top:16px"><button type="button" class="btn small sec" data-a="peUndo" ${PE.hist.length ? '' : 'disabled'}>Undo</button><button type="button" class="btn small sec" data-a="peReset">Back to original</button></div>
+    <p class="foot" style="margin:12px 2px 0">The original picture is kept, so you can always go back. Installers see the cropped version.</p>`;
+}
+async function mountPicEditor() {
+  const st = document.getElementById('pestage'); if (!st || st.dataset.ready) return; st.dataset.ready = '1';
+  pePanel();
+  try {
+    if (!PE.img) {
+      const u = await vidUrl(PE.v.edit && PE.v.edit.orig ? PE.v.edit.orig : PE.v.path); const b = await (await fetch(u)).blob(); PE.url = URL.createObjectURL(b);
+      const im = new Image(); await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = PE.url; }); if (!PE) return; PE.img = im;
+    }
+    peDraw();
+  } catch (e) { st.innerHTML = '<span style="color:#ccc">Couldn’t load the picture. Check your connection.</span>'; }
+}
+window.addEventListener('resize', () => { if (PE && PE.img && S.view && S.view.kind === 'peditor') peDraw(); });
 
 /* ---------- signature ---------- */
 function setupSig() {
@@ -1704,7 +2066,7 @@ const A = {
   loginBack() { S.choosing = false; S.login = { step: 'email', email: S.login.email || '', err: '', acc: null }; render(false); },
   enter(v) { if (!S.me) return; S.choosing = false; S.role = v; S.tab = v === 'admin' ? 'overview' : 'jobs'; S.login = { step: 'email', email: '', err: '', acc: null }; render(false); },
   togglePw(v, el) { const f = el.closest('form'); const ins = f.querySelectorAll('input[type="password"], input[data-shown]'); const show = el.textContent.trim() === 'Show'; ins.forEach((i) => { i.type = show ? 'text' : 'password'; if (show) i.dataset.shown = '1'; else delete i.dataset.shown; }); el.textContent = show ? 'Hide' : 'Show'; },
-  tab(v) { S.panel = null; if (S.view && S.view.kind === 'veditor') edClose(); if (S.view && S.view.kind === 'edit') { S.draft = S.stash || null; S.stash = null; } S.tab = v; S.view = null; U.confirm = null; render(false); },
+  tab(v) { S.panel = null; if (S.view && S.view.kind === 'veditor') edClose(); if (S.view && S.view.kind === 'peditor') peClose(); if (S.view && S.view.kind === 'edit') { S.draft = S.stash || null; S.stash = null; } S.tab = v; S.view = null; U.confirm = null; render(false); },
   set(v, el) { S[el.dataset.k] = Number(v); render(); },
   sheet(v) {
     U.sheet = v; U.err = ''; U.confirm = null; renderSheet();
@@ -1765,6 +2127,32 @@ const A = {
   setManage(v) { S.manage = v; render(false); },
   editVideo(v) { const x = videoBy(v); U.sheet = null; renderSheet(); edClose(); ED = { id: v, v: x, E: normEdit(x.edit, x.duration), dur: x.duration || 0, t: 0, sel: 0, tab: 'cut', hist: [], thumbs: [], blob: null, P: null, saved: JSON.stringify(normEdit(x.edit, x.duration)) }; S.view = { kind: 'veditor', id: v }; render(false); },
   edTab(v) { ED.tab = v; edPanel(); },
+  editPic(v) { const x = videoBy(v); U.sheet = null; renderSheet(); peClose(); const e = x.edit && x.edit.orig ? x.edit : null; PE = { id: v, v: x, rot: e ? e.rot || 0 : 0, crop: e && e.crop ? Object.assign({}, e.crop) : { x: 0, y: 0, w: 1, h: 1 }, aspect: e && e.aspect != null ? e.aspect : 0, img: null, hist: [] }; PE.saved = JSON.stringify([PE.rot, PE.crop]); S.view = { kind: 'peditor', id: v }; render(false); },
+  peAspect(v) { pePush(); PE.aspect = Number(v); peFit(); peBox(); pePanel(); },
+  peRotate(v) { pePush(); PE.rot = (PE.rot + Number(v) + 360) % 360; PE.crop = { x: 0, y: 0, w: 1, h: 1 }; if (PE.aspect) peFit(); peDraw(); pePanel(); },
+  peReset() { pePush(); PE.rot = 0; PE.aspect = 0; PE.crop = { x: 0, y: 0, w: 1, h: 1 }; peDraw(); pePanel(); },
+  peUndo() { if (!PE.hist.length) return; const h = JSON.parse(PE.hist.pop()); PE.rot = h.rot; PE.crop = h.crop; PE.aspect = h.aspect; peDraw(); pePanel(); },
+  peCancel() { if (JSON.stringify([PE.rot, PE.crop]) !== PE.saved && !PE.leaving) { PE.leaving = true; pePanel(); return; } peClose(); S.view = null; render(false); },
+  peStay() { PE.leaving = false; pePanel(); },
+  async peSave(v, btn) {
+    if (!PE.img) return; if (btn) btn.disabled = true;
+    const x = PE.v; const orig = x.edit && x.edit.orig ? x.edit.orig : x.path; const origPoster = x.edit && x.edit.orig ? x.edit.origPoster || null : x.poster || null;
+    const full = PE.rot === 0 && PE.crop.x < 0.002 && PE.crop.y < 0.002 && PE.crop.w > 0.996 && PE.crop.h > 0.996;
+    const old = x.edit && x.edit.orig ? [x.path, x.poster].filter(Boolean) : [];
+    const done = await act(async () => {
+      if (full) { ok(await sb.from('videos').update({ path: orig, poster: origPoster, edit: null }).eq('id', x.id)); }
+      else {
+        const big = peRender(2000), small = peRender(480); const stamp = Date.now();
+        const bBlob = await new Promise((r) => big.toBlob(r, 'image/jpeg', 0.88)), sBlob = await new Promise((r) => small.toBlob(r, 'image/jpeg', 0.75));
+        const path = x.id + '/edited-' + stamp + '.jpg', poster = x.id + '/poster-' + stamp + '.jpg';
+        await uploadWithProgress('videos', path, bBlob, 'image/jpeg'); await uploadWithProgress('videos', poster, sBlob, 'image/jpeg');
+        ok(await sb.from('videos').update({ path, poster, size: bBlob.size, edit: { orig, origPoster, rot: PE.rot, crop: PE.crop, aspect: PE.aspect } }).eq('id', x.id));
+      }
+      if (old.length) sb.storage.from('videos').remove(old).then(() => {}, () => {});
+    }, full ? 'Back to the original picture' : 'Picture saved. Installers see the new version.');
+    if (done) { peClose(); S.view = null; S.tab = 'team'; S.manage = 'videos'; render(false); } else if (btn) btn.disabled = false;
+  },
+  edSelClip(v) { ED.sel = +v; ED.P.pause(); ED.t = ED.E.segments[ED.sel][0]; ED.P.seek(ED.t); edTimeline(); edPanel(); },
   edSplit() { const t = ED.t; const i = ED.E.segments.findIndex(([a, b]) => t > a && t < b); if (i < 0) { toast('Move into a clip first'); return; } const [a, b] = ED.E.segments[i]; if (t - a < 0.3 || b - t < 0.3) { toast('Move a bit away from the edge of the clip'); return; } edPush(); ED.E.segments.splice(i, 1, [a, t], [t, b]); ED.sel = i + 1; edApply(); toast('Split into two clips'); },
   edDelete() { if (ED.E.segments.length < 2) { toast('Split first, then cut out the part you don\u2019t need'); return; } edPush(); const [a, b] = ED.E.segments[ED.sel]; ED.E.segments.splice(ED.sel, 1); ED.E.texts = (ED.E.texts || []).filter((t) => !(t.t0 >= a && t.t1 <= b)); ED.sel = Math.max(0, Math.min(ED.sel, ED.E.segments.length - 1)); edApply(); toast('Clip cut out'); },
   edTrim(v) { const i = ED.sel; const sg = ED.E.segments[i]; if (!sg) return; const t = ED.t; const prevB = i > 0 ? ED.E.segments[i - 1][1] : 0; const nextA = i < ED.E.segments.length - 1 ? ED.E.segments[i + 1][0] : ED.dur;
@@ -1830,7 +2218,7 @@ const A = {
       for (const j of S.jobs.filter((j) => j.videos.includes(v))) ok(await sb.from('jobs').update({ video_ids: j.videos.filter((i) => i !== v) }).eq('id', j.id));
       for (const t of S.templates.filter((t) => t.videos.includes(v))) ok(await sb.from('templates').update({ video_ids: t.videos.filter((i) => i !== v) }).eq('id', t.id));
       ok(await sb.from('videos').delete().eq('id', v));
-      await sb.storage.from('videos').remove([x.path].concat(x.poster ? [x.poster] : []));
+      await sb.storage.from('videos').remove([x.path].concat(x.poster ? [x.poster] : [], x.edit && x.edit.orig ? [x.edit.orig] : [], x.edit && x.edit.origPoster ? [x.edit.origPoster] : []));
     }, '\u201c' + x.title + '\u201d deleted');
     if (S.draft) S.draft.videos = S.draft.videos.filter((i) => i !== v);
   },
@@ -2038,12 +2426,25 @@ document.addEventListener('click', (e) => {
   A[a](el.dataset.v, el);
 });
 document.addEventListener('keydown', (e) => {
+  if (S.view && S.view.kind === 'veditor' && ED && ED.P && !U.sheet) {
+    const t = e.target; const typing = /INPUT|TEXTAREA|SELECT/.test(t.tagName) && t.type !== 'range';
+    const k = e.key; const mod = e.metaKey || e.ctrlKey;
+    if (!typing && mod && (k === 'z' || k === 'Z')) { e.preventDefault(); A.edUndo(); return; }
+    if (!typing && !mod && !e.altKey) {
+      if (k === ' ') { e.preventDefault(); if (ED.P.el.paused) ED.P.play(); else ED.P.pause(); return; }
+      if (k === 's' || k === 'S') { A.edSplit(); return; }
+      if (k === 'i' || k === 'I') { A.edTrim('start'); return; }
+      if (k === 'o' || k === 'O') { A.edTrim('end'); return; }
+      if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); A.edDelete(); return; }
+      if (k === 'ArrowLeft' || k === 'ArrowRight') { e.preventDefault(); ED.P.pause(); const t2 = Math.max(0, Math.min(ED.dur || 0, (ED.t || 0) + (k === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 0.1))); ED.P.seek(t2); ED.t = t2; edTimeline(); return; }
+    }
+  }
   if (isDesk()) {
     const t = e.target; const typing = /INPUT|TEXTAREA|SELECT/.test(t.tagName);
     if ((e.key === 'Enter' || e.key === ' ') && t.matches && t.matches('tr[data-a]')) { e.preventDefault(); t.click(); return; }
     if (!typing && e.key === 'Escape' && S.panel && !U.sheet) { A.closePanel(); return; }
     if (!typing && !U.sheet && !S.view && (e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey) { A.tab('new'); return; }
-    if (!typing && !U.sheet && !S.view && e.key === '/') { const n = document.getElementById('dsearch'); if (n) { e.preventDefault(); n.focus(); } return; }
+    if (!typing && !U.sheet && !S.view && e.key === '/') { const n = document.getElementById('dsearch') || document.getElementById('lsearch'); if (n) { e.preventDefault(); n.focus(); } return; }
   }
   const el = e.target; if (e.key !== 'Enter' || !el.dataset || !el.dataset.enter || !A[el.dataset.enter]) return;
   e.preventDefault(); A[el.dataset.enter]();
@@ -2055,42 +2456,45 @@ document.addEventListener('submit', (e) => {
 });
 document.addEventListener('input', (e) => {
   const el = e.target;
-  if (el.dataset.deskSearch) { S.q = el.value; const pos = el.selectionStart; render(); const n = document.getElementById('dsearch'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } } return; }
+  if (el.dataset.deskSearch) { S[el.dataset.deskSearch === '1' ? 'q' : el.dataset.deskSearch] = el.value; const pos = el.selectionStart; const fid = el.id; render(); const n = document.getElementById(fid); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } } return; }
   if (el.dataset.ubind != null && U.form && U.form.items) { U.form.items[+el.dataset.ubind].title = el.value; return; }
   if (el.dataset.unotes != null && U.form && U.form.items) { U.form.items[+el.dataset.unotes].notes = el.value; return; }
   if (el.dataset.pw) { pwRules(); return; }
   if (el.dataset.edtext != null && ED) { ED.E.texts[+el.dataset.edtext].text = el.value; ED.P.setEdit(ED.E); return; }
   if (el.dataset.edvol && ED) { ED.E.volume = Number(el.value) / 100; const lab = document.getElementById('edvolv'); if (lab) lab.textContent = el.value + ' %'; ED.P.setEdit(ED.E); return; }
-  if (el.dataset.bind && S.draft) { S.draft[el.dataset.bind] = el.value; const ek = { storeName: 'store', storeAddr: 'store', inst: 'price', adm: 'price' }[el.dataset.bind] || el.dataset.bind; if (S.draft.err && S.draft.err[ek]) { S.draft.err[ek] = ''; el.classList.remove('bad-field'); const g = el.closest('.group.bad-field'); if (g) { g.classList.remove('bad-field'); const n = g.nextElementSibling; if (n && n.classList.contains('foot') && n.style.color) n.remove(); } else { const n = el.nextElementSibling; if (n && n.classList.contains('foot') && n.style.color) n.remove(); } } if (el.dataset.live) updateSplit(); save(); }
+  if (el.dataset.bind && S.draft) { S.draft[el.dataset.bind] = el.value; const ek = { storeName: 'store', storeAddr: 'store', inst: 'price', adm: 'price' }[el.dataset.bind] || el.dataset.bind; if (S.draft.err && S.draft.err[ek]) { S.draft.err[ek] = ''; el.classList.remove('bad-field'); const g = el.closest('.group.bad-field'); if (g) { g.classList.remove('bad-field'); const n = g.nextElementSibling; if (n && n.classList.contains('foot') && n.style.color) n.remove(); } else { const n = el.nextElementSibling; if (n && n.classList.contains('foot') && n.style.color) n.remove(); } } if (el.dataset.live) updateSplit(); save(); if (isDesk()) { const sm = document.getElementById('ntsum'); if (sm) sm.innerHTML = ntSummary(S.draft, S.draft.editId ? job(S.draft.editId) : null); } }
   else if (el.dataset.rbind && S.view) { const jj = job(S.view.id); jj.report[el.dataset.rbind] = el.value; queueReport(jj); }
   else if (el.dataset.fbind && U.form) { U.form[el.dataset.fbind] = el.value; }
   else if (el.dataset.abind) { U.note = el.value; }
   else if (el.dataset.cbind && U.cant) { U.cant.reason = el.value; }
   else if (el.id === 'lemail' && S.login.err) { S.login.err = ''; el.classList.remove('bad-field'); const p = el.parentNode.querySelector('.err'); if (p) p.remove(); }
 });
+function pickFiles(files, back) {
+  if (!files.length) return;
+  const tooBig = files.filter((f) => !/^image\//.test(f.type) && f.size > VIDEO_MAX);
+  const okFiles = files.filter((f) => !tooBig.includes(f) && (/^(video|image)\//.test(f.type) || /\.(mov|mp4|m4v|webm|jpe?g|png|heic|webp)$/i.test(f.name)));
+  if (tooBig.length) toast(tooBig.length === 1 ? tooBig[0].name + ' is ' + fmtSize(tooBig[0].size) + '. Keep videos under 50 MB, about a minute.' : tooBig.length + ' videos are over 50 MB and were left out.');
+  if (!okFiles.length) return;
+  let nv = 0, np = 0;
+  const items = okFiles.map((file) => {
+    const kind = /^image\//.test(file.type) || /\.(jpe?g|png|heic|webp)$/i.test(file.name) ? 'image' : 'video';
+    const base = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
+    const generic = /^(IMG|MOV|VID|PXL|DSC|trim|image|photo|video)\b/i.test(base) || /^\d+$/.test(base);
+    const n = kind === 'image' ? ++np : ++nv;
+    return { file, kind, size: file.size, title: generic ? (okFiles.length > 1 ? (kind === 'image' ? 'Picture ' : 'Video ') + n : '') : base, notes: '', duration: null, posterBlob: null, posterUrl: '' };
+  });
+  U.form = { items, back, progress: null, idx: 0 }; U.err = ''; U.sheet = 'upload'; renderSheet();
+  items.forEach((it) => {
+    const done = (posterBlob, duration) => { if (!U.form || U.form.items.indexOf(it) < 0) return; it.posterBlob = posterBlob; it.duration = duration; if (posterBlob) it.posterUrl = URL.createObjectURL(posterBlob); if (U.form.progress == null) { const a = document.activeElement; const keep = a && a.dataset && a.dataset.ubind; renderSheet(); if (keep != null) { const n = document.querySelector('[data-ubind="' + keep + '"]'); if (n) { n.focus(); try { n.setSelectionRange(n.value.length, n.value.length); } catch (e) { /* ignore */ } } } } };
+    if (it.kind === 'image') picToJpeg(it.file, 480, 0.75).then((b) => done(b, null)).catch(() => done(null, null));
+    else videoMeta(it.file).then((m) => done(m.poster, m.duration));
+  });
+  if (items.length === 1) setTimeout(() => { const t = document.getElementById('vtitle'); if (t && !t.value) t.focus(); }, 50);
+}
 document.addEventListener('change', (e) => {
   const el = e.target;
   if (el.dataset.videoFile) {
-    const files = Array.from(el.files || []); const back = el.dataset.videoFile; el.value = ''; if (!files.length) return;
-    const tooBig = files.filter((f) => !/^image\//.test(f.type) && f.size > VIDEO_MAX);
-    const okFiles = files.filter((f) => !tooBig.includes(f) && (/^(video|image)\//.test(f.type) || /\.(mov|mp4|m4v|webm|jpe?g|png|heic|webp)$/i.test(f.name)));
-    if (tooBig.length) toast(tooBig.length === 1 ? tooBig[0].name + ' is ' + fmtSize(tooBig[0].size) + '. Keep videos under 50 MB, about a minute.' : tooBig.length + ' videos are over 50 MB and were left out.');
-    if (!okFiles.length) return;
-    let nv = 0, np = 0;
-    const items = okFiles.map((file) => {
-      const kind = /^image\//.test(file.type) || /\.(jpe?g|png|heic|webp)$/i.test(file.name) ? 'image' : 'video';
-      const base = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
-      const generic = /^(IMG|MOV|VID|PXL|DSC|trim|image|photo|video)\b/i.test(base) || /^\d+$/.test(base);
-      const n = kind === 'image' ? ++np : ++nv;
-      return { file, kind, size: file.size, title: generic ? (okFiles.length > 1 ? (kind === 'image' ? 'Picture ' : 'Video ') + n : '') : base, notes: '', duration: null, posterBlob: null, posterUrl: '' };
-    });
-    U.form = { items, back, progress: null, idx: 0 }; U.err = ''; U.sheet = 'upload'; renderSheet();
-    items.forEach((it) => {
-      const done = (posterBlob, duration) => { if (!U.form || U.form.items.indexOf(it) < 0) return; it.posterBlob = posterBlob; it.duration = duration; if (posterBlob) it.posterUrl = URL.createObjectURL(posterBlob); if (U.form.progress == null) { const a = document.activeElement; const keep = a && a.dataset && a.dataset.ubind; renderSheet(); if (keep != null) { const n = document.querySelector('[data-ubind="' + keep + '"]'); if (n) { n.focus(); try { n.setSelectionRange(n.value.length, n.value.length); } catch (e) { /* ignore */ } } } } };
-      if (it.kind === 'image') picToJpeg(it.file, 480, 0.75).then((b) => done(b, null)).catch(() => done(null, null));
-      else videoMeta(it.file).then((m) => done(m.poster, m.duration));
-    });
-    if (items.length === 1) setTimeout(() => { const t = document.getElementById('vtitle'); if (t && !t.value) t.focus(); }, 50);
+    const files = Array.from(el.files || []); const back = el.dataset.videoFile; el.value = ''; pickFiles(files, back);
     return;
   }
   if (el.dataset.shot) {
