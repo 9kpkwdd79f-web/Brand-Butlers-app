@@ -201,6 +201,8 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 .vthumb .noposter { display: flex; }
 .vthumb .vlen { position: absolute; right: 4px; bottom: 3px; background: rgba(0,0,0,0.7); color: #fff; font-size: 10px; font-weight: 600; padding: 1px 4px; border-radius: 4px; }
 .vbtn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; border: none; background: none; padding: 0; text-align: left; color: var(--fg); }
+.picview { background: #000; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.picview img { display: block; max-width: 100%; max-height: 62vh; object-fit: contain; }
 .vinstr { width: 100%; display: flex; align-items: center; gap: 12px; border: none; border-radius: 14px; background: var(--blue-bg); padding: 10px 14px 10px 10px; text-align: left; color: var(--fg); }
 .vinstr b { font-size: 16px; color: var(--blue-fg); }
 .vinstr .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -414,11 +416,22 @@ const toJob = (r) => ({
   request: r.request || null, changes: r.changes || '', declineReason: r.decline_reason || '',
   videos: r.video_ids || [], startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
 });
-const toVideo = (v) => ({ id: v.id, title: v.title, notes: v.notes || '', path: v.path, poster: v.poster || '', duration: v.duration != null ? Number(v.duration) : null, edit: v.edit || null, size: v.size != null ? Number(v.size) : null });
+const toVideo = (v) => ({ id: v.id, kind: v.kind || 'video', title: v.title, notes: v.notes || '', path: v.path, poster: v.poster || '', duration: v.duration != null ? Number(v.duration) : null, edit: v.edit || null, size: v.size != null ? Number(v.size) : null });
 const videoBy = (id) => S.videos.find((v) => v.id === id);
 const fmtLen = (sec) => { if (!sec && sec !== 0) return ''; const m = Math.floor(sec / 60), x = Math.round(sec % 60); return m + ':' + String(x).padStart(2, '0'); };
 const fmtSize = (b) => (b ? (b / 1048576 < 10 ? (b / 1048576).toFixed(1) : Math.round(b / 1048576)) + ' MB' : '');
 const VIDEO_MAX = 50 * 1024 * 1024;
+const isPic = (v) => v && v.kind === 'image';
+const countLabel = (vs) => { const nv = vs.filter((v) => !isPic(v)).length, np = vs.length - nv; return [nv ? nv + (nv === 1 ? ' video' : ' videos') : '', np ? np + (np === 1 ? ' picture' : ' pictures') : ''].filter(Boolean).join(' \u00b7 '); };
+/* pictures are stored as JPEG: a large copy to view and a small one for lists */
+function picToJpeg(file, max, q) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file); const im = new Image();
+    im.onload = () => { const sc = Math.min(1, max / Math.max(im.width, im.height)); const c = document.createElement('canvas'); c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url); c.toBlob((b) => (b ? res(b) : rej(new Error('picture'))), 'image/jpeg', q); };
+    im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('This picture format can\u2019t be read. Try a JPEG or PNG.')); };
+    im.src = url;
+  });
+}
 const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0 });
 const toReport = (row) => { const ts = row.submitted_at ? Date.parse(row.submitted_at) : null; return Object.assign(emptyReport(), row.data || {}, { draft: row.draft, submittedTs: ts, submittedAt: ts ? hhmm(ts) : '' }); };
 
@@ -810,8 +823,8 @@ function adminNew() {
     <div class="row"><input id="newpart" class="inl" data-bind="newPart" data-enter="addPart" value="${esc(d.newPart)}" placeholder="Add a part the installer will replace" aria-label="Add a part" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addPart">Add</button></div></div>
     <p class="foot">The installer ticks off what they replaced and can add parts on site.</p>`;
   h += `<h2 class="sec">Video instructions · ${d.videos.length}</h2><div class="group">${d.videos.map((id) => { const v = videoBy(id); return v ? `<div class="row"><button type="button" class="vbtn" data-a="playVideo" data-v="${v.id}">${videoRow(v)}</button><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removeDraftVideo" data-v="${v.id}">Remove</button></div>` : ''; }).join('')}
-    <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="pickVideos">+ Add from video library</button></div>
-    <p class="foot">The installer can watch these on the job card.</p>`;
+    <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="pickVideos">+ Add videos or pictures from the library</button></div>
+    <p class="foot">The installer sees these under Video instructions on the job card.</p>`;
   h += d.tplOpen
     ? `<div class="card" style="gap:10px;margin-top:14px"><b>${tpl ? 'Save as template' : 'Save as a new template'}</b><span class="muted" style="font-size:15px">Saves the ${d.tools.length} ${d.tools.length === 1 ? 'tool' : 'tools'}, ${d.parts.length} ${d.parts.length === 1 ? 'part' : 'parts'} and ${d.videos.length} ${d.videos.length === 1 ? 'video' : 'videos'} above. All admins can use it.</span><input id="tplname" class="box" style="background:var(--bg)" data-bind="tplName" data-enter="saveTemplate" value="${esc(d.tplName)}" placeholder="e.g. Apple accessory wall" aria-label="Template name" autocomplete="off" autocapitalize="sentences"><div class="btn2"><button type="button" class="btn small sec" data-a="tplOpen" data-v="">Cancel</button><button type="button" class="btn small" data-a="saveTemplate">Save template</button></div></div>`
     : `<button type="button" class="btn sec" style="margin-top:14px" data-a="tplOpen" data-v="1">${tpl ? 'Update or save as template' : 'Save as template'}</button>`;
@@ -849,19 +862,20 @@ function adminApprovals() {
 function statusPill(u) { return u.hash ? '' : u.reset ? '<span class="pill p-or">Password reset</span>' : '<span class="pill p-or">Invited</span>'; }
 function vidButton(j) {
   const vs = j.videos.map(videoBy).filter(Boolean); if (!vs.length) return '';
-  const total = vs.reduce((t, v) => t + (effDur(v) || 0), 0);
-  return `<button type="button" class="vinstr" data-a="playJob" data-v="${j.id}"><span class="vthumb">${posterImg(vs[0])}</span><span class="grow"><b>Video instructions</b><span class="sub">${total ? fmtLen(total) + ' · ' : ''}${vs.length === 1 ? esc(vs[0].title) : vs.length + ' videos'}</span></span>${I.play.replace('rgba(0,0,0,0.55)', 'var(--blue)')}</button>`;
+  const total = vs.filter((v) => !isPic(v)).reduce((t, v) => t + (effDur(v) || 0), 0);
+  return `<button type="button" class="vinstr" data-a="playJob" data-v="${j.id}"><span class="vthumb">${posterImg(vs[0])}</span><span class="grow"><b>Video instructions</b><span class="sub">${total ? fmtLen(total) + ' · ' : ''}${vs.length === 1 ? esc(vs[0].title) : countLabel(vs)}</span></span>${I.play.replace('rgba(0,0,0,0.55)', 'var(--blue)')}</button>`;
 }
 function videoRow(v, extra) {
   const uses = S.jobs.filter((j) => j.videos.includes(v.id)).length, tu = S.templates.filter((t) => t.videos.includes(v.id)).length;
-  return `<span class="vthumb">${posterImg(v)}${effDur(v) ? `<span class="vlen">${fmtLen(effDur(v))}</span>` : ''}</span><span class="grow"><span style="font-weight:500">${esc(v.title)}${isEdited(v) ? ' <span class="pill p-blue" style="font-size:10px;padding:1px 6px">Edited</span>' : ''}</span><span class="sub">${[uses ? uses + (uses === 1 ? ' ticket' : ' tickets') : '', tu ? tu + (tu === 1 ? ' template' : ' templates') : '', !uses && !tu ? 'Not used yet' : ''].filter(Boolean).join(' · ')}${extra || ''}</span></span>`;
+  return `<span class="vthumb">${posterImg(v)}${isPic(v) ? '<span class="vlen">Picture</span>' : effDur(v) ? `<span class="vlen">${fmtLen(effDur(v))}</span>` : ''}</span><span class="grow"><span style="font-weight:500">${esc(v.title)}${isEdited(v) ? ' <span class="pill p-blue" style="font-size:10px;padding:1px 6px">Edited</span>' : ''}</span><span class="sub">${[uses ? uses + (uses === 1 ? ' ticket' : ' tickets') : '', tu ? tu + (tu === 1 ? ' template' : ' templates') : '', !uses && !tu ? 'Not used yet' : ''].filter(Boolean).join(' · ')}${extra || ''}</span></span>`;
 }
 function adminVideos() {
-  let h = header('Manage', 'Videos for installers');
-  h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" data-a="setManage" data-v="people">People</button><button type="button" class="on" data-a="setManage" data-v="videos">Videos</button></div>`;
-  h += `<label class="btn" style="margin-top:16px;position:relative">+ Upload video<input type="file" accept="video/*" data-video-file="library" class="vh"></label>`;
-  h += `<p class="foot">Short instruction videos (up to 50 MB, about a minute) that you can add to templates and tickets. Installers watch them in the app.</p>`;
-  h += `<h2 class="sec">Library · ${S.videos.length}</h2><div class="group">${S.videos.length ? S.videos.map((v) => `<button type="button" class="row" data-a="openVideo" data-v="${v.id}">${videoRow(v)}${I.chev}</button>`).join('') : '<div class="row muted">No videos yet. Upload the first one above.</div>'}</div>`;
+  let h = header('Manage', 'Instructions for installers');
+  h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" data-a="setManage" data-v="people">People</button><button type="button" class="on" data-a="setManage" data-v="videos">Videos & pictures</button></div>`;
+  h += `<label class="btn" style="margin-top:16px;position:relative">+ Upload videos or pictures<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label>`;
+  h += `<p class="foot">Pick one or several at once. Short videos (up to 50 MB, about a minute) and pictures that you can add to templates and tickets. Installers see them under Video instructions.</p>`;
+  const F = S.libF || 'all'; const list = S.videos.filter((v) => F === 'all' || (F === 'image' ? isPic(v) : !isPic(v)));
+  h += `<h2 class="sec">Library \u00b7 ${S.videos.length}<span class="seg" style="display:inline-grid;width:auto;margin:0">${[['all', 'All'], ['video', 'Videos'], ['image', 'Pictures']].map(([k, l]) => `<button type="button" class="${F === k ? 'on' : ''}" style="padding:2px 10px;min-height:26px;font-size:12px;text-transform:none" data-a="setLibF" data-v="${k}">${l}</button>`).join('')}</span></h2><div class="group">${list.length ? list.map((v) => `<button type="button" class="row" data-a="openVideo" data-v="${v.id}">${videoRow(v)}${I.chev}</button>`).join('') : `<div class="row muted">${S.videos.length ? 'Nothing here yet.' : 'The library is empty. Upload the first videos or pictures above.'}</div>`}</div>`;
   return h;
 }
 function adminTeam() {
@@ -1198,34 +1212,38 @@ function renderSheet() {
       ${canRemove ? (U.confirm === 'remove' ? `<div class="card" style="gap:10px"><b>Remove ${esc(u.name || u.email)}?</b><span class="muted" style="font-size:15px">They can no longer sign in. Their past jobs and reports stay.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="removeUser" data-v="${u.id}">Remove</button></div></div>` : `<button type="button" class="link" style="color:var(--red)" data-a="confirm" data-v="remove">Remove account</button>`) : ''}`;
   } else if (kind === 'play') {
     const v = videoBy(arg); const list = (U.playList || []).map(videoBy).filter(Boolean);
-    body = `${sheetHead('Video instructions', 'Close')}${v ? `<b style="font-size:17px;margin:0 4px">${esc(v.title)}</b>` : ''}<div id="vhost"></div>
+    body = `${sheetHead('Video instructions', 'Close')}${v ? `<b style="font-size:17px;margin:0 4px">${esc(v.title)}</b>` : ''}${isPic(v) ? `<div class="picview"><img data-vk="${esc(v.path)}" alt="${esc(v.title)}" src="${(VU.get(v.path) || {}).u || BLANK}"></div>` : '<div id="vhost"></div>'}
       ${v && v.notes ? `<div class="group"><div class="row" style="font-size:15px;line-height:21px;white-space:pre-line">${esc(v.notes)}</div></div>` : ''}
-      ${list.length > 1 ? `<span class="cap">All videos for this job</span><div class="group">${list.map((x, i) => `<button type="button" class="row" data-a="playVideo" data-v="${x.id}" aria-current="${x.id === arg}"><span class="vthumb">${posterImg(x)}${effDur(x) ? `<span class="vlen">${fmtLen(effDur(x))}</span>` : ''}</span><span class="grow"><span style="font-weight:${x.id === arg ? 700 : 500}">${i + 1}. ${esc(x.title)}</span>${x.id === arg ? '<span class="sub" style="color:var(--blue)">Playing</span>' : ''}</span></button>`).join('')}</div>` : ''}`;
+      ${list.length > 1 ? `<div class="btn2"><button type="button" class="btn small sec" data-a="playStep" data-v="-1" ${list[0].id === arg ? 'disabled' : ''}>\u2039 Previous</button><button type="button" class="btn small" data-a="playStep" data-v="1" ${list[list.length - 1].id === arg ? 'disabled' : ''}>Next \u203a</button></div>
+      <span class="cap">All for this job \u00b7 ${countLabel(list)}</span><div class="group">${list.map((x, i) => `<button type="button" class="row" data-a="playVideo" data-v="${x.id}" aria-current="${x.id === arg}"><span class="vthumb">${posterImg(x)}${isPic(x) ? '<span class="vlen">Picture</span>' : effDur(x) ? `<span class="vlen">${fmtLen(effDur(x))}</span>` : ''}</span><span class="grow"><span style="font-weight:${x.id === arg ? 700 : 500}">${i + 1}. ${esc(x.title)}</span>${x.id === arg ? `<span class="sub" style="color:var(--blue)">${isPic(x) ? 'Showing' : 'Playing'}</span>` : ''}</span></button>`).join('')}</div>` : ''}`;
   } else if (kind === 'video') {
     const v = videoBy(arg); if (!v) { U.sheet = null; overlay.innerHTML = ''; return; }
     const usedJ = S.jobs.filter((j) => j.videos.includes(v.id)).length, usedT = S.templates.filter((t) => t.videos.includes(v.id)).length;
-    body = `${sheetHead('Video', 'Close', 'Save', 'saveVideo')}<div id="vhost"></div>
-      <button type="button" class="btn" style="background:#5E3CE6" data-a="editVideo" data-v="${v.id}">${ICON.spark} Edit video \u00b7 trim, text, auto edit</button>
+    body = `${sheetHead(isPic(v) ? 'Picture' : 'Video', 'Close', 'Save', 'saveVideo')}${isPic(v) ? `<div class="picview"><img data-vk="${esc(v.path)}" alt="${esc(v.title)}" src="${(VU.get(v.path) || {}).u || BLANK}"></div>` : `<div id="vhost"></div>
+      <button type="button" class="btn" style="background:#5E3CE6" data-a="editVideo" data-v="${v.id}">${ICON.spark} Edit video \u00b7 trim, text, auto edit</button>`}
       <div class="group"><label class="row" for="vtitle"><span class="lbl">Title</span><input id="vtitle" class="inl" data-fbind="title" value="${esc(U.form.title)}" autocomplete="off"></label></div>
-      <textarea class="box" data-fbind="notes" placeholder="Short notes or steps shown under the video (optional)" style="min-height:90px">${esc(U.form.notes)}</textarea>
+      <textarea class="box" data-fbind="notes" placeholder="Short notes or steps shown under it (optional)" style="min-height:90px">${esc(U.form.notes)}</textarea>
       <p class="foot" style="margin:0 4px">${[v.duration ? (isEdited(v) ? fmtLen(effDur(v)) + ' edited (' + fmtLen(v.duration) + ' original)' : fmtLen(v.duration)) : '', fmtSize(v.size), usedJ ? 'on ' + usedJ + (usedJ === 1 ? ' ticket' : ' tickets') : '', usedT ? 'in ' + usedT + (usedT === 1 ? ' template' : ' templates') : ''].filter(Boolean).join(' · ')}</p>
       ${U.err ? `<p class="err">${esc(U.err)}</p>` : ''}
       <button type="button" class="btn" data-a="saveVideo">Save</button>
-      ${U.confirm === 'delvideo' ? `<div class="card" style="gap:10px"><b>Delete \u201c${esc(v.title)}\u201d?</b><span class="muted" style="font-size:15px">It's removed from the library${usedJ || usedT ? ` and from ${[usedJ ? usedJ + (usedJ === 1 ? ' ticket' : ' tickets') : '', usedT ? usedT + (usedT === 1 ? ' template' : ' templates') : ''].filter(Boolean).join(' and ')}` : ''}.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="deleteVideo" data-v="${v.id}">Delete</button></div></div>` : `<button type="button" class="link" style="color:var(--red)" data-a="confirm" data-v="delvideo">Delete video</button>`}`;
+      ${U.confirm === 'delvideo' ? `<div class="card" style="gap:10px"><b>Delete \u201c${esc(v.title)}\u201d?</b><span class="muted" style="font-size:15px">It's removed from the library${usedJ || usedT ? ` and from ${[usedJ ? usedJ + (usedJ === 1 ? ' ticket' : ' tickets') : '', usedT ? usedT + (usedT === 1 ? ' template' : ' templates') : ''].filter(Boolean).join(' and ')}` : ''}.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="deleteVideo" data-v="${v.id}">Delete</button></div></div>` : `<button type="button" class="link" style="color:var(--red)" data-a="confirm" data-v="delvideo">Delete ${isPic(v) ? 'picture' : 'video'}</button>`}`;
   } else if (kind === 'upload') {
-    const f = U.form; const busy = f.progress != null;
-    body = `${sheetHead('Upload video', busy ? '' : 'Cancel')}
-      <div class="row" style="border-radius:12px;border:none"><span class="vthumb">${f.posterUrl ? `<img src="${f.posterUrl}" alt="">` : `<span class="noposter">${I.play}</span>`}${f.duration ? `<span class="vlen">${fmtLen(f.duration)}</span>` : ''}</span><span class="grow"><span style="font-size:15px;word-break:break-all">${esc(f.fileName)}</span><span class="sub">${fmtSize(f.size)}</span></span></div>
-      <div class="group"><label class="row" for="vtitle"><span class="lbl">Title</span><input id="vtitle" class="inl" data-fbind="title" value="${esc(f.title)}" placeholder="e.g. Fitting the header sign" autocomplete="off" autocapitalize="sentences" ${busy ? 'disabled' : ''}></label></div>
-      <textarea class="box" data-fbind="notes" placeholder="Short notes or steps shown under the video (optional)" style="min-height:80px" ${busy ? 'disabled' : ''}>${esc(f.notes)}</textarea>
+    const f = U.form; const busy = f.progress != null; const many = f.items.length > 1;
+    const thumb = (it) => `<span class="vthumb">${it.posterUrl ? `<img src="${it.posterUrl}" alt="">` : `<span class="noposter">${I.play}</span>`}${it.kind === 'image' ? '<span class="vlen">Picture</span>' : it.duration ? `<span class="vlen">${fmtLen(it.duration)}</span>` : ''}</span>`;
+    body = `${sheetHead(many ? 'Upload ' + f.items.length + ' files' : f.items[0].kind === 'image' ? 'Upload picture' : 'Upload video', busy ? '' : 'Cancel')}
+      ${many ? `<div class="group">${f.items.map((it, i) => `<div class="row">${thumb(it)}<span class="grow"><input class="inl" style="font-size:16px" data-ubind="${i}" value="${esc(it.title)}" placeholder="Title" aria-label="Title" ${busy ? 'disabled' : ''}><span class="sub">${it.kind === 'image' ? 'Picture' : 'Video'} \u00b7 ${fmtSize(it.size)}${it.done ? ' \u00b7 <b style="color:var(--green)">Uploaded</b>' : ''}</span></span>${busy ? '' : `<button type="button" class="link" style="color:var(--red);font-size:14px;padding:4px" data-a="uploadDrop" data-v="${i}">Remove</button>`}</div>`).join('')}</div>
+        <p class="foot" style="margin:0 4px">You can add notes to each one later from the library.</p>`
+      : `<div class="row" style="border-radius:12px;border:none">${thumb(f.items[0])}<span class="grow"><span style="font-size:15px;word-break:break-all">${esc(f.items[0].file.name)}</span><span class="sub">${fmtSize(f.items[0].size)}</span></span></div>
+        <div class="group"><label class="row" for="vtitle"><span class="lbl">Title</span><input id="vtitle" class="inl" data-ubind="0" value="${esc(f.items[0].title)}" placeholder="e.g. Fitting the header sign" autocomplete="off" autocapitalize="sentences" ${busy ? 'disabled' : ''}></label></div>
+        <textarea class="box" data-unotes="0" placeholder="Short notes or steps shown under it (optional)" style="min-height:80px" ${busy ? 'disabled' : ''}>${esc(f.items[0].notes)}</textarea>`}
       ${U.err ? `<p class="err">${esc(U.err)}</p>` : ''}
-      ${busy ? `<div class="bar"><span style="width:${Math.round(f.progress * 100)}%"></span></div><p class="foot" style="text-align:center;margin:0">Uploading… ${Math.round(f.progress * 100)} %. Keep the app open.</p>` : `<button type="button" class="btn" data-a="uploadVideo">Upload to library</button>`}`;
+      ${busy ? `<div class="bar"><span style="width:${Math.round(f.progress * 100)}%"></span></div><p class="foot" style="text-align:center;margin:0">Uploading${many ? ' ' + Math.min(f.items.length, f.idx + 1) + ' of ' + f.items.length : ''}\u2026 ${Math.round(f.progress * 100)} %. Keep the app open.</p>` : `<button type="button" class="btn" data-a="uploadVideo">${many ? 'Upload all ' + f.items.length + ' to the library' : 'Upload to library'}</button>`}`;
   } else if (kind === 'pickvideos') {
     const d = S.draft;
-    body = `${sheetHead('Video library', 'Close', 'Done', 'closeSheet')}
-      <label class="btn sec" style="position:relative">+ Upload new video<input type="file" accept="video/*" data-video-file="pick" class="vh"></label>
-      <div class="group">${S.videos.length ? S.videos.map((v) => { const on = d.videos.includes(v.id); return `<button type="button" class="row" aria-pressed="${on}" data-a="toggleDraftVideo" data-v="${v.id}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span>${videoRow(v)}</button>`; }).join('') : '<div class="row muted">The library is empty. Upload the first video above.</div>'}</div>
-      <p class="foot" style="margin:0 4px">Videos you upload here are saved to the library for all admins.</p>`;
+    body = `${sheetHead('Videos & pictures', 'Close', 'Done', 'closeSheet')}
+      <label class="btn sec" style="position:relative">+ Upload videos or pictures<input type="file" accept="video/*,image/*" multiple data-video-file="pick" class="vh"></label>
+      <div class="group">${S.videos.length ? S.videos.map((v) => { const on = d.videos.includes(v.id); return `<button type="button" class="row" aria-pressed="${on}" data-a="toggleDraftVideo" data-v="${v.id}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span>${videoRow(v)}</button>`; }).join('') : '<div class="row muted">The library is empty. Upload the first videos or pictures above.</div>'}</div>
+      <p class="foot" style="margin:0 4px">Tick as many as you like. What you upload here is saved to the library for all admins.</p>`;
   } else if (kind === 'support') {
     const c = C[+arg];
     body = `<div style="text-align:center;display:flex;flex-direction:column;gap:2px;padding:4px"><b>${esc(c.support[0])}</b><span class="muted num" style="font-size:15px;user-select:all">${esc(c.support[1])}</span><span class="muted" style="font-size:13px">Support in ${c.name}</span></div>
@@ -1246,7 +1264,8 @@ function renderSheet() {
       <span class="cap">Reason</span><textarea id="creason" class="box" data-cbind="1" placeholder="Short note for your admin" style="min-height:64px">${esc(m.reason)}</textarea>
       <button type="button" class="btn ${m.mode === 'decline' ? 'red' : ''}" data-a="cantSend" data-v="${j.id}">${m.mode === 'resched' ? 'Send request to admin' : 'Decline job'}</button>`;
   }
-  if (kind === 'play' || kind === 'video') setTimeout(() => loadPlayer(arg), 0);
+  if ((kind === 'play' || kind === 'video') && !isPic(videoBy(arg))) setTimeout(() => loadPlayer(arg), 0);
+  if (kind === 'play' || kind === 'video') setTimeout(hydrate, 0);
   overlay.innerHTML = `<div class="scrim"><button type="button" class="close" aria-label="Close" data-a="closeSheet"></button><div class="sheet" role="dialog" aria-modal="true"><span class="grab"></span>${body}</div></div>`;
 }
 
@@ -1691,7 +1710,7 @@ const A = {
     U.sheet = v; U.err = ''; U.confirm = null; renderSheet();
     if (v === 'forgot') sb.rpc('admin_names').then((r) => { U.admins = r.data || []; if (U.sheet === 'forgot') renderSheet(); }, () => {});
   },
-  closeSheet() { if (U.sheet === 'upload' && U.form && U.form.progress != null) return; if (U.sheet === 'upload' && U.form && U.form.back === 'pick') { U.sheet = 'pickvideos'; U.form = null; renderSheet(); return; } U.sheet = null; U.cant = null; U.err = ''; U.confirm = null; renderSheet(); },
+  closeSheet() { if (U.sheet === 'upload' && U.form && U.form.progress != null) return; if (U.sheet === 'upload' && U.form && U.form.items) U.form.items.forEach((it) => { if (it.posterUrl) URL.revokeObjectURL(it.posterUrl); }); if (U.sheet === 'upload' && U.form && U.form.back === 'pick') { U.sheet = 'pickvideos'; U.form = null; renderSheet(); return; } U.sheet = null; U.cant = null; U.err = ''; U.confirm = null; renderSheet(); },
   confirm(v) { U.confirm = v || null; if (U.sheet) renderSheet(); else render(); },
   switchRole(v) { const me = meU(); if (v === 'admin' && !me.admin) return; if (v === 'installer' && !me.installer) return; const fromSubmit = S.view && S.view.kind === 'submitted'; S.role = v; S.tab = v === 'admin' ? (fromSubmit ? 'approvals' : 'overview') : 'jobs'; S.view = null; U.sheet = null; render(false); },
   async signOut() { await sb.auth.signOut().catch(() => {}); const keep = S.lastEmail; S = Object.assign(fresh(), { loading: false, lastEmail: keep }); PREF_KEYS.forEach((k) => { if (k !== 'lastEmail') { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); if (p[k] !== undefined) S[k] = p[k]; } catch (e) { /* defaults */ } } }); PH.clear(); PHT.clear(); U.sheet = null; render(false); },
@@ -1819,25 +1838,41 @@ const A = {
   toggleDraftVideo(v) { const d = S.draft; const i = d.videos.indexOf(v); if (i >= 0) d.videos.splice(i, 1); else d.videos.push(v); renderSheet(); render(); },
   removeDraftVideo(v) { S.draft.videos = S.draft.videos.filter((i) => i !== v); render(); },
   async uploadVideo() {
-    const f = U.form; const title = (f.title || '').trim();
-    if (!title) { U.err = 'Give the video a title.'; renderSheet(); const el = document.getElementById('vtitle'); if (el) el.focus(); return; }
-    U.err = ''; f.progress = 0; renderSheet();
-    const id = (crypto.randomUUID ? crypto.randomUUID() : uid('v'));
-    const ext = (f.file.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4';
-    const type = f.file.type || (ext === 'mov' ? 'video/quicktime' : 'video/mp4');
-    const path = id + '/video.' + ext;
+    const f = U.form;
+    const empty = f.items.findIndex((it) => !(it.title || '').trim());
+    if (empty >= 0) { U.err = f.items.length > 1 ? 'Give every file a title.' : 'Give it a title.'; renderSheet(); const el = document.querySelector('[data-ubind="' + empty + '"]'); if (el) el.focus(); return; }
+    U.err = ''; f.progress = 0; f.idx = 0; renderSheet();
+    const ids = [];
     try {
-      let last = 0;
-      await uploadWithProgress('videos', path, f.file, type, (p) => { f.progress = p; if (p - last > 0.02 || p === 1) { last = p; renderSheet(); } });
-      let poster = null;
-      if (f.posterBlob) { poster = id + '/poster.jpg'; await uploadWithProgress('videos', poster, f.posterBlob, 'image/jpeg'); }
-      ok(await sb.from('videos').insert({ id, title, notes: (f.notes || '').trim(), path, poster, duration: f.duration, size: f.size, created_by: S.me }));
-    } catch (e) { f.progress = null; U.err = friendly(e); renderSheet(); return; }
-    const back = f.back; if (f.posterUrl) URL.revokeObjectURL(f.posterUrl);
+      for (let i = 0; i < f.items.length; i++) {
+        const it = f.items[i]; f.idx = i; if (it.done) { ids.push(it.id); continue; }
+        const id = it.id || (it.id = (crypto.randomUUID ? crypto.randomUUID() : uid('v')));
+        const share = (p) => { f.progress = (i + p) / f.items.length; renderSheet(); };
+        let path, poster = null, size = it.size;
+        if (it.kind === 'image') {
+          const big = await picToJpeg(it.file, 2000, 0.85); size = big.size;
+          path = id + '/image.jpg'; await uploadWithProgress('videos', path, big, 'image/jpeg', (p) => share(p * 0.9));
+          if (it.posterBlob) { poster = id + '/poster.jpg'; await uploadWithProgress('videos', poster, it.posterBlob, 'image/jpeg'); }
+        } else {
+          const ext = (it.file.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4';
+          path = id + '/video.' + ext;
+          let last = 0;
+          await uploadWithProgress('videos', path, it.file, it.file.type || (ext === 'mov' ? 'video/quicktime' : 'video/mp4'), (p) => { if (p - last > 0.03 || p === 1) { last = p; share(p * 0.95); } });
+          if (it.posterBlob) { poster = id + '/poster.jpg'; await uploadWithProgress('videos', poster, it.posterBlob, 'image/jpeg'); }
+        }
+        ok(await sb.from('videos').insert({ id, kind: it.kind, title: it.title.trim(), notes: (it.notes || '').trim(), path, poster, duration: it.kind === 'image' ? null : it.duration, size, created_by: S.me }));
+        it.done = true; ids.push(id); share(1);
+      }
+    } catch (e) { f.progress = null; U.err = friendly(e) + (ids.length ? ' The ' + ids.length + ' already uploaded are saved; tap Upload to continue with the rest.' : ''); renderSheet(); await refresh().catch(() => {}); return; }
+    const back = f.back; f.items.forEach((it) => { if (it.posterUrl) URL.revokeObjectURL(it.posterUrl); });
     await refresh().catch(() => {});
-    if (back === 'pick' && S.draft) { S.draft.videos.push(id); U.sheet = 'pickvideos'; } else U.sheet = null;
-    U.form = null; renderSheet(); render(); toast('\u201c' + title + '\u201d added to the library');
+    if (back === 'pick' && S.draft) { ids.forEach((id) => { if (!S.draft.videos.includes(id)) S.draft.videos.push(id); }); U.sheet = 'pickvideos'; } else U.sheet = null;
+    U.form = null; renderSheet(); render();
+    toast(ids.length === 1 ? '\u201c' + f.items[0].title.trim() + '\u201d added to the library' : ids.length + ' files added to the library' + (back === 'pick' ? ' and to this ticket' : ''));
   },
+  uploadDrop(v) { U.form.items.splice(+v, 1); if (!U.form.items.length) { A.closeSheet(); return; } renderSheet(); },
+  setLibF(v) { S.libF = v; render(); },
+  playStep(v) { const list = (U.playList || []).filter(videoBy); const cur = list.indexOf(String(U.sheet).split(':')[1]); const n = list[cur + Number(v)]; if (n) A.playVideo(n); },
   openJob(v) { U.confirm = null; if (isDesk()) { S.panel = { kind: 'job', id: v }; render(); return; } S.view = { kind: 'job', id: v }; render(false); },
   closePanel() { S.panel = null; render(); },
   setStatusF(v) { S.statusF = v; render(); },
@@ -2021,6 +2056,8 @@ document.addEventListener('submit', (e) => {
 document.addEventListener('input', (e) => {
   const el = e.target;
   if (el.dataset.deskSearch) { S.q = el.value; const pos = el.selectionStart; render(); const n = document.getElementById('dsearch'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } } return; }
+  if (el.dataset.ubind != null && U.form && U.form.items) { U.form.items[+el.dataset.ubind].title = el.value; return; }
+  if (el.dataset.unotes != null && U.form && U.form.items) { U.form.items[+el.dataset.unotes].notes = el.value; return; }
   if (el.dataset.pw) { pwRules(); return; }
   if (el.dataset.edtext != null && ED) { ED.E.texts[+el.dataset.edtext].text = el.value; ED.P.setEdit(ED.E); return; }
   if (el.dataset.edvol && ED) { ED.E.volume = Number(el.value) / 100; const lab = document.getElementById('edvolv'); if (lab) lab.textContent = el.value + ' %'; ED.P.setEdit(ED.E); return; }
@@ -2034,12 +2071,26 @@ document.addEventListener('input', (e) => {
 document.addEventListener('change', (e) => {
   const el = e.target;
   if (el.dataset.videoFile) {
-    const file = el.files && el.files[0]; const back = el.dataset.videoFile; el.value = ''; if (!file) return;
-    if (file.size > VIDEO_MAX) { toast('The video is ' + fmtSize(file.size) + '. Keep it under 50 MB, about a minute.'); return; }
-    const base = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
-    U.form = { file, fileName: file.name, size: file.size, title: /^(IMG|MOV|VID|trim)\b/i.test(base) ? '' : base, notes: '', back, progress: null, duration: null, posterBlob: null, posterUrl: '' };
-    U.err = ''; U.sheet = 'upload'; renderSheet();
-    videoMeta(file).then((m) => { if (U.sheet !== 'upload' || !U.form || U.form.file !== file) return; U.form.duration = m.duration; U.form.posterBlob = m.poster; if (m.poster) U.form.posterUrl = URL.createObjectURL(m.poster); renderSheet(); const t = document.getElementById('vtitle'); if (t && !t.value) t.focus(); });
+    const files = Array.from(el.files || []); const back = el.dataset.videoFile; el.value = ''; if (!files.length) return;
+    const tooBig = files.filter((f) => !/^image\//.test(f.type) && f.size > VIDEO_MAX);
+    const okFiles = files.filter((f) => !tooBig.includes(f) && (/^(video|image)\//.test(f.type) || /\.(mov|mp4|m4v|webm|jpe?g|png|heic|webp)$/i.test(f.name)));
+    if (tooBig.length) toast(tooBig.length === 1 ? tooBig[0].name + ' is ' + fmtSize(tooBig[0].size) + '. Keep videos under 50 MB, about a minute.' : tooBig.length + ' videos are over 50 MB and were left out.');
+    if (!okFiles.length) return;
+    let nv = 0, np = 0;
+    const items = okFiles.map((file) => {
+      const kind = /^image\//.test(file.type) || /\.(jpe?g|png|heic|webp)$/i.test(file.name) ? 'image' : 'video';
+      const base = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
+      const generic = /^(IMG|MOV|VID|PXL|DSC|trim|image|photo|video)\b/i.test(base) || /^\d+$/.test(base);
+      const n = kind === 'image' ? ++np : ++nv;
+      return { file, kind, size: file.size, title: generic ? (okFiles.length > 1 ? (kind === 'image' ? 'Picture ' : 'Video ') + n : '') : base, notes: '', duration: null, posterBlob: null, posterUrl: '' };
+    });
+    U.form = { items, back, progress: null, idx: 0 }; U.err = ''; U.sheet = 'upload'; renderSheet();
+    items.forEach((it) => {
+      const done = (posterBlob, duration) => { if (!U.form || U.form.items.indexOf(it) < 0) return; it.posterBlob = posterBlob; it.duration = duration; if (posterBlob) it.posterUrl = URL.createObjectURL(posterBlob); if (U.form.progress == null) { const a = document.activeElement; const keep = a && a.dataset && a.dataset.ubind; renderSheet(); if (keep != null) { const n = document.querySelector('[data-ubind="' + keep + '"]'); if (n) { n.focus(); try { n.setSelectionRange(n.value.length, n.value.length); } catch (e) { /* ignore */ } } } } };
+      if (it.kind === 'image') picToJpeg(it.file, 480, 0.75).then((b) => done(b, null)).catch(() => done(null, null));
+      else videoMeta(it.file).then((m) => done(m.poster, m.duration));
+    });
+    if (items.length === 1) setTimeout(() => { const t = document.getElementById('vtitle'); if (t && !t.value) t.focus(); }, 50);
     return;
   }
   if (el.dataset.shot) {
