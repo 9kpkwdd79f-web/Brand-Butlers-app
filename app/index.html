@@ -526,7 +526,7 @@ const toJob = (r) => ({
   date: r.date, time: r.time, status: r.status, fixture: r.fixture || '', tools: r.tools || [], parts: r.parts || [], note: r.note || '', last: r.last_note || '',
   price: r.price != null ? Number(r.price) : null, share: r.share != null ? Number(r.share) : null, split: [Number(r.inst_pct != null ? r.inst_pct : 40), Number(r.adm_pct != null ? r.adm_pct : 10)],
   request: r.request || null, changes: r.changes || '', declineReason: r.decline_reason || '',
-  videos: r.video_ids || [], startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
+  videos: r.video_ids || [], reopenedAt: r.reopened_at ? Date.parse(r.reopened_at) : null, sentBack: Number(r.sent_back) || 0, startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
 });
 const toVideo = (v) => ({ id: v.id, kind: v.kind || 'video', title: v.title, notes: v.notes || '', path: v.path, poster: v.poster || '', duration: v.duration != null ? Number(v.duration) : null, edit: v.edit || null, size: v.size != null ? Number(v.size) : null });
 const videoBy = (id) => S.videos.find((v) => v.id === id);
@@ -698,7 +698,7 @@ const STATUS = {
 const effStatus = (j) => (j.status === 'scheduled' && Date.now() > jobTs(j) + 30 * 60000 ? 'overdue' : j.status);
 const OPEN = ['scheduled', 'progress', 'overdue', 'changes', 'declined'];
 const EDITABLE = ['scheduled', 'progress', 'changes', 'declined'];
-const pillFor = (j) => j.request && j.request.kind === 'resched' && j.status === 'scheduled' ? '<span class="pill p-or">Reschedule asked</span>' : `<span class="pill ${STATUS[effStatus(j)][1]}">${STATUS[effStatus(j)][0]}</span>`;
+const pillFor = (j) => j.status === 'progress' && j.reopenedAt && j.report && j.report.signed ? '<span class="pill p-or">Installer is editing</span>' : j.request && j.request.kind === 'resched' && j.status === 'scheduled' ? '<span class="pill p-or">Reschedule asked</span>' : `<span class="pill ${STATUS[effStatus(j)][1]}">${STATUS[effStatus(j)][0]}</span>`;
 const inPeriod = (j, p) => { const n = Math.abs(dayDiff(j.date)); return p === 0 ? n === 0 : p === 1 ? n <= 7 : n <= 31; };
 const shareOf = (j) => j.share != null ? j.share : (Number(j.price) || 0) * (j.split ? j.split[0] : 40) / 100 / (j.second ? 2 : 1);
 const money = (c, n) => C[c].cur + ' ' + fmt(n);
@@ -1176,7 +1176,7 @@ function insightsDesk() {
   const rev = (a) => a.reduce((t, j) => t + (Number(j.price) || 0), 0);
   const timed = (a) => a.filter((j) => j.startedAt && j.report && j.report.submittedTs && j.report.submittedTs > j.startedAt);
   const avgT = (a) => { const x = timed(a); return x.length ? x.reduce((t, j) => t + (j.report.submittedTs - j.startedAt), 0) / x.length : null; };
-  const sentBack = appr.filter((j) => j.changes).length;
+  const sentBack = appr.filter((j) => j.sentBack > 0).length;
   const firstOk = appr.length ? Math.round((appr.length - sentBack) / appr.length * 100) : null;
   const delta = (a, b) => { if (!b) return '<span class="kd muted">No data the ' + pName + ' before</span>'; const p = Math.round((a - b) / b * 100); return p === 0 ? `<span class="kd muted">Same as last ${pName}</span>` : `<span class="kd" style="color:${p > 0 ? 'var(--green)' : 'var(--red)'}">${p > 0 ? '▲' : '▼'} ${Math.abs(p)} % vs last ${pName}</span>`; };
   const tNow = avgT(cur), tPrev = avgT(prev);
@@ -1213,7 +1213,7 @@ function insightsDesk() {
   }
   h += `<div class="igrid"><div class="icard"><div class="chead"><h3 class="ctitle">Jobs done per ${P === 0 ? 'day' : 'week'}</h3>${legend}</div>${chart}</div><div class="icard">${side}</div></div>`;
   const ins = S.users.filter((u) => u.installer && (nordic || u.c === R || cur.some((j) => j.installer === u.id || j.second === u.id)));
-  const rows = ins.map((u) => { const mine = cur.filter((j) => j.installer === u.id || j.second === u.id); const ap = mine.filter((j) => j.status === 'approved'); const tm = avgT(mine.filter((j) => j.installer === u.id)); return { u, n: mine.length, tm, fo: ap.length ? Math.round(ap.filter((j) => !j.changes).length / ap.length * 100) : null, earn: ap.reduce((t, j) => t + shareOf(j), 0) }; }).sort((a, b) => b.n - a.n || b.earn - a.earn);
+  const rows = ins.map((u) => { const mine = cur.filter((j) => j.installer === u.id || j.second === u.id); const ap = mine.filter((j) => j.status === 'approved'); const tm = avgT(mine.filter((j) => j.installer === u.id)); return { u, n: mine.length, tm, fo: ap.length ? Math.round(ap.filter((j) => !(j.sentBack > 0)).length / ap.length * 100) : null, earn: ap.reduce((t, j) => t + shareOf(j), 0) }; }).sort((a, b) => b.n - a.n || b.earn - a.earn);
   const mxE = Math.max(1, ...rows.map((r) => r.earn));
   h += `<div class="icard" style="margin-top:20px;padding:0"><div class="chead" style="padding:18px 22px 6px"><h3 class="ctitle">Installers</h3><span class="muted" style="font-size:13px">This ${pName} · sorted by jobs done</span></div>
     ${rows.length ? `<table class="tbl itbl"><thead><tr><th style="width:34%">Installer</th><th style="text-align:right">Jobs</th><th style="text-align:right">Avg time</th><th style="text-align:right">First-time approval</th><th style="text-align:right">Earnings</th><th style="width:22%"></th></tr></thead><tbody>${rows.map((r) => `<tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar" style="margin:0;width:32px;height:32px;font-size:12px">${initials(r.u.name || r.u.email)}</span><span class="ell">${esc(r.u.name || r.u.email)} <span class="muted" style="font-size:12px">${C[r.u.c].k}</span></span></div></td><td class="num" style="text-align:right;font-weight:600">${r.n}</td><td class="num" style="text-align:right">${r.tm == null ? '–' : fmtDur(r.tm)}</td><td class="num" style="text-align:right">${r.fo == null ? '–' : r.fo + ' %'}</td><td class="num" style="text-align:right;font-weight:600;white-space:nowrap">DKK ${fmt(r.earn)}</td><td><span class="hbt"><span style="width:${r.earn / mxE * 100}%;background:var(--c0)"></span></span></td></tr>`).join('')}</tbody></table>` : '<p class="muted" style="padding:6px 22px 20px">No installers in this country yet.</p>'}</div>`;
@@ -1274,7 +1274,9 @@ function viewInstaller() {
   if (next) h += jobCard(next);
   else h += `<div class="empty" style="margin-top:16px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--green-bg)">${small(TABICON.jobs, 'var(--green)').replace('width="16" height="16"', 'width="24" height="24"')}</span><b>No jobs right now</b><span>When an admin assigns a job to you, it shows up here.${me.admin ? ' You are an admin too: create a ticket and assign it to yourself to try the report.' : ''}</span>${me.admin ? '<button type="button" class="btn small" style="width:auto;padding:0 18px;margin-top:6px" data-a="switchRole" data-v="admin">Go to admin</button>' : ''}</div>`;
   if (rest.length) h += `<h2 class="sec">Coming up</h2><div class="group">${rest.map((j) => { const d = parseD(j.date); return `<button type="button" class="row" data-a="focusJob" data-v="${j.id}"><span style="width:44px;display:flex;flex-direction:column;align-items:center;flex-shrink:0"><span style="font-size:11px;font-weight:600;color:${dayDiff(j.date) === 0 ? 'var(--redbtn)' : 'var(--muted)'}">${WD[d.getDay()].toUpperCase()}</span><span class="num" style="font-size:20px;font-weight:600">${d.getDate()}</span></span><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.time)}${j.addr ? ' · ' + esc(j.addr.split(',').pop().trim()) : ''}${j.second ? ' · with ' + esc(first(nameOf(j.installer === S.me ? j.second : j.installer))) : ''}</span></span>${pillFor(j)}</button>`; }).join('')}</div>`;
-  if (sent.length) h += `<h2 class="sec">Submitted</h2><div class="group">${sent.map((j) => `<div class="row"><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(whenLabel(j))}</span></span>${pillFor(j)}</div>`).join('')}</div>`;
+  if (sent.length) h += `<h2 class="sec">Submitted</h2><div class="group">${sent.map((j) => j.status === 'waiting' && j.installer === S.me
+    ? `<button type="button" class="row" data-a="sheet" data-v="reopen:${j.id}"><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(whenLabel(j))}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">${pillFor(j)}<span style="font-size:13px;color:var(--blue);font-weight:600">Edit</span></span></button>`
+    : `<div class="row"><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(whenLabel(j))}</span></span>${pillFor(j)}</div>`).join('')}</div><p class="foot">You can edit a report until an admin has approved it.</p>`;
   return h;
 }
 function jobCard(j) {
@@ -1335,6 +1337,7 @@ function reportFlow(j) {
   const left = `<button type="button" class="navbtn" data-a="${st === 1 ? 'closeView' : 'stepBack'}">${I.back} ${st === 1 ? 'Today' : 'Back'}</button>`;
   const right = `<span class="muted" style="justify-self:end;font-size:13px;display:flex;align-items:center;gap:4px">${I.tick('var(--muted)', 12)} Saved</span>`;
   let h = navbar(left, j.store, right, prog);
+  if (j.reopenedAt && j.status === 'progress' && r.signed) h += `<div class="banner" style="margin-top:12px;background:var(--orange-bg);color:var(--fg2)"><span style="flex:1"><b>Editing a submitted report.</b> The admin sees it again when you submit.</span></div>`;
   if (st === 1) {
     h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 1 of 3</span><h1 style="font-size:28px;line-height:34px">Contact and parts</h1></div>`;
     if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
@@ -1373,7 +1376,7 @@ function reportFlow(j) {
     h += `<h2 class="sec">Store sign-off <button type="button" class="link" style="font-size:13px;padding:0" data-a="sigClear">Clear</button></h2><div class="card" style="gap:8px;padding:14px"><span style="font-size:15px;line-height:20px;color:var(--fg2)">Hand the phone to ${esc(r.contact || 'the store contact')} to confirm the work is done.</span><canvas class="sig" id="sig" aria-label="Signature pad, sign with your finger"></canvas><span class="muted" style="font-size:13px">${esc(r.contact || 'Store contact')} · ${esc(r.contactRole)}</span></div>`;
     if ((r.extras || []).length || xupFor(j).length) h += `<div class="row" style="margin-top:12px;border-radius:12px;border:none"><span class="grow"><span>${countExtras(r.extras || [])} attached</span><span class="sub">${xupFor(j).length ? 'Still uploading. Keep the app open.' : 'The admin sees them with the report.'}</span></span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="stepBack">Change</button></div>`;
     h += `<h2 class="sec">What happens next</h2><div class="group"><div class="row"><span class="grow"><span>An admin approves it first</span><span class="sub">Then it goes to Apple. You'll see it here if anything needs changing.</span></span></div></div>`;
-    h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="submitReport" ${ok ? '' : 'disabled'}>${!r.checks.every(Boolean) ? 'Finish the checklist' : !r.signed ? 'Sign to finalize' : 'Finalize and submit'}</button></div>`;
+    h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="submitReport" ${ok ? '' : 'disabled'}>${!r.checks.every(Boolean) ? 'Finish the checklist' : !r.signed ? 'Sign to finalize' : j.reopenedAt ? 'Submit again' : 'Finalize and submit'}</button></div>`;
   }
   // instructions stay one tap away while taking photos and signing off
   const vs = st >= 2 ? j.videos.map(videoBy).filter(Boolean) : [];
@@ -1385,7 +1388,7 @@ function submitted(j) {
     <span class="ico" style="width:88px;height:88px;border-radius:44px;background:var(--green)">${I.tick('#FFFFFF', 42)}</span>
     <h1 style="font-size:28px;line-height:34px">Report submitted</h1>
     <p class="muted" style="margin:0;font-size:17px;line-height:24px">An admin will review ${esc(j.store)} and send it to Apple. ${money(j.c, shareOf(j))} is added to your earnings once approved.</p>
-    <div class="stack" style="width:100%;margin-top:20px"><button type="button" class="btn" data-a="closeView">Back to today</button>${meU().admin ? '<button type="button" class="btn sec" data-a="switchRole" data-v="admin">Switch to admin and review it</button>' : ''}</div>
+    <div class="stack" style="width:100%;margin-top:20px"><button type="button" class="btn" data-a="closeView">Back to today</button><button type="button" class="btn sec" data-a="sheet" data-v="reopen:${j.id}">Edit report</button>${meU().admin ? '<button type="button" class="btn sec" data-a="switchRole" data-v="admin">Switch to admin and review it</button>' : ''}</div>
   </div>`;
 }
 function approvalDetail(j) {
@@ -1452,7 +1455,14 @@ function renderSheet() {
   const [kind, arg] = String(U.sheet).split(':');
   const me = meU();
   let body = '';
-  if (kind === 'extra') {
+  if (kind === 'reopen') {
+    const j = job(arg); if (!j) { U.sheet = null; overlay.innerHTML = ''; return; }
+    body = `${sheetHead('Edit report', 'Cancel')}
+      <div style="padding:4px 4px 0"><b style="font-size:20px">${esc(j.store)}</b><div class="muted" style="font-size:15px">${esc(j.ticket)} \u00b7 submitted ${esc((j.report && j.report.submittedAt) || '')}</div></div>
+      <div class="group"><div class="row"><span class="grow"><span>Change anything in the report</span><span class="sub">Contact, parts, comments, photos and extra photos or videos.</span></span></div>
+      <div class="row"><span class="grow"><span>Paused while you edit</span><span class="sub">It leaves the admin's approval list until you submit it again. The store's signature is kept.</span></span></div></div>
+      ${j.status === 'waiting' ? `<button type="button" class="btn" data-a="reopenReport" data-v="${j.id}">Edit report</button>` : `<p class="err">An admin has already handled this report, so it can't be edited any more.</p>`}`;
+  } else if (kind === 'extra') {
     const [jid, ix] = String(arg).split('|'); const j = job(jid); const x = j && j.report && (j.report.extras || [])[+ix];
     if (!x) { U.sheet = null; overlay.innerHTML = ''; return; }
     const list = j.report.extras; const canDel = j.report.draft && S.role === 'installer';
@@ -2137,6 +2147,7 @@ async function act(fn, okMsg) {
   catch (e) { toast(friendly(e)); render(); return false; }
 }
 const upd = (id, patch) => sb.from('jobs').update(patch).eq('id', id).then(ok);
+const updWaiting = (id, patch) => sb.from('jobs').update(patch).eq('id', id).eq('status', 'waiting').select('id').then((r) => { ok(r); if (!r.data || !r.data.length) throw new Error('The installer has taken this report back to edit it. It comes back here when they submit it again.'); });
 const A = {
   loginCountry(v, el) { S.login.country = Number(v); el.parentNode.querySelectorAll('button').forEach((b) => { const on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); }); },
   loginBack() { S.choosing = false; S.login = { step: 'email', email: S.login.email || '', err: '', acc: null }; render(false); },
@@ -2437,14 +2448,23 @@ const A = {
     if (done) { S.split = [sp.inst, sp.adm]; S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2; render(false); }
     else if (btn) { btn.disabled = false; btn.textContent = 'Create ticket'; }
   },
-  async approve(v) { const j = job(v); if (await act(() => upd(v, { status: 'approved', request: null, handled_at: new Date().toISOString(), handled_by: S.me }), j.store + ' approved')) { S.view = null; if (isDesk()) S.panel = null; S.tab = 'approvals'; render(false); } },
+  async approve(v) { const j = job(v); if (!(await act(() => updWaiting(v, { status: 'approved', request: null, handled_at: new Date().toISOString(), handled_by: S.me }), j.store + ' approved'))) { await refresh().catch(() => {}); if (isDesk()) S.panel = null; S.view = null; render(false); return; } S.view = null; if (isDesk()) S.panel = null; S.tab = 'approvals'; render(false); },
   async askChanges(v) {
     const j = job(v); const note = (U.note || '').trim() || 'Please check the report and resubmit.';
-    if (await act(async () => { await upd(v, { status: 'changes', changes: note, handled_at: new Date().toISOString(), handled_by: S.me }); ok(await sb.from('reports').update({ draft: true }).eq('job_id', v)); }, 'Sent back to ' + first(nameOf(j.installer)))) { S.view = null; if (isDesk() && S.tab === 'approvals') S.panel = null; render(false); }
+    if (await act(async () => { await updWaiting(v, { status: 'changes', changes: note, handled_at: new Date().toISOString(), handled_by: S.me }); ok(await sb.from('reports').update({ draft: true }).eq('job_id', v)); }, 'Sent back to ' + first(nameOf(j.installer)))) { S.view = null; if (isDesk() && S.tab === 'approvals') S.panel = null; render(false); }
+    else { await refresh().catch(() => {}); S.view = null; if (isDesk()) S.panel = null; render(false); }
   },
 
   // installer
   focusJob(v) { S.focus = v; render(false); },
+  async reopenReport(v, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = 'Opening\u2026'; }
+    try { await Promise.all(Array.from(PEND.values())).catch(() => {}); ok(await sb.rpc('job_reopen', { p_job: v })); await refresh(); }
+    catch (e) { U.sheet = null; renderSheet(); toast(friendly(e)); await refresh().catch(() => {}); render(false); return; }
+    const j = job(v); ensureReport(j); U.sheet = null; renderSheet();
+    S.view = { kind: 'report', id: v }; S.step = 1; S.phase = 'after'; S.focus = v; render(false);
+    toast('Report opened. Make your changes and submit it again.');
+  },
   async startReport(v, btn) {
     const j = job(v);
     if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
