@@ -348,6 +348,27 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 .xinstr { position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 30; display: flex; align-items: center; gap: 8px; border: none; border-radius: 999px; background: var(--blue); color: #fff; font-size: 15px; font-weight: 600; padding: 10px 16px 10px 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.28); }
 .xinstr svg { width: 22px; height: 22px; }
 .xinstr .xic { min-width: 22px; height: 22px; border-radius: 11px; background: rgba(255,255,255,0.25); font-size: 12px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+
+.t24 { display: inline-flex; align-items: center; gap: 4px; }
+.t24 select { appearance: none; -webkit-appearance: none; border: none; border-radius: 8px; background: var(--fill); color: var(--fg); font: 600 17px/1 -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 7px 10px; text-align: center; text-align-last: center; cursor: pointer; }
+.t24 b { font-size: 17px; }
+.dayplan { position: relative; height: 44px; margin-top: 10px; border-radius: 10px; background: var(--card); overflow: hidden; cursor: pointer; touch-action: manipulation; }
+.dpgrid span { position: absolute; top: 14px; bottom: 14px; width: 1px; background: var(--sep); }
+.dpgrid span.big { top: 6px; bottom: 6px; background: var(--chev); }
+.dpjob { position: absolute; top: 9px; bottom: 9px; border-radius: 5px; background: var(--fill2); border: 1px solid var(--chev); }
+.dpnow { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: var(--blue); }
+.dpnow.clash { background: var(--orange); }
+.dpnow b { position: absolute; top: 3px; left: 6px; font-size: 11px; color: var(--blue); background: var(--card); padding: 0 3px; border-radius: 4px; }
+.dpnow.clash b { color: var(--orange); }
+.dplab { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin: 3px 2px 0; }
+.pipecard { display: flex; flex-direction: column; gap: 4px; }
+.pipecard .splitbar { margin-top: 8px; }
+.pipe { display: flex; flex-direction: column; margin-top: 8px; }
+.prow { display: flex; align-items: center; gap: 10px; border: none; background: none; padding: 7px 0; text-align: left; font-size: 14px; color: var(--fg); border-top: 0.5px solid var(--sep); }
+.prow:first-child { border-top: none; }
+.prow .grow { flex: 1; min-width: 0; }
+.prow i { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.istack { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 /* ---------- desktop (admins on wide screens) ---------- */
 body.desk { padding-left: 0; padding-right: 0; }
 body.desk .app { max-width: 900px; margin: 0 auto 0 248px; padding: 28px 40px 60px; }
@@ -926,7 +947,8 @@ function adminNew() {
     <p class="foot">${stores.length ? 'Stores you add are saved for next time.' : 'Stores you add are saved for next time. The store list from Excel can be imported later.'}</p>`;
   h += `<div class="row" style="margin-top:10px;border-radius:12px;border:none"><span class="ico" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">Support: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · the installer can call or text</span></span></div>`;
   cut('store');
-  h += `<h2 class="sec">When</h2><div class="group"><label class="row" for="ddate"><span class="lbl">Date</span><input id="ddate" class="inl" type="date" data-bind="date" value="${esc(d.date)}" style="text-align:right"></label><label class="row" for="dtime"><span class="lbl">Time</span><input id="dtime" class="inl" type="time" data-bind="time" value="${esc(d.time)}" style="text-align:right"></label></div>`;
+  h += `<h2 class="sec">When</h2><div class="group"><label class="row" for="ddate"><span class="lbl">Date</span><input id="ddate" class="inl" type="date" data-bind="date" value="${esc(d.date)}" style="text-align:right"></label><div class="row"><span class="lbl">Time</span><span class="grow"></span><span class="t24" role="group" aria-label="Time, 24-hour clock"><select id="dhour" data-tpart="h" aria-label="Hour">${Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(0, 2) === x ? 'selected' : ''}>${x}</option>`).join('')}</select><b>:</b><select id="dmin" data-tpart="m" aria-label="Minutes">${Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(3, 5) === x ? 'selected' : ''}>${x}</option>`).join('')}</select></span></div></div>
+    ${dayPlan(d)}`;
   cut('when');
   h += `<h2 class="sec">Installer</h2><div class="group${E.installer ? ' bad-field' : ''}">`;
   if (lockInstaller) h += `<div class="row"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(nameOf(d.lead))}</span><span class="grow"><span>${esc(nameOf(d.lead))}${d.second ? ' + ' + esc(nameOf(d.second)) : ''}</span><span class="sub">Can\u2019t be changed after the report is started</span></span></div>`;
@@ -1036,6 +1058,7 @@ function adminInsights() {
   let h = header('Insights', 'Admins only');
   h += `<div style="margin-top:14px">${regionSeg('insRegion', R)}</div><div style="margin-top:10px">${periodSeg('insPeriod', P)}</div>`;
   h += `<div class="grid2" style="margin-top:14px"><div class="tile"><span class="k">Jobs done</span><span class="v num">${done.length}</span></div><div class="tile"><span class="k">Avg time on site</span><span class="v num">${avg == null ? '–' : fmtDur(avg)}</span></div><div class="tile"><span class="k">Photo retakes</span><span class="v num">${retake == null ? '–' : retake + '%'}</span></div><div class="tile"><span class="k">Overdue now</span><span class="v num" style="color:${overdueNow ? 'var(--red)' : 'var(--fg)'}">${overdueNow}</span></div></div>`;
+  h += `<div class="card pipecard" style="margin-top:12px">${pipeline(R)}</div>`;
   if (nordic) {
     h += `<h2 class="sec">By country · approved</h2><div class="group">${[0, 1, 2, 3].map((i) => { const a = appr.filter((j) => j.c === i); return `<button type="button" class="row" data-a="set" data-k="insRegion" data-v="${i}">${flag(i, 28, 20)}<span class="grow"><span>${C[i].name}</span><span class="sub num">${a.length} ${a.length === 1 ? 'job' : 'jobs'}</span></span><b class="num" style="font-size:15px">${money(i, a.reduce((t, j) => t + (Number(j.price) || 0), 0))}</b>${I.chev}</button>`; }).join('')}</div><p class="foot">All amounts in Danish kroner (DKK).</p>`;
   } else {
@@ -1125,6 +1148,29 @@ function approvalsDesk() {
 }
 DESK_MQ.addEventListener('change', () => { if (S.me) render(); });
 
+
+/* 24-hour day planner on the ticket form: tap the day to pick a time, see other jobs that day */
+function dayPlan(d) {
+  const people = [d.lead, d.secondOn ? d.second : null].filter(Boolean);
+  const others = S.jobs.filter((j) => j.date === d.date && j.id !== d.editId && !['declined'].includes(j.status) && (people.length ? people.includes(j.installer) || people.includes(j.second) : j.c === d.c));
+  const mins = (t) => { const [h, m] = String(t || '0:0').split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+  const cur = mins(d.time); const DUR = 90;
+  const clash = others.some((j) => Math.abs(mins(j.time) - cur) < DUR);
+  const who = people.length ? people.map((p) => first(nameOf(p))).join(' and ') : C[d.c].name;
+  return `<div class="dayplan" data-dayplan="1" aria-label="Day planner, 00:00 to 23:59">
+      <div class="dpgrid">${Array.from({ length: 24 }, (_, h) => `<span class="${h % 6 === 0 ? 'big' : ''}" style="left:${h / 24 * 100}%"></span>`).join('')}</div>
+      ${others.map((j) => `<span class="dpjob" style="left:${mins(j.time) / 1440 * 100}%;width:${DUR / 1440 * 100}%" title="${esc(j.time + ' ' + j.store)}"></span>`).join('')}
+      <span class="dpnow${clash ? ' clash' : ''}" style="left:${cur / 1440 * 100}%"><b class="num">${esc(d.time || '')}</b></span>
+    </div>
+    <div class="dplab num">${['00', '06', '12', '18', '24'].map((x) => `<span>${x}</span>`).join('')}</div>
+    <p class="foot" style="margin-top:4px">${others.length ? `Grey: ${others.length} other ${others.length === 1 ? 'job' : 'jobs'} that day for ${esc(who)} (${others.map((j) => esc(j.time)).sort().join(', ')}).` : `No other jobs that day for ${esc(who)}.`}${clash ? ' <b style="color:var(--orange)">Close to another job.</b>' : ''} Tap the bar to pick a time, or set it exactly above. 24-hour clock, 00:00–23:59.</p>`;
+}
+document.addEventListener('click', (e) => {
+  const dp = e.target.closest && e.target.closest('[data-dayplan]'); if (!dp || !S.draft) return;
+  const b = dp.getBoundingClientRect(); const f = Math.max(0, Math.min(1, (e.clientX - b.left) / b.width));
+  const m = Math.min(1439, Math.round(f * 1440 / 15) * 15); S.draft.time = String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  save(); render();
+});
 /* ---------- desktop: new ticket ---------- */
 function newDesk(d, PT, editing) {
   const head = editing ? PT.head : `<div class="dhead"><div><div class="date">Client: Apple</div><h1>New ticket</h1></div></div>`;
@@ -1162,6 +1208,22 @@ function ntSummary(d, editing) {
     ${editing ? `<button type="button" class="link" style="width:100%" data-a="cancelEdit">Cancel</button>` : `<p class="foot" style="text-align:center;margin-bottom:0">Shortcut: N opens a new ticket from anywhere.</p>`}`;
 }
 
+
+/* revenue on tickets that are not approved yet (all dates), split by where they are */
+function pipeline(R) {
+  const sc = S.jobs.filter((j) => (R === 4 || j.c === R) && j.status !== 'approved');
+  const sum = (a) => a.reduce((t, j) => t + (Number(j.price) || 0), 0);
+  const parts = [
+    ['Waiting for approval', sc.filter((j) => j.status === 'waiting'), 'var(--blue)'],
+    ['In progress', sc.filter((j) => ['progress', 'changes'].includes(j.status)), 'var(--orange)'],
+    ['Planned', sc.filter((j) => ['scheduled', 'declined'].includes(j.status)), 'var(--muted)']];
+  const tot = sum(sc);
+  return `<span class="k" style="font-size:13px;color:var(--muted);font-weight:500">Revenue not approved yet</span>
+    <span class="num" style="font-size:28px;font-weight:700;letter-spacing:-0.4px">DKK ${fmt(tot)}</span>
+    <span class="muted" style="font-size:13px">${sc.length} ${sc.length === 1 ? 'ticket' : 'tickets'} · all dates${R === 4 ? ' · all countries' : ' · ' + C[R].name}</span>
+    ${tot ? `<div class="splitbar" role="img" aria-label="Not approved yet, split by status">${parts.map(([l, a, col]) => `<span style="flex:${sum(a)};background:${col}" title="${l}"></span>`).join('')}</div>` : ''}
+    <div class="pipe">${parts.map(([l, a, col]) => `<button type="button" class="prow" data-a="${l === 'Waiting for approval' ? 'tab' : 'pipeGo'}" data-v="${l === 'Waiting for approval' ? 'approvals' : l === 'In progress' ? 'progress' : 'todo'}"><i style="background:${col}"></i><span class="grow">${l} <span class="muted num">· ${a.length}</span></span><b class="num">DKK ${fmt(sum(a))}</b></button>`).join('')}</div>`;
+}
 /* ---------- desktop: insights with charts ---------- */
 const CCOL = ['var(--c0)', 'var(--c1)', 'var(--c2)', 'var(--c3)'];
 function isoWeek(d) { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); }
@@ -1211,7 +1273,7 @@ function insightsDesk() {
     const mx = Math.max(1, ...parts.map((p) => p[1]));
     side = `<h3 class="ctitle">Where the money goes</h3><div class="hbars">${parts.map(([l, v]) => `<div class="hb"><span class="hbl">${l}</span><span class="hbt"><span style="width:${Math.max(0, v) / mx * 100}%;background:var(--c0)"></span></span><b class="num">${fmt(v)}</b></div>`).join('')}</div><p class="foot" style="margin:14px 0 0">${C[R].name} · approved reports only · DKK ${fmt(tot)} in total</p>`;
   }
-  h += `<div class="igrid"><div class="icard"><div class="chead"><h3 class="ctitle">Jobs done per ${P === 0 ? 'day' : 'week'}</h3>${legend}</div>${chart}</div><div class="icard">${side}</div></div>`;
+  h += `<div class="igrid"><div class="icard"><div class="chead"><h3 class="ctitle">Jobs done per ${P === 0 ? 'day' : 'week'}</h3>${legend}</div>${chart}</div><div class="istack"><div class="icard pipecard">${pipeline(R)}</div><div class="icard">${side}</div></div></div>`;
   const ins = S.users.filter((u) => u.installer && (nordic || u.c === R || cur.some((j) => j.installer === u.id || j.second === u.id)));
   const rows = ins.map((u) => { const mine = cur.filter((j) => j.installer === u.id || j.second === u.id); const ap = mine.filter((j) => j.status === 'approved'); const tm = avgT(mine.filter((j) => j.installer === u.id)); return { u, n: mine.length, tm, fo: ap.length ? Math.round(ap.filter((j) => !(j.sentBack > 0)).length / ap.length * 100) : null, earn: ap.reduce((t, j) => t + shareOf(j), 0) }; }).sort((a, b) => b.n - a.n || b.earn - a.earn);
   const mxE = Math.max(1, ...rows.map((r) => r.earn));
@@ -2457,6 +2519,7 @@ const A = {
 
   // installer
   focusJob(v) { S.focus = v; render(false); },
+  pipeGo(v) { S.tab = 'overview'; S.view = null; S.region = S.insRegion; S.statusF = v; S.period = 2; render(false); },
   async reopenReport(v, btn) {
     if (btn) { btn.disabled = true; btn.textContent = 'Opening\u2026'; }
     try { await Promise.all(Array.from(PEND.values())).catch(() => {}); ok(await sb.rpc('job_reopen', { p_job: v })); await refresh(); }
@@ -2612,6 +2675,7 @@ document.addEventListener('change', (e) => {
     }).catch(() => toast('Couldn\u2019t read that photo. Try again.'));
   }
   if (el.dataset.bind === 'date' && S.draft) render();
+  if (el.dataset.tpart && S.draft) { const [hh, mm] = (S.draft.time || '09:00').split(':'); S.draft.time = el.dataset.tpart === 'h' ? el.value + ':' + (mm || '00') : (hh || '09') + ':' + el.value; save(); render(); }
 });
 window.addEventListener('pageshow', (e) => { if (e.persisted) quietRefresh(); });
 
