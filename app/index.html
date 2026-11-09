@@ -369,6 +369,14 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 .prow .grow { flex: 1; min-width: 0; }
 .prow i { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 .istack { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.mtbl { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 15px; }
+.mtbl th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); text-align: right; padding: 0 0 6px; }
+.mtbl td { padding: 9px 0; border-top: 0.5px solid var(--sep); text-align: right; white-space: nowrap; }
+.mtbl td:first-child { text-align: left; }
+.mtbl td + td, .mtbl th + th { padding-left: 14px; }
+.mtbl td:last-child { color: var(--fg2); }
+.mtbl i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; }
+.mtbl tr.tot td { font-weight: 600; border-top: 1px solid var(--chev); }
 /* ---------- desktop (admins on wide screens) ---------- */
 body.desk { padding-left: 0; padding-right: 0; }
 body.desk .app { max-width: 900px; margin: 0 auto 0 248px; padding: 28px 40px 60px; }
@@ -1060,12 +1068,13 @@ function adminInsights() {
   h += `<div class="grid2" style="margin-top:14px"><div class="tile"><span class="k">Jobs done</span><span class="v num">${done.length}</span></div><div class="tile"><span class="k">Avg time on site</span><span class="v num">${avg == null ? '–' : fmtDur(avg)}</span></div><div class="tile"><span class="k">Photo retakes</span><span class="v num">${retake == null ? '–' : retake + '%'}</span></div><div class="tile"><span class="k">Overdue now</span><span class="v num" style="color:${overdueNow ? 'var(--red)' : 'var(--fg)'}">${overdueNow}</span></div></div>`;
   h += `<div class="card pipecard" style="margin-top:12px">${pipeline(R)}</div>`;
   if (nordic) {
-    h += `<h2 class="sec">By country · approved</h2><div class="group">${[0, 1, 2, 3].map((i) => { const a = appr.filter((j) => j.c === i); return `<button type="button" class="row" data-a="set" data-k="insRegion" data-v="${i}">${flag(i, 28, 20)}<span class="grow"><span>${C[i].name}</span><span class="sub num">${a.length} ${a.length === 1 ? 'job' : 'jobs'}</span></span><b class="num" style="font-size:15px">${money(i, a.reduce((t, j) => t + (Number(j.price) || 0), 0))}</b>${I.chev}</button>`; }).join('')}</div><p class="foot">All amounts in Danish kroner (DKK).</p>`;
+    h += `<h2 class="sec">By country · approved</h2><div class="group">${[0, 1, 2, 3].map((i) => { const a = appr.filter((j) => j.c === i); return `<button type="button" class="row" data-a="set" data-k="insRegion" data-v="${i}">${flag(i, 28, 20)}<span class="grow"><span>${C[i].name}</span><span class="sub num">${a.length} ${a.length === 1 ? 'job' : 'jobs'}</span></span><b class="num" style="font-size:15px">${money(i, a.reduce((t, j) => t + (Number(j.price) || 0), 0))}</b>${I.chev}</button>`; }).join('')}</div>
+    <h2 class="sec">Where the money goes</h2><div class="card" style="gap:4px">${moneySplit(appr, R, ['today', 'this week', 'this month'][P])}</div>`;
   } else {
     const tot = appr.reduce((t, j) => t + (Number(j.price) || 0), 0);
     const parts = [['Installers', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[0] / 100, 0), 'var(--green)'], ['Admin', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[1] / 100, 0), 'var(--orange)']];
     parts.push(['Brand Butlers', tot - parts[0][1] - parts[1][1], 'var(--blue)']);
-    h += `<h2 class="sec">Revenue · approved</h2><div class="card" style="gap:12px"><span class="num" style="font-size:28px;font-weight:700">${money(R, tot)}</span>${tot ? `<div role="img" aria-label="Revenue split" style="display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px">${parts.map((p) => `<span style="flex:${Math.max(p[1], 0)};background:${p[2]}"></span>`).join('')}</div>` : ''}${parts.map(([l, v, col]) => `<span style="display:flex;align-items:center;gap:8px;font-size:15px"><span style="width:10px;height:10px;border-radius:3px;background:${col}"></span><span style="flex:1">${l}</span><b class="num">${money(R, v)}</b></span>`).join('')}</div>`;
+    h += `<h2 class="sec">Revenue · approved</h2><div class="card" style="gap:12px"><span class="num" style="font-size:28px;font-weight:700">${money(R, tot)}</span>${tot ? `<div role="img" aria-label="Revenue split" style="display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px">${parts.map((p) => `<span style="flex:${Math.max(p[1], 0)};background:${p[2]}"></span>`).join('')}</div>` : ''}<b style="font-size:15px;margin-top:4px">Where the money goes</b>${moneySplit(appr, R, ['today', 'this week', 'this month'][P])}</div>`;
   }
   const ins = S.users.filter((u) => u.installer && (nordic || u.c === R || appr.some((j) => j.installer === u.id || j.second === u.id)));
   const rows = ins.map((u) => { const mine = appr.filter((j) => j.installer === u.id || j.second === u.id); return { u, n: mine.length, sums: sumByCur(mine.map((j) => [j.c, shareOf(j)])) }; }).sort((a, b) => b.n - a.n);
@@ -1209,6 +1218,16 @@ function ntSummary(d, editing) {
 }
 
 
+
+/* who gets what: approved (in the chosen period) next to what is still to be approved (any date) */
+function moneySplit(appr, R, pName) {
+  const pend = S.jobs.filter((j) => (R === 4 || j.c === R) && j.status !== 'approved');
+  const sp = (a) => { const pr = (j) => Number(j.price) || 0; const t = a.reduce((x, j) => x + pr(j), 0); const i = a.reduce((x, j) => x + pr(j) * j.split[0] / 100, 0); const ad = a.reduce((x, j) => x + pr(j) * j.split[1] / 100, 0); return [i, ad, t - i - ad, t]; };
+  const A = sp(appr), P = sp(pend);
+  const rows = [['Installers', 'var(--green)'], ['Admin', 'var(--orange)'], ['Brand Butlers', 'var(--blue)']];
+  return `<table class="mtbl"><thead><tr><th></th><th>Approved</th><th>To be approved</th></tr></thead><tbody>${rows.map(([l, col], k) => `<tr><td><i style="background:${col}"></i>${l}</td><td class="num"><b>${fmt(A[k])}</b></td><td class="num">${fmt(P[k])}</td></tr>`).join('')}<tr class="tot"><td>Total</td><td class="num"><b>${fmt(A[3])}</b></td><td class="num"><b>${fmt(P[3])}</b></td></tr></tbody></table>
+    <p class="foot" style="margin:10px 0 0">DKK · ${R === 4 ? 'all countries' : C[R].name}. Approved: ${esc(pName)}. To be approved: ${pend.length} ${pend.length === 1 ? 'ticket' : 'tickets'} not approved yet, any date.</p>`;
+}
 /* revenue on tickets that are not approved yet (all dates), split by where they are */
 function pipeline(R) {
   const sc = S.jobs.filter((j) => (R === 4 || j.c === R) && j.status !== 'approved');
@@ -1267,11 +1286,11 @@ function insightsDesk() {
   let side;
   if (nordic) {
     const rows = [0, 1, 2, 3].map((c) => ({ c, v: rev(appr.filter((j) => j.c === c)) })); const mx = Math.max(1, ...rows.map((r) => r.v));
-    side = `<h3 class="ctitle">Revenue by country</h3><div class="hbars">${rows.map((r) => `<div class="hb"><span class="hbl">${C[r.c].name}</span><span class="hbt"><span style="width:${r.v / mx * 100}%;background:${CCOL[r.c]}"></span></span><b class="num">${fmt(r.v)}</b></div>`).join('')}</div><p class="foot" style="margin:14px 0 0">Approved reports only · DKK</p>`;
+    side = `<h3 class="ctitle">Revenue by country</h3><div class="hbars">${rows.map((r) => `<div class="hb"><span class="hbl">${C[r.c].name}</span><span class="hbt"><span style="width:${r.v / mx * 100}%;background:${CCOL[r.c]}"></span></span><b class="num">${fmt(r.v)}</b></div>`).join('')}</div><p class="foot" style="margin:14px 0 0">Approved reports only · DKK</p><h3 class="ctitle" style="margin-top:22px">Where the money goes</h3>${moneySplit(appr, R, 'this ' + pName)}`;
   } else {
     const tot = rev(appr); const parts = [['Installers', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[0] / 100, 0)], ['Admin', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[1] / 100, 0)]]; parts.push(['Brand Butlers', tot - parts[0][1] - parts[1][1]]);
     const mx = Math.max(1, ...parts.map((p) => p[1]));
-    side = `<h3 class="ctitle">Where the money goes</h3><div class="hbars">${parts.map(([l, v]) => `<div class="hb"><span class="hbl">${l}</span><span class="hbt"><span style="width:${Math.max(0, v) / mx * 100}%;background:var(--c0)"></span></span><b class="num">${fmt(v)}</b></div>`).join('')}</div><p class="foot" style="margin:14px 0 0">${C[R].name} · approved reports only · DKK ${fmt(tot)} in total</p>`;
+    side = `<h3 class="ctitle">Where the money goes</h3>${moneySplit(appr, R, 'this ' + pName)}`;
   }
   h += `<div class="igrid"><div class="icard"><div class="chead"><h3 class="ctitle">Jobs done per ${P === 0 ? 'day' : 'week'}</h3>${legend}</div>${chart}</div><div class="istack"><div class="icard pipecard">${pipeline(R)}</div><div class="icard">${side}</div></div></div>`;
   const ins = S.users.filter((u) => u.installer && (nordic || u.c === R || cur.some((j) => j.installer === u.id || j.second === u.id)));
