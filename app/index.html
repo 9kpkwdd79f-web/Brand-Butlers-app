@@ -377,6 +377,16 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 .mtbl td:last-child { color: var(--fg2); }
 .mtbl i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; }
 .mtbl tr.tot td { font-weight: 600; border-top: 1px solid var(--chev); }
+
+.ynq { display: flex; flex-direction: column; gap: 6px; margin-top: 18px; }
+.ynq > b { font-size: 16px; line-height: 21px; margin: 0 4px; }
+.ynq > .sub { font-size: 13px; color: var(--muted); margin: -2px 4px 2px; }
+.ynq .seg button { min-height: 40px; font-size: 15px; }
+
+.sig2 { display: grid; grid-template-columns: 1fr; gap: 10px; }
+body.desk .sig2 { grid-template-columns: 1fr 1fr; }
+.dlbtn { flex-shrink: 0; border: none; border-radius: 8px; background: var(--blue-bg); color: var(--blue-fg); font-size: 13px; font-weight: 700; padding: 6px 12px; }
+.dlbtn:disabled { opacity: .6; }
 /* ---------- desktop (admins on wide screens) ---------- */
 body.desk { padding-left: 0; padding-right: 0; }
 body.desk .app { max-width: 900px; margin: 0 auto 0 248px; padding: 28px 40px 60px; }
@@ -573,7 +583,7 @@ function picToJpeg(file, max, q) {
     im.src = url;
   });
 }
-const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0, extras: [] });
+const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0, extras: [], apple: {}, disposal: [], instSigned: false });
 const toReport = (row) => { const ts = row.submitted_at ? Date.parse(row.submitted_at) : null; return Object.assign(emptyReport(), row.data || {}, { draft: row.draft, submittedTs: ts, submittedAt: ts ? hhmm(ts) : '' }); };
 
 async function loadAll() {
@@ -592,7 +602,7 @@ async function loadAll() {
     S.templates = ok(tp).map((t) => ({ id: t.id, name: t.name, tools: t.tools || [], parts: t.parts || [], videos: t.video_ids || [] })).sort((a, b) => a.name.localeCompare(b.name));
     S.videos = ok(vd).map(toVideo).sort((a, b) => a.title.localeCompare(b.title));
     S.tools = ok(tl).map((t) => ({ id: t.id, name: t.name })).sort((a, b) => a.name.localeCompare(b.name));
-    S.users = ok(ps).map(toUser); S.stores = ok(st).map((s) => ({ id: s.id, c: s.country, name: s.name, addr: s.address })); jobs = ok(js); reports = ok(rs);
+    S.users = ok(ps).map(toUser); S.stores = ok(st).map((s) => ({ id: s.id, c: s.country, name: s.name, addr: s.address, appleId: s.apple_id || '', city: s.city || '' })); jobs = ok(js); reports = ok(rs);
   } else {
     const [js, rs, vd] = await Promise.all([sb.rpc('my_jobs'), sb.from('reports').select('*'), sb.rpc('my_videos')]);
     S.users = [me]; S.stores = []; jobs = ok(js); reports = ok(rs); S.videos = (vd.data || []).map(toVideo);
@@ -655,6 +665,8 @@ async function phGet(k) {
 }
 function phDel(k) { PH.delete(k); PHT.delete(k); sb.storage.from('photos').remove([k]).then(() => {}, () => {}); }
 const sigKey = (j) => j.id + '/signature.png';
+const isigKey = (j) => j.id + '/installer-signature.png';
+const cityFrom = (addr) => { const p = String(addr || '').split(',').pop().trim().replace(/^\d[\d\s-]*/, '').trim(); return p; };
 const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const pimg = (k, alt) => `<img data-pk="${esc(k)}" alt="${esc(alt || '')}" src="${(PHT.get(k) || 0) > Date.now() ? PH.get(k) : BLANK}">`;
 const VU = new Map();
@@ -670,7 +682,7 @@ function hydrate() {
 
 /* report drafts are saved to the server as you go */
 const RQ = new Map();
-const REPORT_KEYS = ['init', 'contact', 'contactRole', 'parts', 'extra', 'comments', 'nextNote', 'problem', 'probType', 'probText', 'photos', 'checks', 'signed', 'shots', 'extras'];
+const REPORT_KEYS = ['init', 'contact', 'contactRole', 'parts', 'extra', 'comments', 'nextNote', 'problem', 'probType', 'probText', 'photos', 'checks', 'signed', 'shots', 'extras', 'apple', 'disposal', 'instSigned'];
 function queueReport(j, now) {
   if (!j || !j.report || !j.report.draft) return Promise.resolve();
   clearTimeout(RQ.get(j.id));
@@ -923,6 +935,7 @@ function splitNums(d) {
 }
 function adminNew() {
   const d = S.draft || (S.draft = newDraft());
+  if (d.metaFor !== d.store) { const s0 = S.stores.find((x) => x.id === d.store); d.storeApple = s0 ? s0.appleId : ''; d.storeCity = s0 ? s0.city || cityFrom(s0.addr) : ''; d.metaFor = d.store; }
   const E = d.err || {};
   const cur = C[d.c].cur;
   const stores = storesFor(d.c);
@@ -952,7 +965,8 @@ function adminNew() {
   cut('country');
   h += `<h2 class="sec">Store</h2><div class="group${E.store ? ' bad-field' : ''}">${stores.map((s) => `<button type="button" class="row" aria-pressed="${d.store === s.id}" data-a="draftStore" data-v="${s.id}"><span class="grow"><span>${esc(s.name)}</span><span class="sub">${esc(s.addr)}</span></span>${d.store === s.id ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}
     ${d.store === 'new' || !stores.length ? `<label class="row" for="sname"><span class="lbl">Store</span><input id="sname" class="inl" data-bind="storeName" value="${esc(d.storeName)}" placeholder="e.g. Elkjøp Storo" autocomplete="off"></label><label class="row" for="saddr"><span class="lbl">Address</span><input id="saddr" class="inl" data-bind="storeAddr" value="${esc(d.storeAddr)}" placeholder="Street, postcode, city" autocomplete="off"></label>` : `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftStore" data-v="new">+ New store</button>`}</div>${errL('store')}
-    <p class="foot">${stores.length ? 'Stores you add are saved for next time.' : 'Stores you add are saved for next time. The store list from Excel can be imported later.'}</p>`;
+    <div class="group" style="margin-top:8px"><label class="row" for="sapple"><span class="lbl">Apple ID</span><input id="sapple" class="inl num" data-bind="storeApple" value="${esc(d.storeApple || '')}" placeholder="Apple's store number, e.g. 252094" autocomplete="off" inputmode="numeric"></label><label class="row" for="scity"><span class="lbl">City</span><input id="scity" class="inl" data-bind="storeCity" value="${esc(d.storeCity || '')}" placeholder="e.g. Oslo" autocomplete="off" autocapitalize="words"></label></div>
+    <p class="foot">Apple ID and city go on the Apple statement of completion and are saved with the store. ${stores.length ? 'Stores you add are saved for next time.' : 'Stores you add are saved for next time. The store list from Excel can be imported later.'}</p>`;
   h += `<div class="row" style="margin-top:10px;border-radius:12px;border:none"><span class="ico" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">Support: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · the installer can call or text</span></span></div>`;
   cut('store');
   h += `<h2 class="sec">When</h2><div class="group"><label class="row" for="ddate"><span class="lbl">Date</span><input id="ddate" class="inl" type="date" data-bind="date" value="${esc(d.date)}" style="text-align:right"></label><div class="row"><span class="lbl">Time</span><span class="grow"></span><span class="t24" role="group" aria-label="Time, 24-hour clock"><select id="dhour" data-tpart="h" aria-label="Hour">${Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(0, 2) === x ? 'selected' : ''}>${x}</option>`).join('')}</select><b>:</b><select id="dmin" data-tpart="m" aria-label="Minutes">${Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(3, 5) === x ? 'selected' : ''}>${x}</option>`).join('')}</select></span></div></div>
@@ -1016,7 +1030,7 @@ function adminApprovals() {
   const recent = S.jobs.filter((j) => j.status === 'approved' || j.status === 'changes').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0)).slice(0, 20);
   let h = header('Approvals', 'Before anything reaches Apple');
   h += `<h2 class="sec">Waiting · ${waiting.length}</h2><div class="group">${waiting.length ? waiting.map((j) => `<button type="button" class="row" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(nameOf(j.installer))} · ${esc(whenLabel(j))}</span></span>${j.report && j.report.problem ? '<span class="pill p-red">Problem</span>' : ''}${I.chev}</button>`).join('') : '<div class="row muted">All caught up.</div>'}</div>`;
-  h += `<h2 class="sec">Recently handled</h2><div class="group">${recent.length ? recent.map((j) => `<button type="button" class="row" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(nameOf(j.installer))}</span></span>${pillFor(j)}</button>`).join('') : '<div class="row muted">Nothing yet.</div>'}</div>`;
+  h += approvedList(false);
   return h;
 }
 
@@ -1151,7 +1165,7 @@ function approvalsDesk() {
   const item = (j) => `<button type="button" class="row${S.panel && S.panel.id === j.id ? ' rsel' : ''}" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(nameOf(j.installer))} · ${esc(whenLabel(j))}</span></span>${j.report && j.report.problem ? '<span class="pill p-red">Problem</span>' : j.status !== 'waiting' ? pillFor(j) : ''}</button>`;
   let h = `<div class="dhead"><div><div class="date">Before anything reaches Apple</div><h1>Approvals</h1></div></div>`;
   h += `<div class="dgrid ap"><div class="dmain"><h2 class="sec" style="margin-top:0">Waiting · ${waiting.length}</h2><div class="group">${waiting.length ? waiting.map(item).join('') : '<div class="row muted">All caught up.</div>'}</div>
-    <h2 class="sec">Recently handled</h2><div class="group">${recent.length ? recent.map(item).join('') : '<div class="row muted">Nothing yet.</div>'}</div></div>
+    ${approvedList(true)}</div>
     <div class="dright">${S.panel ? deskPanel() : '<div class="empty"><b>Nothing to review</b><span>New reports show up here as soon as installers submit them.</span></div>'}</div></div>`;
   return h;
 }
@@ -1180,6 +1194,20 @@ document.addEventListener('click', (e) => {
   const m = Math.min(1439, Math.round(f * 1440 / 15) * 15); S.draft.time = String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
   save(); render();
 });
+
+function approvedList(desk) {
+  const q = (S.apQ || '').trim().toLowerCase();
+  const all = S.jobs.filter((j) => j.status === 'approved').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0));
+  const list = all.filter((j) => !q || [j.store, j.ticket, nameOf(j.installer), j.addr].join(' ').toLowerCase().includes(q));
+  const back = S.jobs.filter((j) => j.status === 'changes').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0));
+  const row = (j) => `<div class="row${desk && S.panel && S.panel.id === j.id ? ' rsel' : ''}" style="gap:8px"><button type="button" class="vbtn" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow" style="display:flex;flex-direction:column;min-width:0"><span class="ell">${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(nameOf(j.installer))} \u00b7 ${j.handledAt ? esc(new Date(j.handledAt).toLocaleDateString('en-GB')) : ''}</span></span></button><button type="button" class="dlbtn" data-a="dlReport" data-v="${j.id}" aria-label="Download PDF for ${esc(j.store)}">PDF</button></div>`;
+  let h = '';
+  if (back.length) h += `<h2 class="sec">Sent back for changes \u00b7 ${back.length}</h2><div class="group">${back.map((j) => `<button type="button" class="row${desk && S.panel && S.panel.id === j.id ? ' rsel' : ''}" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(nameOf(j.installer))}</span></span>${pillFor(j)}</button>`).join('')}</div>`;
+  h += `<h2 class="sec">Approved \u00b7 ${all.length}</h2>${all.length > 5 || q ? `<input class="box" id="apsearch" data-desk-search="apQ" value="${esc(S.apQ || '')}" placeholder="Search store, ticket or installer" aria-label="Search approved reports" autocomplete="off" style="height:42px;margin-bottom:8px">` : ''}
+    <div class="group">${list.length ? list.map(row).join('') : `<div class="row muted">${all.length ? 'No approved reports match.' : 'Nothing approved yet.'}</div>`}</div>
+    <p class="foot">Tap PDF to download the statement of completion again, any time.</p>`;
+  return h;
+}
 /* ---------- desktop: new ticket ---------- */
 function newDesk(d, PT, editing) {
   const head = editing ? PT.head : `<div class="dhead"><div><div class="date">Client: Apple</div><h1>New ticket</h1></div></div>`;
@@ -1420,13 +1448,14 @@ function reportFlow(j) {
   let h = navbar(left, j.store, right, prog);
   if (j.reopenedAt && j.status === 'progress' && r.signed) h += `<div class="banner" style="margin-top:12px;background:var(--orange-bg);color:var(--fg2)"><span style="flex:1"><b>Editing a submitted report.</b> The admin sees it again when you submit.</span></div>`;
   if (st === 1) {
-    h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 1 of 3</span><h1 style="font-size:28px;line-height:34px">Contact and parts</h1></div>`;
+    h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 1 of 3</span><h1 style="font-size:28px;line-height:34px">Check-in and parts</h1></div>`;
     if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
-    h += `<h2 class="sec">Who did you speak with?</h2><div class="group"><label class="row" for="rcontact"><span class="lbl">Name</span><input id="rcontact" class="inl" data-rbind="contact" value="${esc(r.contact)}" placeholder="Full name" autocomplete="off" autocapitalize="words"></label><div class="row" style="flex-wrap:wrap">${['Store manager', 'Department lead', 'Staff'].map((x) => `<button type="button" class="chip ${r.contactRole === x ? 'on' : ''}" data-a="rset" data-k="contactRole" data-v="${x}">${x}</button>`).join('')}</div></div>`;
+    h += ynQ(r, 'checkedIn', 'Have you checked in?', 'Check in with the store before you start.');
+    h += `<h2 class="sec">Store manager</h2><div class="group"><label class="row" for="rcontact"><span class="lbl">Name</span><input id="rcontact" class="inl" data-rbind="contact" value="${esc(r.contact)}" placeholder="Full name" autocomplete="off" autocapitalize="words"></label><div class="row" style="flex-wrap:wrap">${['Store manager', 'Department lead', 'Staff'].map((x) => `<button type="button" class="chip ${r.contactRole === x ? 'on' : ''}" data-a="rset" data-k="contactRole" data-v="${x}">${x}</button>`).join('')}</div></div>`;
     h += `<h2 class="sec">Parts replaced</h2><div class="group">${r.parts.map(([p, q], i) => `<div class="row"><button type="button" style="flex:1;display:flex;align-items:center;gap:12px;border:none;background:none;padding:0;text-align:left;min-height:44px" data-a="partToggle" data-v="${i}" aria-pressed="${q > 0}"><span class="check ${q > 0 ? 'on' : ''}">${I.tick()}</span><span>${esc(p)}</span></button>${q > 0 ? `<div class="step"><button type="button" aria-label="Fewer" data-a="partQty" data-v="${i}" data-d="-1">−</button><span class="num">${q}</span><button type="button" aria-label="More" data-a="partQty" data-v="${i}" data-d="1">+</button></div>` : ''}</div>`).join('')}
       <div class="row"><input id="rextra" class="inl" data-rbind="extra" value="${esc(r.extra)}" placeholder="${r.parts.length ? 'Add another part' : 'Add a part you replaced'}" aria-label="Add a part"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="partAdd">Add</button></div></div>
       <p class="foot">Parts you add on site are flagged for the admin.</p>`;
-    h += `<h2 class="sec">Comments for Apple</h2><textarea id="rcomments" class="box" data-rbind="comments" placeholder="Anything Apple should know">${esc(r.comments)}</textarea>`;
+    h += `<h2 class="sec">Security: items replaced</h2><textarea class="box" data-abind2="secItems" placeholder="${esc(partsLine(r) || 'e.g. 4 pucks, 2 tethers, 1 riser')}" style="min-height:64px">${esc(r.apple.secItems || '')}</textarea><p class="foot">How many pucks, tethers, risers and so on. Leave empty to use the parts ticked above.</p>`;
     h += `<h2 class="sec">Note for the next visit</h2><textarea id="rnext" class="box" data-rbind="nextNote" placeholder="Parking, who to ask for, anything to check" style="min-height:64px">${esc(r.nextNote)}</textarea><p class="foot">Only for installers. Shown on the job card next time someone visits this store.</p>`;
     h += `<div style="margin-top:20px">${r.problem ? `<div class="banner" style="background:var(--red-bg);color:var(--fg2)">${I.flagP('var(--redbtn)')}<span style="flex:1"><b style="color:var(--red)">Problem reported:</b> ${esc(r.problem.type)}. ${esc(r.problem.text)}</span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="probRemove">Remove</button></div>`
       : r.probOpen ? `<div class="card" style="gap:12px"><b>Report a problem</b><div class="chips">${['Damaged fixture', 'Missing fixture', 'Missing parts', 'Other'].map((x) => `<button type="button" class="chip ${r.probType === x ? 'on' : ''}" data-a="rset" data-k="probType" data-v="${x}">${x}</button>`).join('')}</div><textarea id="rprob" class="box" style="background:var(--bg)" data-rbind="probText" placeholder="Describe what's wrong">${esc(r.probText)}</textarea><div class="btn2"><button type="button" class="btn small sec" data-a="rset" data-k="probOpen" data-v="">Cancel</button><button type="button" class="btn small red" data-a="probSave">Add to report</button></div></div>`
@@ -1449,15 +1478,25 @@ function reportFlow(j) {
     const left = 8 - done('before') - done('after');
     h += `<div style="margin-top:20px" class="stack">${ph === 'before' && done('before') === 4 && done('after') < 4 ? '<button type="button" class="btn" data-a="phase" data-v="after">Done with work — take after photos</button>' : `<button type="button" class="btn" data-a="stepNext" ${left ? 'disabled' : ''}>${left ? left + (left === 1 ? ' photo' : ' photos') + ' left' : 'Continue to sign-off'}</button>`}</div>`;
   } else {
-    const ok = r.checks.every(Boolean) && r.signed;
-    h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 3 of 3</span><h1 style="font-size:28px;line-height:34px">Check and sign</h1></div>`;
-    if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
-    h += `<div class="banner" style="margin-top:14px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 18)}Photo check passed: all 8 are bright and sharp enough</div>`;
-    h += `<h2 class="sec">Before you leave <span class="num">${r.checks.filter(Boolean).length} of 4</span></h2><div class="group">${CHECKS.map((c, i) => `<button type="button" class="row" aria-pressed="${r.checks[i]}" data-a="check" data-v="${i}"><span class="check g ${r.checks[i] ? 'on' : ''}">${I.tick()}</span>${c}</button>`).join('')}</div>`;
-    h += `<h2 class="sec">Store sign-off <button type="button" class="link" style="font-size:13px;padding:0" data-a="sigClear">Clear</button></h2><div class="card" style="gap:8px;padding:14px"><span style="font-size:15px;line-height:20px;color:var(--fg2)">Hand the phone to ${esc(r.contact || 'the store contact')} to confirm the work is done.</span><canvas class="sig" id="sig" aria-label="Signature pad, sign with your finger"></canvas><span class="muted" style="font-size:13px">${esc(r.contact || 'Store contact')} · ${esc(r.contactRole)}</span></div>`;
+    const miss = reportMissing(j);
+    h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 3 of 3</span><h1 style="font-size:28px;line-height:34px">Questions and sign-off</h1><p class="muted" style="margin:6px 0 0;font-size:15px;line-height:21px">These answers go on the Apple statement of completion.</p></div>`;
+    h += `<div class="banner" style="margin-top:14px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 18)}Before and after photos taken: all 8 passed the check</div>`;
+    const A = r.apple;
+    h += ynQ(r, 'scope', 'Did the repair or replacement go as per the scope of work?', '', 'no', 'scopeWhy', 'Explain what was different');
+    h += ynQ(r, 'issues', 'Did you experience any issues in store?', '', 'yes', null, null, A.issues !== true ? '' :
+      `<div class="group" style="margin-top:8px">${[['access', 'Access'], ['alarm', 'Alarm'], ['other', 'Other']].map(([k, l]) => `<label class="row"><span class="lbl" style="min-width:64px">${l}</span><input class="inl" data-abind2="${k}" value="${esc(A[k] || '')}" placeholder="${l} issues, if any" autocomplete="off" autocapitalize="sentences"></label>`).join('')}</div>`);
+    h += ynQ(r, 'electrical', 'Were there any electrical or lighting issues when you left the store?', '', 'yes', 'electricalWhy', 'Describe the issue');
+    h += ynQ(r, 'disposed', 'Were parts and packaging disposed of as per guidelines, and disposal photos taken?', '', 'no', 'disposedWhy', 'Explain why not',
+      A.disposed === true ? `<div class="xgrid" style="margin-top:8px">${(r.disposal || []).map((x, i) => `<div class="xtile"><button type="button" class="xopen" data-a="sheet" data-v="disp:${j.id}|${i}">${pimg(x.k, 'Disposal photo ' + (i + 1))}</button><button type="button" class="xdel" data-a="dispDel" data-v="${i}" aria-label="Remove">✕</button></div>`).join('')}<label class="xtile xadd">${I.cam}<span>Disposal<br>photo</span><input type="file" accept="image/*" capture="environment" multiple data-disp="1" class="vh"></label></div>${(r.disposal || []).length ? '' : '<p class="foot" style="margin:6px 4px 0;color:var(--orange)">Take at least one disposal photo.</p>'}` : '');
+    h += `<h2 class="sec">Security: devices with alarm issues</h2><input class="box" data-abind2="alarmDevices" value="${esc(A.alarmDevices || '')}" placeholder="Which devices were alarming? Leave empty if none" autocomplete="off" autocapitalize="sentences">`;
+    h += ynQ(r, 'checkedOut', 'Have you checked out?', 'Check out with the store before you leave.');
+    h += `<h2 class="sec">Notes for Apple</h2><textarea id="rcomments" class="box" data-rbind="comments" placeholder="Anything Apple should know (optional)">${esc(r.comments)}</textarea>`;
     if ((r.extras || []).length || xupFor(j).length) h += `<div class="row" style="margin-top:12px;border-radius:12px;border:none"><span class="grow"><span>${countExtras(r.extras || [])} attached</span><span class="sub">${xupFor(j).length ? 'Still uploading. Keep the app open.' : 'The admin sees them with the report.'}</span></span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="stepBack">Change</button></div>`;
-    h += `<h2 class="sec">What happens next</h2><div class="group"><div class="row"><span class="grow"><span>An admin approves it first</span><span class="sub">Then it goes to Apple. You'll see it here if anything needs changing.</span></span></div></div>`;
-    h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="submitReport" ${ok ? '' : 'disabled'}>${!r.checks.every(Boolean) ? 'Finish the checklist' : !r.signed ? 'Sign to finalize' : j.reopenedAt ? 'Submit again' : 'Finalize and submit'}</button></div>`;
+    h += `<h2 class="sec" style="margin-top:26px">Works completed as per the scope of works</h2>`;
+    h += `<h2 class="sec">Lead installer: ${esc(nameOf(j.installer))} <button type="button" class="link" style="font-size:13px;padding:0" data-a="sigClear" data-v="inst">Clear</button></h2><div class="card" style="gap:8px;padding:14px"><span style="font-size:15px;line-height:20px;color:var(--fg2)">Sign to confirm the work is done.</span><canvas class="sig" id="isig" aria-label="Installer signature, sign with your finger"></canvas></div>`;
+    h += `<h2 class="sec">Store manager: ${esc(r.contact || 'not named yet')} <button type="button" class="link" style="font-size:13px;padding:0" data-a="sigClear" data-v="store">Clear</button></h2><div class="card" style="gap:8px;padding:14px"><span style="font-size:15px;line-height:20px;color:var(--fg2)">Hand the phone to ${esc(r.contact || 'the store manager')}.</span><canvas class="sig" id="sig" aria-label="Store manager signature, sign with your finger"></canvas><span class="muted" style="font-size:12px;line-height:16px">By signing, the store certifies that aside from any issues documented above, all work is completed on this date to their satisfaction.</span></div>`;
+    h += `<h2 class="sec">What happens next</h2><div class="group"><div class="row"><span class="grow"><span>An admin approves it first</span><span class="sub">Then the statement of completion is made for Apple. You'll see it here if anything needs changing.</span></span></div></div>`;
+    h += `${miss.length ? `<p class="foot" id="rmiss" style="color:var(--orange);margin-top:18px">Still needed: ${miss.map(esc).join(' · ')}</p>` : '<p class="foot" id="rmiss"></p>'}<div style="margin-top:8px"><button type="button" class="btn" data-a="submitReport" ${miss.length ? 'disabled' : ''}>${miss.length ? 'Answer all questions and sign' : j.reopenedAt ? 'Submit again' : 'Finalize and submit'}</button></div>`;
   }
   // instructions stay one tap away while taking photos and signing off
   const vs = st >= 2 ? j.videos.map(videoBy).filter(Boolean) : [];
@@ -1479,18 +1518,23 @@ function approvalDetail(j) {
   if (!r || r.draft) return h + `<div class="card" style="margin-top:16px">No submitted report yet.</div>`;
   const photosOk = ['before', 'after'].every((k) => r.photos[k].every((p) => p && p.ok));
   const chk = (ok, t, s) => `<div class="row"><span class="ico" style="width:30px;height:30px;background:${ok ? 'var(--green-bg)' : 'var(--red-bg)'}">${ok ? I.tick('var(--green)', 14) : I.flagP('var(--redbtn)')}</span><span class="grow"><span style="font-size:15px;font-weight:600">${t}</span><span class="sub">${s}</span></span></div>`;
-  h += `<h2 class="sec">Checks</h2><div class="group">${chk(r.signed, 'Signed by the store', esc(r.contact) + ' · ' + esc(r.contactRole))}${chk(photosOk, '8 photos passed the check', 'Bright and sharp enough')}${chk(r.checks.every(Boolean), 'Checklist complete', '4 of 4 before leaving')}${r.problem ? chk(false, 'Problem reported', esc(r.problem.type) + '. ' + esc(r.problem.text)) : ''}</div>`;
+  h += `<h2 class="sec">Statement of completion</h2><div class="group">${appleRows(j).map(([b, q, a, sub]) => `<div class="row" style="align-items:flex-start;padding-top:10px;padding-bottom:10px"><span class="grow"><span style="font-size:14px;line-height:19px;font-weight:600">${esc(b + q)}</span>${sub ? sub.map(([l, v]) => `<span class="sub" style="color:var(--fg)"><b>${esc(l)}</b> ${esc(v || '')}</span>`).join('') : `<span class="sub" style="color:var(--fg);white-space:pre-line">${esc(a || '\u2013')}</span>`}</span></div>`).join('')}${chk(photosOk, '8 photos passed the check', 'Bright and sharp enough')}${r.problem ? chk(false, 'Problem reported', esc(r.problem.type) + '. ' + esc(r.problem.text)) : ''}</div>
+    ${(r.disposal || []).length ? `<h2 class="sec">Disposal photos \u00b7 ${r.disposal.length}</h2><div class="xgrid">${r.disposal.map((x, i) => `<div class="xtile"><button type="button" class="xopen" data-a="sheet" data-v="disp:${j.id}|${i}">${pimg(x.k, 'Disposal photo ' + (i + 1))}</button></div>`).join('')}</div>` : ''}`;
   h += `<h2 class="sec">Before and after</h2><div class="stack">${ANGLES.map((a, i) => `<div class="shot" style="padding:10px;gap:8px"><b style="font-size:13px">${i + 1} · ${a.t}</b><div class="pair"><div class="ph">${r.photos.before[i] ? pimg(r.photos.before[i].k, 'Before') : ''}<span class="tag">Before</span></div><div class="ph">${r.photos.after[i] ? pimg(r.photos.after[i].k, 'After') : ''}<span class="tag">After</span></div></div></div>`).join('')}</div>`;
   if ((r.extras || []).length) h += extrasBlock(j, false);
   const parts = r.parts.filter(([, q]) => q > 0);
   h += `<h2 class="sec">Parts replaced</h2><div class="group">${parts.length ? parts.map(([p, q]) => `<div class="row"><span class="grow">${esc(p)}</span><span class="val num">× ${q}</span></div>`).join('') : '<div class="row muted">None</div>'}</div>`;
-  if (r.comments) h += `<h2 class="sec">Comments</h2><div class="group"><div class="row" style="font-size:15px;line-height:21px">${esc(r.comments)}</div></div>`;
-  h += `<h2 class="sec">Store sign-off</h2><div class="card" style="gap:6px;padding:14px"><div style="background:#FFFFFF;border-radius:10px;padding:6px;align-self:stretch">${r.signed ? pimg(sigKey(j), 'Signature').replace('<img', '<img style="height:110px;width:100%;object-fit:contain;display:block"') : ''}</div><span class="muted" style="font-size:13px">${esc(r.contact)} · ${esc(r.contactRole)} · submitted ${esc(r.submittedAt || '')}</span></div>`;
+  if (r.comments) h += `<h2 class="sec">Notes for Apple</h2><div class="group"><div class="row" style="font-size:15px;line-height:21px">${esc(r.comments)}</div></div>`;
+  const sigBox = (key, ok, who) => `<div class="card" style="gap:6px;padding:14px"><div style="background:#FFFFFF;border-radius:10px;padding:6px;align-self:stretch;min-height:60px">${ok ? pimg(key, 'Signature').replace('<img', '<img style="height:100px;width:100%;object-fit:contain;display:block"') : '<span class="muted" style="font-size:13px">Not signed</span>'}</div><span class="muted" style="font-size:13px">${who}</span></div>`;
+  h += `<h2 class="sec">Signatures</h2><div class="sig2">${sigBox(isigKey(j), r.instSigned, 'Lead installer: ' + esc(nameOf(j.installer)))}${sigBox(sigKey(j), r.signed, 'Store manager: ' + esc(r.contact) + ' \u00b7 submitted ' + esc(r.submittedAt || ''))}</div>`;
   if (j.status === 'waiting') {
     h += `<h2 class="sec">Note to ${esc(first(nameOf(j.installer)))}</h2><textarea id="anote" class="box" data-abind="1" placeholder="Only needed if you ask for changes">${esc(U.note)}</textarea>`;
     h += `<div class="btn2" style="margin-top:20px"><button type="button" class="btn sec" data-a="askChanges" data-v="${j.id}">Ask for changes</button><button type="button" class="btn" data-a="approve" data-v="${j.id}">Approve</button></div>`;
-    h += `<p class="foot">Sending to Apple's email starts once the address is added and the app is connected to a server.</p>`;
-  } else h += `<div style="margin-top:16px">${pillFor(j)}</div>`;
+    h += `<p class="foot">When you approve, the statement of completion for Apple downloads as a PDF. <button type="button" class="link" style="font-size:13px;padding:0" data-a="dlReport" data-v="${j.id}">Preview the PDF</button></p>`;
+  } else {
+    h += `<div style="margin-top:16px">${pillFor(j)}</div>`;
+    if (j.status === 'approved') h += `<button type="button" class="btn" style="margin-top:14px" data-a="dlReport" data-v="${j.id}">${I.dl || ''}Download statement of completion (PDF)</button>`;
+  }
   return h;
 }
 function jobDetail(j) {
@@ -1536,7 +1580,16 @@ function renderSheet() {
   const [kind, arg] = String(U.sheet).split(':');
   const me = meU();
   let body = '';
-  if (kind === 'reopen') {
+  if (kind === 'disp') {
+    const [jid, ix] = String(arg).split('|'); const j = job(jid); const x = j && j.report && (j.report.disposal || [])[+ix];
+    if (!x) { U.sheet = null; overlay.innerHTML = ''; return; }
+    body = `${sheetHead('Disposal photo', 'Close')}<div class="picview">${pimg(x.k, 'Disposal photo')}</div>${j.report.draft && S.role === 'installer' ? `<button type="button" class="btn sec" style="color:var(--red)" data-a="dispDel" data-v="${+ix}">Remove</button>` : ''}`;
+    setTimeout(hydrate, 0);
+  } else if (kind === 'pdf') {
+    const j = job(arg);
+    body = `${sheetHead('Statement of completion', 'Close')}<div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:6px 4px 4px"><span class="ico" style="width:64px;height:64px;border-radius:32px;background:var(--green)">${I.tick('#FFFFFF', 30)}</span><b style="font-size:20px">${esc(j ? j.store : '')} is approved</b><span class="muted" style="font-size:15px;line-height:21px">The statement of completion for Apple is ready${U.pdfAuto ? ' and is downloading' : ''}. You can download it again any time under Approvals.</span></div>
+      <button type="button" class="btn" data-a="dlReport" data-v="${esc(arg)}">Download PDF</button>`;
+  } else if (kind === 'reopen') {
     const j = job(arg); if (!j) { U.sheet = null; overlay.innerHTML = ''; return; }
     body = `${sheetHead('Edit report', 'Cancel')}
       <div style="padding:4px 4px 0"><b style="font-size:20px">${esc(j.store)}</b><div class="muted" style="font-size:15px">${esc(j.ticket)} \u00b7 submitted ${esc((j.report && j.report.submittedAt) || '')}</div></div>
@@ -2040,40 +2093,36 @@ async function mountPicEditor() {
 window.addEventListener('resize', () => { if (PE && PE.img && S.view && S.view.kind === 'peditor') peDraw(); });
 
 /* ---------- signature ---------- */
-function setupSig() {
-  const cv = document.getElementById('sig'); if (!cv) return;
+function setupSig() { setupPad('isig', isigKey, 'instSigned'); setupPad('sig', sigKey, 'signed'); }
+function setupPad(id, keyFn, flag) {
+  const cv = document.getElementById(id); if (!cv) return;
   const j = job(S.view.id), r = j.report;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const rect = cv.getBoundingClientRect();
   cv.width = rect.width * dpr; cv.height = rect.height * dpr;
   const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
-  const ink = '#1C1C1E';
   cv.style.background = '#FFFFFF';
   const guide = () => { ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(128,128,128,0.45)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(16, rect.height - 34); ctx.lineTo(rect.width - 16, rect.height - 34); ctx.stroke(); ctx.restore(); };
   const blank = () => { ctx.clearRect(0, 0, rect.width, rect.height); guide(); };
   blank();
-  let empty = !r.signed;
-  if (r.signed) phGet(sigKey(j)).then((v) => { if (!v) return; const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, rect.width, rect.height); im.src = v; });
+  let empty = !r[flag];
+  if (r[flag]) phGet(keyFn(j)).then((v) => { if (!v) return; const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, rect.width, rect.height); im.src = v; });
   else { ctx.fillStyle = 'rgba(128,128,128,0.75)'; ctx.font = '15px -apple-system, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Sign here with a finger', rect.width / 2, rect.height / 2 - 6); }
-  ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = ink;
+  ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1C1C1E';
   let drawing = false, drew = false;
   const pt = (e) => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
-  cv.addEventListener('pointerdown', (e) => {
-    e.preventDefault(); cv.setPointerCapture(e.pointerId);
-    if (empty) { blank(); empty = false; }
-    drawing = true; const [x, y] = pt(e); ctx.beginPath(); ctx.moveTo(x, y);
-  });
+  cv.addEventListener('pointerdown', (e) => { e.preventDefault(); cv.setPointerCapture(e.pointerId); if (empty) { blank(); empty = false; } drawing = true; const [x, y] = pt(e); ctx.beginPath(); ctx.moveTo(x, y); });
   cv.addEventListener('pointermove', (e) => { if (!drawing) return; e.preventDefault(); const [x, y] = pt(e); ctx.lineTo(x, y); ctx.stroke(); drew = true; });
   const end = () => {
     if (!drawing) return; drawing = false;
-    if (drew) {
-      phPut(sigKey(j), cv.toDataURL('image/png'));
-      r.signed = true; save();
-      const btn = document.querySelector('[data-a="submitReport"]');
-      if (btn) { const ok = r.checks.every(Boolean); btn.disabled = !ok; btn.textContent = ok ? 'Finalize and submit' : 'Finish the checklist'; }
-    }
+    if (drew) { phPut(keyFn(j), cv.toDataURL('image/png')); r[flag] = true; queueReport(j); save(); updateMissing(j); }
   };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+}
+function updateMissing(j) {
+  const miss = reportMissing(j); const btn = document.querySelector('[data-a="submitReport"]'); const p = document.getElementById('rmiss');
+  if (btn) { btn.disabled = !!miss.length; btn.textContent = miss.length ? 'Answer all questions and sign' : j.reopenedAt ? 'Submit again' : 'Finalize and submit'; }
+  if (p) { p.textContent = miss.length ? 'Still needed: ' + miss.join(' · ') : ''; p.style.color = 'var(--orange)'; }
 }
 
 /* ---------- photo processing ---------- */
@@ -2107,6 +2156,155 @@ function processPhoto(file) {
   });
 }
 
+
+
+/* ---------- Apple statement of completion: questions on the report ---------- */
+const partsLine = (r) => (r.parts || []).filter(([, q]) => q > 0).map(([p, q]) => q + ' × ' + String(p).replace(/ \(added on site\)$/, '')).join(', ');
+function ynQ(r, k, q, hint, explainOn, whyKey, whyPh, extra) {
+  const A = r.apple || (r.apple = {}); const v = A[k];
+  let h = `<div class="ynq"><b>${esc(q)}</b>${hint ? `<span class="sub">${esc(hint)}</span>` : ''}<div class="seg" role="radiogroup" aria-label="${esc(q)}"><button type="button" role="radio" aria-checked="${v === true}" class="${v === true ? 'on' : ''}" data-a="yn" data-k="${k}" data-v="1">Yes</button><button type="button" role="radio" aria-checked="${v === false}" class="${v === false ? 'on' : ''}" data-a="yn" data-k="${k}" data-v="0">No</button></div>`;
+  if (whyKey && ((explainOn === 'no' && v === false) || (explainOn === 'yes' && v === true))) h += `<textarea class="box" style="margin-top:8px;min-height:64px" data-abind2="${whyKey}" placeholder="${esc(whyPh)}">${esc(A[whyKey] || '')}</textarea>`;
+  if (extra) h += extra;
+  return h + '</div>';
+}
+function reportMissing(j) {
+  const r = j.report; const A = r.apple || {}; const m = [];
+  const need = (k, l) => { if (A[k] !== true && A[k] !== false) m.push(l); };
+  need('checkedIn', 'checked in (step 1)');
+  if (!(r.contact || '').trim()) m.push('store manager name (step 1)');
+  need('scope', 'scope of work'); if (A.scope === false && !(A.scopeWhy || '').trim()) m.push('why the scope was different');
+  need('issues', 'issues in store'); if (A.issues === true && !['access', 'alarm', 'other'].some((k) => (A[k] || '').trim())) m.push('which issues');
+  need('electrical', 'electrical or lighting issues'); if (A.electrical === true && !(A.electricalWhy || '').trim()) m.push('the electrical issue');
+  need('disposed', 'disposal'); if (A.disposed === true && !(r.disposal || []).length) m.push('a disposal photo'); if (A.disposed === false && !(A.disposedWhy || '').trim()) m.push('why parts were not disposed');
+  need('checkedOut', 'checked out');
+  if (!r.instSigned) m.push('your signature'); if (!r.signed) m.push('store manager signature');
+  return m;
+}
+
+
+/* ---------- Apple statement of completion (PDF), laid out like Apple's template ---------- */
+function appleRows(j) {
+  const r = j.report || {}, A = r.apple || {};
+  const YN = (v) => (v === true ? 'YES' : v === false ? 'NO' : '');
+  const why = (v, on, w) => YN(v) + ((on ? v === true : v === false) && (w || '').trim() ? ' - ' + w.trim() : '');
+  const other = [A.issues ? A.other : '', r.problem ? r.problem.type + ': ' + (r.problem.text || '') : ''].map((x) => (x || '').trim()).filter(Boolean).join('. ');
+  const photos = r.photos && ['before', 'after'].every((k) => r.photos[k].every((p) => p && p.ok));
+  return [
+    ['', 'Have you checked in?', YN(A.checkedIn)],
+    ['', 'Did the repair/replacement go as per the scope of work? If NO, please explain.', why(A.scope, false, A.scopeWhy)],
+    ['', 'Did you experience any issues in store?', '', [['Access Issues:', A.issues ? A.access : ''], ['Alarm Issues:', A.issues ? A.alarm : ''], ['Other Issues:', other]]],
+    ['', 'Have you taken Before & After Photos?', photos ? 'YES' : 'NO'],
+    ['', 'Were there any electrical/lighting issues when you left the store?', why(A.electrical, true, A.electricalWhy)],
+    ['', 'Were parts and packaging disposed of as per guidelines and disposal photos taken?', why(A.disposed, false, A.disposedWhy)],
+    ['SECURITY:', ' Which devices were experiencing alarming issues?', (A.alarmDevices || '').trim()],
+    ['SECURITY:', ' please list number of items replaced - Pucks, Tethers, Risers etc', (A.secItems || '').trim() || partsLine(r)],
+    ['', 'Have you checked out?', YN(A.checkedOut)]];
+}
+let PDFLIB = null;
+function loadPdfLib() {
+  if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
+  const get = (src) => new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = () => (window.jspdf ? res(window.jspdf.jsPDF) : rej(new Error('PDF tool missing'))); sc.onerror = () => { sc.remove(); rej(new Error('No connection.')); }; document.head.appendChild(sc); });
+  if (!PDFLIB) PDFLIB = get('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js').catch(() => get('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')).catch((e) => { PDFLIB = null; throw e; });
+  return PDFLIB;
+}
+async function pdfImage(key, max, png) {
+  const u = await phGet(key); if (!u) return null;
+  const b = await (await fetch(u)).blob(); const url = URL.createObjectURL(b);
+  try {
+    const im = new Image(); await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = url; });
+    const sc = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)); const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * sc)); c.height = Math.max(1, Math.round(im.naturalHeight * sc));
+    const g = c.getContext('2d'); if (!png) { g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, c.width, c.height); } g.drawImage(im, 0, 0, c.width, c.height);
+    return { d: c.toDataURL(png ? 'image/png' : 'image/jpeg', 0.82), w: c.width, h: c.height, f: png ? 'PNG' : 'JPEG' };
+  } catch (e) { return null; } finally { URL.revokeObjectURL(url); }
+}
+const ddmmyyyy = (ts) => { const d = new Date(ts); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); };
+async function buildPdf(j) {
+  const jsPDF = await loadPdfLib(); const r = j.report; if (!r || r.draft) throw new Error('There is no submitted report for this ticket yet.');
+  const st = S.stores.find((x) => x.id === j.storeId) || {};
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' }); const W = 595.28, X0 = 56.9, X1 = 537, XM = 216.5, BLUE = [68, 102, 175];
+  const T = (txt, x, y, o) => doc.text(String(txt), x, y, o || {});
+  const font = (style, size) => { doc.setFont('helvetica', style); doc.setFontSize(size); };
+  const header = (title) => {
+    doc.setFillColor(...BLUE); doc.rect(56.3, 61.5, 485.3, 21, 'F'); doc.setTextColor(255, 255, 255); font('bold', 11.8); T(title, W / 2, 76.3, { align: 'center' });
+    // Brand Butlers mark
+    const word = 'BRAND BUTLERS'; font('normal', 9.5); const cs = 2.4; const tw = doc.getTextWidth(word) + cs * (word.length - 1); const gw = 30 + 10 + tw; const gx = W / 2 - gw / 2;
+    doc.setFillColor(28, 28, 30); doc.roundedRect(gx, 87, 30, 30, 7, 7, 'F'); doc.setTextColor(255, 255, 255); font('bold', 13); T('BB', gx + 15, 106.5, { align: 'center' });
+    doc.setTextColor(...BLUE); font('normal', 9.5); T(word, gx + 40, 105.5, { charSpace: cs });
+    doc.setTextColor(0, 0, 0);
+  };
+  doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.6);
+  header('REACTIVE MAINTENANCE - STATEMENT OF COMPLETION');
+  // job facts
+  const cw = (X1 - X0) / 3; const facts = [['WO:', j.ticket], ['City:', (st.city || cityFrom(j.addr || st.addr) || '').toUpperCase()], ['Country:', C[j.c].name.toUpperCase()], ['Apple ID:', st.appleId || ''], ['Store Name:', String(j.store || '').toUpperCase()], ['Completion Date:', ddmmyyyy(r.submittedTs || Date.now())]];
+  facts.forEach(([l, v], i) => {
+    const cx = X0 + (i % 3) * cw, cy = 139.3 + Math.floor(i / 3) * 32; doc.rect(cx, cy, cw, 32);
+    font('normal', 9); T(l, cx + cw / 2, cy + 11.5, { align: 'center' });
+    let fs = 11.5; font('normal', fs); while (doc.getTextWidth(String(v)) > cw - 8 && fs > 7) { fs -= 0.5; doc.setFontSize(fs); } T(v, cx + cw / 2, cy + 26, { align: 'center' });
+  });
+  font('bold', 9); T('Checklist and Comments', W / 2, 222, { align: 'center' });
+  // checklist table
+  let y = 234; const LH = 10.4, PADT = 11.6;
+  const rowBox = (h) => { doc.rect(X0, y, XM - X0, h); doc.rect(XM, y, X1 - XM, h); };
+  rowBox(18.3); font('bold', 8.5); T('Checklist', X0 + 6, y + 12); T('Comments', XM + 6, y + 12); y += 18.3;
+  for (const [b, q, a, sub] of appleRows(j)) {
+    font(b ? 'normal' : 'bold', 8.5); const qLines = doc.splitTextToSize(b + q, XM - X0 - 12);
+    let aLines = [];
+    if (sub) { font('normal', 8.5); sub.forEach(([l, v]) => { const wl = doc.splitTextToSize(l + ' ' + (v || ''), X1 - XM - 12); aLines.push(...wl.map((t, k) => ({ t, l: k === 0 ? l : '' }))); }); }
+    else { font('normal', 8.5); aLines = doc.splitTextToSize(a || '', X1 - XM - 12).map((t) => ({ t, l: '' })); }
+    const h = Math.max(qLines.length, aLines.length, 1) * LH + 7.4; rowBox(h);
+    qLines.forEach((t, k) => {
+      if (b && k === 0 && t.startsWith(b)) { font('bold', 8.5); T(b, X0 + 6, y + PADT); const bw = doc.getTextWidth(b); font('normal', 8.5); T(t.slice(b.length), X0 + 6 + bw, y + PADT); }
+      else { font(b ? 'normal' : 'bold', 8.5); T(t, X0 + 6, y + PADT + k * LH); }
+    });
+    aLines.forEach((o, k) => { if (o.l) { font('bold', 8.5); T(o.l, XM + 6, y + PADT + k * LH); const lw = doc.getTextWidth(o.l + ' '); font('normal', 8.5); T(o.t.slice(o.l.length).trimStart(), XM + 6 + lw, y + PADT + k * LH); } else { font('normal', 8.5); T(o.t, XM + 6, y + PADT + k * LH); } });
+    y += h;
+  }
+  // notes
+  y += 16; font('bold', 8.5); T('Notes:', X0, y);
+  const notes = (r.comments || '').trim(); font('normal', 8.5); const nl = notes ? doc.splitTextToSize(notes, X1 - X0) : []; nl.forEach((t, k) => T(t, X0, y + 12 + k * LH));
+  y += Math.max(30, 12 + nl.length * LH + 18);
+  if (y > 690) { doc.addPage(); y = 70; }
+  font('bold', 9); T('Works completed as per Scope of Works from Apple to the satisfaction of:', W / 2, y, { align: 'center' }); y += 16;
+  const sh = 46, half = 297.6;
+  doc.rect(X0, y, half - X0, sh); doc.rect(half, y, X1 - half, sh);
+  const who = [[X0, 'Lead Installer: ', nameOf(j.installer), isigKey(j), r.instSigned], [half, 'Store Manager: ', r.contact || '', sigKey(j), r.signed]];
+  for (const [x, l, n, key, ok] of who) {
+    font('normal', 9); T(l, x + 5, y + 12); const lw = doc.getTextWidth(l); font('bold', 9); T(n, x + 5 + lw, y + 12);
+    font('normal', 6); T('Signature:', x + 5, y + 22);
+    if (ok) { const im = await pdfImage(key, 600, true).catch(() => null); if (im) { const bw = 150, bh = 26; const sc = Math.min(bw / im.w, bh / im.h); doc.addImage(im.d, im.f, x + 40, y + 16, im.w * sc, im.h * sc); } }
+  }
+  y += sh + 18;
+  font('bold', 8.6); doc.splitTextToSize('*NOTE TO MANAGEMENT OR VENDOR REPRESENTATIVE: Your signature on this document certifies that aside from any issues documented above, all work is completed on the above date to your satisfaction.', X1 - X0 - 20).forEach((t, k) => T(t, W / 2, y + k * 11, { align: 'center' }));
+  // photos, after the statement
+  const groups = [];
+  ANGLES.forEach((a, i) => groups.push({ label: (i + 1) + ' · ' + a.t, keys: [r.photos.before[i] && r.photos.before[i].k, r.photos.after[i] && r.photos.after[i].k], tags: ['Before', 'After'] }));
+  const disp = (r.disposal || []).map((x) => x.k), extra = (r.extras || []).filter((x) => x.kind === 'image').map((x) => x.k);
+  for (let i = 0; i < disp.length; i += 2) groups.push({ label: i === 0 ? 'Disposal photos' : '', keys: disp.slice(i, i + 2), tags: [] });
+  for (let i = 0; i < extra.length; i += 2) groups.push({ label: i === 0 ? 'Extra photos' : '', keys: extra.slice(i, i + 2), tags: [] });
+  if (groups.some((g) => g.keys.some(Boolean))) {
+    doc.addPage(); header('PHOTOS'); font('normal', 9); T(`WO ${j.ticket}  ·  ${String(j.store || '').toUpperCase()}  ·  ${ddmmyyyy(r.submittedTs || Date.now())}`, W / 2, 133, { align: 'center' });
+    y = 148; const gw2 = (X1 - X0 - 12) / 2, maxH = 170;
+    for (const g of groups) {
+      const ims = await Promise.all(g.keys.map((k) => (k ? pdfImage(k, 1100, false).catch(() => null) : null)));
+      const hs = ims.map((im) => (im ? Math.min(maxH, gw2 * im.h / im.w) : 0)); const rh = Math.max(...hs, 0) + (g.label ? 16 : 4) + 10;
+      if (y + rh > 790) { doc.addPage(); y = 60; }
+      if (g.label) { font('bold', 9); T(g.label, X0, y + 9); y += 16; }
+      ims.forEach((im, k) => { if (!im) return; const w = Math.min(gw2, hs[k] * im.w / im.h), x = X0 + k * (gw2 + 12); doc.addImage(im.d, im.f, x, y, w, hs[k]); if (g.tags[k]) { font('bold', 7); doc.setFillColor(255, 255, 255); doc.rect(x + 4, y + 4, doc.getTextWidth(g.tags[k]) + 8, 11, 'F'); T(g.tags[k], x + 8, y + 12); } });
+      y += Math.max(...hs, 0) + 10;
+    }
+  }
+  const n = doc.getNumberOfPages(); for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setTextColor(0, 0, 0); font('italic', 7); T(`Page ${i}/${n}`, 512, 785, { align: 'right' }); }
+  return doc;
+}
+async function downloadReport(id) {
+  const j = job(id); if (!j) throw new Error('Ticket not found.');
+  const doc = await buildPdf(j);
+  const name = ('Statement of completion WO ' + j.ticket + ' ' + j.store).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.pdf';
+  const blob = doc.output('blob'); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  return name;
+}
 
 /* ---------- extra photos and videos on a report (optional, any number) ---------- */
 const XUP = new Map(); // uploads in progress: key -> { jid, p, poster }
@@ -2500,6 +2698,12 @@ const A = {
     const tpl = S.templates.find((x) => x.id === d.template);
     const second = d.secondOn && d.second ? d.second : null;
     const resolveStore = async () => {
+      const id = await resolveStore0(); const meta = { apple_id: (d.storeApple || '').trim(), city: (d.storeCity || '').trim() };
+      const s0 = S.stores.find((x) => x.id === id);
+      if (id && (!s0 || s0.appleId !== meta.apple_id || s0.city !== meta.city)) ok(await sb.from('stores').update(meta).eq('id', id));
+      return id;
+    };
+    const resolveStore0 = async () => {
       if (!store.isNew) return store.id;
       const existing = S.stores.find((s) => s.c === d.c && s.name.toLowerCase() === store.name.toLowerCase());
       if (existing) return existing.id;
@@ -2529,7 +2733,10 @@ const A = {
     if (done) { S.split = [sp.inst, sp.adm]; S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2; render(false); }
     else if (btn) { btn.disabled = false; btn.textContent = 'Create ticket'; }
   },
-  async approve(v) { const j = job(v); if (!(await act(() => updWaiting(v, { status: 'approved', request: null, handled_at: new Date().toISOString(), handled_by: S.me }), j.store + ' approved'))) { await refresh().catch(() => {}); if (isDesk()) S.panel = null; S.view = null; render(false); return; } S.view = null; if (isDesk()) S.panel = null; S.tab = 'approvals'; render(false); },
+  async approve(v) { const j = job(v); if (!(await act(() => updWaiting(v, { status: 'approved', request: null, handled_at: new Date().toISOString(), handled_by: S.me }), ''))) { await refresh().catch(() => {}); if (isDesk()) S.panel = null; S.view = null; render(false); return; } S.view = null; if (isDesk()) S.panel = null; S.tab = 'approvals'; render(false);
+    U.pdfAuto = !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); U.sheet = 'pdf:' + v; renderSheet();
+    if (U.pdfAuto) downloadReport(v).catch((e) => toast(friendly(e))); },
+  async dlReport(v, btn) { const t = btn ? btn.textContent : ''; if (btn) { btn.disabled = true; btn.textContent = 'Making PDF\u2026'; } try { await downloadReport(v); } catch (e) { toast('Couldn\u2019t make the PDF. ' + friendly(e)); } if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = t; } },
   async askChanges(v) {
     const j = job(v); const note = (U.note || '').trim() || 'Please check the report and resubmit.';
     if (await act(async () => { await updWaiting(v, { status: 'changes', changes: note, handled_at: new Date().toISOString(), handled_by: S.me }); ok(await sb.from('reports').update({ draft: true }).eq('job_id', v)); }, 'Sent back to ' + first(nameOf(j.installer)))) { S.view = null; if (isDesk() && S.tab === 'approvals') S.panel = null; render(false); }
@@ -2567,10 +2774,12 @@ const A = {
   probRemove() { const r = job(S.view.id).report; r.problem = null; render(); },
   phase(v) { S.phase = v; render(false); },
   check(v) { const r = job(S.view.id).report; r.checks[+v] = !r.checks[+v]; render(); },
-  sigClear() { const j = job(S.view.id); j.report.signed = false; phDel(sigKey(j)); render(); },
+  sigClear(v) { const j = job(S.view.id); if (v === 'inst') { j.report.instSigned = false; phDel(isigKey(j)); } else { j.report.signed = false; phDel(sigKey(j)); } queueReport(j); render(); },
+  yn(v, el) { const j = job(S.view.id); const r = j.report; r.apple = r.apple || {}; r.apple[el.dataset.k] = v === '1'; queueReport(j); render(); },
+  dispDel(v) { const j = job(S.view.id); const r = j.report; const x = (r.disposal || [])[+v]; if (!x) return; r.disposal.splice(+v, 1); phDel(x.k); queueReport(j); U.sheet = null; renderSheet(); render(); },
   async submitReport(v, btn) {
     const j = job(S.view.id), r = j.report;
-    if (!r.checks.every(Boolean) || !r.signed) return;
+    if (reportMissing(j).length) { updateMissing(j); return; }
     if (!(r.contact || '').trim()) r.contact = 'Store contact';
     if (btn) { btn.disabled = true; btn.textContent = 'Uploading…'; }
     try {
@@ -2636,6 +2845,7 @@ document.addEventListener('submit', (e) => {
 document.addEventListener('input', (e) => {
   const el = e.target;
   if (el.dataset.deskSearch) { S[el.dataset.deskSearch === '1' ? 'q' : el.dataset.deskSearch] = el.value; const pos = el.selectionStart; const fid = el.id; render(); const n = document.getElementById(fid); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } } return; }
+  if (el.dataset.abind2 && S.view && S.view.kind === 'report') { const j = job(S.view.id); j.report.apple = j.report.apple || {}; j.report.apple[el.dataset.abind2] = el.value; queueReport(j); if (S.step === 3) updateMissing(j); return; }
   if (el.dataset.ubind != null && U.form && U.form.items) { U.form.items[+el.dataset.ubind].title = el.value; return; }
   if (el.dataset.unotes != null && U.form && U.form.items) { U.form.items[+el.dataset.unotes].notes = el.value; return; }
   if (el.dataset.pw) { pwRules(); return; }
@@ -2674,6 +2884,11 @@ document.addEventListener('change', (e) => {
   const el = e.target;
   if (el.dataset.videoFile) {
     const files = Array.from(el.files || []); const back = el.dataset.videoFile; el.value = ''; pickFiles(files, back);
+    return;
+  }
+  if (el.dataset.disp) {
+    const files = Array.from(el.files || []); el.value = ''; const j = job(S.view.id); const r = j.report; r.disposal = r.disposal || [];
+    files.forEach((f) => processPhoto(f).then((p) => { const k = j.id + '/disposal-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5) + '.jpg'; phPut(k, p.data); r.disposal.push({ k }); queueReport(j); render(); }).catch(() => toast('Couldn\u2019t read that photo. Try again.')));
     return;
   }
   if (el.dataset.extra) { const files = Array.from(el.files || []); el.value = ''; if (files.length && S.view) addExtras(job(S.view.id), files); return; }
