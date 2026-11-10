@@ -1200,12 +1200,12 @@ function approvedList(desk) {
   const all = S.jobs.filter((j) => j.status === 'approved').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0));
   const list = all.filter((j) => !q || [j.store, j.ticket, nameOf(j.installer), j.addr].join(' ').toLowerCase().includes(q));
   const back = S.jobs.filter((j) => j.status === 'changes').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0));
-  const row = (j) => `<div class="row${desk && S.panel && S.panel.id === j.id ? ' rsel' : ''}" style="gap:8px"><button type="button" class="vbtn" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow" style="display:flex;flex-direction:column;min-width:0"><span class="ell">${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(nameOf(j.installer))} \u00b7 ${j.handledAt ? esc(new Date(j.handledAt).toLocaleDateString('en-GB')) : ''}</span></span></button><button type="button" class="dlbtn" data-a="dlReport" data-v="${j.id}" aria-label="Download PDF for ${esc(j.store)}">PDF</button><button type="button" class="dlbtn" data-a="dlPhotos" data-v="${j.id}" aria-label="Export pictures for ${esc(j.store)}">Pictures</button></div>`;
+  const row = (j) => `<div class="row${desk && S.panel && S.panel.id === j.id ? ' rsel' : ''}" style="gap:8px"><button type="button" class="vbtn" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow" style="display:flex;flex-direction:column;min-width:0"><span class="ell">${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(nameOf(j.installer))} \u00b7 ${j.handledAt ? esc(new Date(j.handledAt).toLocaleDateString('en-GB')) : ''}</span></span></button><button type="button" class="dlbtn" data-a="dlReport" data-v="${j.id}" aria-label="Download PDF for ${esc(j.store)}">PDF</button><button type="button" class="dlbtn" data-a="dlPhotos" data-v="${j.id}" aria-label="Export pictures for ${esc(j.store)}">Pictures</button>${reportVideos(j).length ? `<button type="button" class="dlbtn" data-a="dlVideos" data-v="${j.id}" aria-label="Export videos for ${esc(j.store)}">Videos</button>` : ''}</div>`;
   let h = '';
   if (back.length) h += `<h2 class="sec">Sent back for changes \u00b7 ${back.length}</h2><div class="group">${back.map((j) => `<button type="button" class="row${desk && S.panel && S.panel.id === j.id ? ' rsel' : ''}" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(nameOf(j.installer))}</span></span>${pillFor(j)}</button>`).join('')}</div>`;
   h += `<h2 class="sec">Approved \u00b7 ${all.length}</h2>${all.length > 5 || q ? `<input class="box" id="apsearch" data-desk-search="apQ" value="${esc(S.apQ || '')}" placeholder="Search store, ticket or installer" aria-label="Search approved reports" autocomplete="off" style="height:42px;margin-bottom:8px">` : ''}
     <div class="group">${list.length ? list.map(row).join('') : `<div class="row muted">${all.length ? 'No approved reports match.' : 'Nothing approved yet.'}</div>`}</div>
-    <p class="foot">PDF downloads the statement of completion again. Pictures saves the report\u2019s photos one by one.</p>`;
+    <p class="foot">PDF downloads the statement of completion again. Pictures and Videos save the report\u2019s photos or videos one by one.</p>`;
   return h;
 }
 /* ---------- desktop: new ticket ---------- */
@@ -1530,11 +1530,12 @@ function approvalDetail(j) {
   if (j.status === 'waiting') {
     h += `<h2 class="sec">Note to ${esc(first(nameOf(j.installer)))}</h2><textarea id="anote" class="box" data-abind="1" placeholder="Only needed if you ask for changes">${esc(U.note)}</textarea>`;
     h += `<div class="btn2" style="margin-top:20px"><button type="button" class="btn sec" data-a="askChanges" data-v="${j.id}">Ask for changes</button><button type="button" class="btn" data-a="approve" data-v="${j.id}">Approve</button></div>`;
-    h += `<p class="foot">When you approve, the statement of completion for Apple downloads as a PDF. <button type="button" class="link" style="font-size:13px;padding:0" data-a="dlReport" data-v="${j.id}">Preview the PDF</button> \u00b7 <button type="button" class="link" style="font-size:13px;padding:0" data-a="dlPhotos" data-v="${j.id}">Export pictures only</button></p>`;
+    h += `<p class="foot">When you approve, the statement of completion for Apple downloads as a PDF. <button type="button" class="link" style="font-size:13px;padding:0" data-a="dlReport" data-v="${j.id}">Preview the PDF</button> \u00b7 <button type="button" class="link" style="font-size:13px;padding:0" data-a="dlPhotos" data-v="${j.id}">Export pictures only</button>${reportVideos(j).length ? ` \u00b7 <button type="button" class="link" style="font-size:13px;padding:0" data-a="dlVideos" data-v="${j.id}">Export videos only</button>` : ''}</p>`;
   } else {
     h += `<div style="margin-top:16px">${pillFor(j)}</div>`;
     if (j.status === 'approved') h += `<button type="button" class="btn" style="margin-top:14px" data-a="dlReport" data-v="${j.id}">${I.dl || ''}Download statement of completion (PDF)</button>`;
     if (reportPhotos(j).length) h += `<button type="button" class="btn sec" style="margin-top:10px" data-a="dlPhotos" data-v="${j.id}">Export pictures only (${reportPhotos(j).length})</button>`;
+    if (reportVideos(j).length) h += `<button type="button" class="btn sec" style="margin-top:10px" data-a="dlVideos" data-v="${j.id}">Export videos only (${reportVideos(j).length})</button>`;
   }
   return h;
 }
@@ -1582,9 +1583,9 @@ function renderSheet() {
   const me = meU();
   let body = '';
   if (kind === 'photos') {
-    const j = job(arg); const n = (U.photoFiles || []).length;
-    body = `${sheetHead('Pictures', 'Close')}<div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:4px"><b style="font-size:20px">${n} ${n === 1 ? 'picture' : 'pictures'} ready</b><span class="muted" style="font-size:15px;line-height:21px">${esc(j ? j.store + ' \u00b7 ' + j.ticket : '')}. Tap below, then choose \u201cSave images\u201d (or Save to Files) to store them one by one on this device.</span></div>
-      <button type="button" class="btn" data-a="sharePhotos">Save ${n} ${n === 1 ? 'picture' : 'pictures'}</button>`;
+    const j = job(arg); const n = (U.photoFiles || []).length; const vid = U.mediaKind === 'video'; const one = vid ? 'video' : 'picture', many = vid ? 'videos' : 'pictures';
+    body = `${sheetHead(vid ? 'Videos' : 'Pictures', 'Close')}<div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:4px"><b style="font-size:20px">${n} ${n === 1 ? one : many} ready</b><span class="muted" style="font-size:15px;line-height:21px">${esc(j ? j.store + ' \u00b7 ' + j.ticket : '')}. Tap below, then choose \u201c${vid ? 'Save video' : 'Save images'}\u201d (or Save to Files) to store them one by one on this device.</span></div>
+      <button type="button" class="btn" data-a="sharePhotos">Save ${n} ${n === 1 ? one : many}</button>`;
   } else if (kind === 'disp') {
     const [jid, ix] = String(arg).split('|'); const j = job(jid); const x = j && j.report && (j.report.disposal || [])[+ix];
     if (!x) { U.sheet = null; overlay.innerHTML = ''; return; }
@@ -2198,11 +2199,15 @@ function reportPhotos(j) {
   return out;
 }
 const isTouchDevice = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
-async function fetchPhotos(j, onProg) {
-  const list = reportPhotos(j); const files = [];
+function reportVideos(j) {
+  const r = j.report || {}; const wo = 'WO' + String(j.ticket || '').replace(/[^\w-]+/g, '');
+  return (r.extras || []).filter((x) => x.kind === 'video').map((x, i) => ({ k: x.k, name: `${wo}_Video_${i + 1}.${(x.k.split('.').pop() || 'mp4').toLowerCase()}`, size: x.size || 0 }));
+}
+async function fetchPhotos(j, onProg, list) {
+  list = list || reportPhotos(j); const files = [];
   for (let i = 0; i < list.length; i++) {
     const u = await phGet(list[i].k); if (!u) continue;
-    const b = await (await fetch(u)).blob(); files.push(new File([b], list[i].name, { type: b.type || 'image/jpeg' })); if (onProg) onProg(i + 1, list.length);
+    const b = await (await fetch(u)).blob(); files.push(new File([b], list[i].name, { type: b.type || (/\.(mp4|mov|m4v|webm)$/i.test(list[i].name) ? (/\.mov$/i.test(list[i].name) ? 'video/quicktime' : 'video/mp4') : 'image/jpeg') })); if (onProg) onProg(i + 1, list.length);
   }
   return files;
 }
@@ -2772,10 +2777,21 @@ const A = {
     const t = btn ? btn.textContent : ''; const prog = (i, all) => { if (btn && btn.isConnected) btn.textContent = 'Getting pictures ' + i + ' of ' + all + '\u2026'; };
     if (btn) btn.disabled = true;
     try {
-      const files = await fetchPhotos(j, prog); U.photoFiles = files;
+      const files = await fetchPhotos(j, prog); U.photoFiles = files; U.mediaKind = 'image';
       if (isTouchDevice() && navigator.canShare && navigator.canShare({ files })) { U.sheet = 'photos:' + v; renderSheet(); }
       else { if (btn && btn.isConnected) btn.textContent = 'Saving\u2026'; await savePhotosOneByOne(files); toast(files.length + (files.length === 1 ? ' picture saved' : ' pictures saved') + ' to your downloads'); }
     } catch (e) { toast('Couldn\u2019t get the pictures. ' + friendly(e)); }
+    if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = t; }
+  },
+  async dlVideos(v, btn) {
+    const j = job(v); const list = reportVideos(j); if (!list.length) { toast('This report has no videos.'); return; }
+    const t = btn ? btn.textContent : ''; const prog = (i, all) => { if (btn && btn.isConnected) btn.textContent = 'Getting videos ' + i + ' of ' + all + '\u2026'; };
+    if (btn) btn.disabled = true;
+    try {
+      const files = await fetchPhotos(j, prog, list); U.photoFiles = files; U.mediaKind = 'video';
+      if (isTouchDevice() && navigator.canShare && navigator.canShare({ files })) { U.sheet = 'photos:' + v; renderSheet(); }
+      else { if (btn && btn.isConnected) btn.textContent = 'Saving\u2026'; await savePhotosOneByOne(files); toast(files.length + (files.length === 1 ? ' video saved' : ' videos saved') + ' to your downloads'); }
+    } catch (e) { toast('Couldn\u2019t get the videos. ' + friendly(e)); }
     if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = t; }
   },
   async sharePhotos() { const files = U.photoFiles || []; try { await navigator.share({ files }); U.sheet = null; renderSheet(); } catch (e) { if (e && e.name !== 'AbortError') { await savePhotosOneByOne(files); } } },
