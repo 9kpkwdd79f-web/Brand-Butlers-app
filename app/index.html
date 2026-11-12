@@ -2258,7 +2258,7 @@ function appleRows(j) {
     ['', 'Did the repair/replacement go as per the scope of work? If NO, please explain.', why(A.scope, false, A.scopeWhy)],
     ['', 'Did you experience any issues in store?', '', [['Access Issues:', A.issues ? A.access : ''], ['Alarm Issues:', A.issues ? A.alarm : ''], ['Other Issues:', other]]],
     ['', 'Have you taken Before & After Photos?', photos ? 'YES' : 'NO'],
-    ['', 'Were there any electrical/lighting issues when you left the store?', why(A.electrical, true, A.electricalWhy)],
+    ['', 'Where there any electrical/lighting issues when you left the store?', why(A.electrical, true, A.electricalWhy)],
     ['', 'Were parts and packaging disposed of as per guidelines and disposal photos taken?', why(A.disposed, false, A.disposedWhy)],
     ['SECURITY:', ' Which devices were experiencing alarming issues?', (A.alarmDevices || '').trim()],
     ['SECURITY:', ' please list number of items replaced - Pucks, Tethers, Risers etc', (A.secItems || '').trim() || partsLine(r)],
@@ -2281,70 +2281,100 @@ async function pdfImage(key, max, png) {
   } catch (e) { return null; } finally { URL.revokeObjectURL(url); }
 }
 const ddmmyyyy = (ts) => { const d = new Date(ts); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); };
-async function buildPdf(j, mode) {
-  const jsPDF = await loadPdfLib(); const r = j.report; if (!r || r.draft) throw new Error('There is no submitted report for this ticket yet.');
-  const st = S.stores.find((x) => x.id === j.storeId) || {};
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' }); const W = 595.28, X0 = 56.9, X1 = 537, XM = 216.5, BLUE = [68, 102, 175];
+/* The statement of completion is an exact copy of the client's one-page template (measured from their PDF):
+   same letterhead, Helvetica 8.37/11.16 pt, 0.8 pt boxes, rows that grow 10.46 pt per line. */
+let LETTERHEAD = null;
+async function letterhead() {
+  if (LETTERHEAD) return LETTERHEAD;
+  const b = await (await fetch('report/letterhead.png')).blob();
+  LETTERHEAD = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(b); });
+  return LETTERHEAD;
+}
+function pdfKit(doc) {
   const T = (txt, x, y, o) => doc.text(String(txt), x, y, o || {});
   const font = (style, size) => { doc.setFont('helvetica', style); doc.setFontSize(size); };
-  const header = (title) => {
-    doc.setFillColor(...BLUE); doc.rect(56.3, 61.5, 485.3, 21, 'F'); doc.setTextColor(255, 255, 255); font('bold', 11.8); T(title, W / 2, 76.3, { align: 'center' });
-    // Brand Butlers mark
-    const word = 'BRAND BUTLERS'; font('normal', 9.5); const cs = 2.4; const tw = doc.getTextWidth(word) + cs * (word.length - 1); const gw = 30 + 10 + tw; const gx = W / 2 - gw / 2;
-    doc.setFillColor(28, 28, 30); doc.roundedRect(gx, 87, 30, 30, 7, 7, 'F'); doc.setTextColor(255, 255, 255); font('bold', 13); T('BB', gx + 15, 106.5, { align: 'center' });
-    doc.setTextColor(...BLUE); font('normal', 9.5); T(word, gx + 40, 105.5, { charSpace: cs });
-    doc.setTextColor(0, 0, 0);
-  };
-  doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.6);
-  const photosOnly = mode === 'photos';
-  header(photosOnly ? 'PHOTO APPENDIX' : 'REACTIVE MAINTENANCE - STATEMENT OF COMPLETION');
-  // job facts
-  const cw = (X1 - X0) / 3; const facts = [['WO:', j.ticket], ['City:', (st.city || cityFrom(j.addr || st.addr) || '').toUpperCase()], ['Country:', C[j.c].name.toUpperCase()], ['Apple ID:', st.appleId || ''], ['Store Name:', String(j.store || '').toUpperCase()], ['Completion Date:', ddmmyyyy(r.submittedTs || Date.now())]];
-  if (photosOnly) facts.push(['Lead Installer:', nameOf(j.installer)], ['Store Manager:', r.contact || ''], ['Photos:', String(reportPhotos(j).length)]);
+  const base = (top, size) => top + size * 0.793; // template positions are text tops; jsPDF writes on the baseline
+  return { T, font, base };
+}
+function jobFacts(j) {
+  const r = j.report; const st = S.stores.find((x) => x.id === j.storeId) || {};
+  return [['WO:', j.ticket], ['City:', (st.city || cityFrom(j.addr || st.addr) || '').toUpperCase()], ['Country:', C[j.c].name.toUpperCase()], ['Apple ID:', st.appleId || ''], ['Store Name:', String(j.store || '').toUpperCase()], ['Completion Date:', ddmmyyyy(r.submittedTs || Date.now())]];
+}
+function factsTable(doc, k, facts, top) {
+  const { T, font, base } = k; const xs = [57.4, 217.3, 377.2, 537.2], RH = 31.9;
   facts.forEach(([l, v], i) => {
-    const cx = X0 + (i % 3) * cw, cy = 139.3 + Math.floor(i / 3) * 32; doc.rect(cx, cy, cw, 32);
-    font('normal', 9); T(l, cx + cw / 2, cy + 11.5, { align: 'center' });
-    let fs = 11.5; font('normal', fs); while (doc.getTextWidth(String(v)) > cw - 8 && fs > 7) { fs -= 0.5; doc.setFontSize(fs); } T(v, cx + cw / 2, cy + 26, { align: 'center' });
+    const c = i % 3, row = Math.floor(i / 3), x = xs[c], w = xs[c + 1] - xs[c], y = top + row * RH, mid = x + w / 2 - 1.85;
+    doc.rect(x, y, w, RH);
+    font('normal', 8.37); T(l, mid, base(y + 5.5, 8.37), { align: 'center' });
+    let fs = 11.16; font('normal', fs); while (doc.getTextWidth(String(v)) > w - 6 && fs > 6) { fs -= 0.25; doc.setFontSize(fs); }
+    T(v, mid, base(y + 16.5, 11.16), { align: 'center' });
   });
-  if (photosOnly) return await photoPages(doc, j, { W, X0, X1, T, font, header }, 139.3 + 3 * 32 + 22);
-  font('bold', 9); T('Checklist and Comments', W / 2, 222, { align: 'center' });
+  return top + Math.ceil(facts.length / 3) * RH;
+}
+async function signatureRow(doc, k, j, top) {
+  const { T, font, base } = k; const r = j.report; const H = 38.9;
+  const cells = [[57.4, 297.3, 'Lead Installer: ', nameOf(j.installer), isigKey(j), r.instSigned], [297.3, 537.2, 'Store Manager: ', r.contact || '', sigKey(j), r.signed]];
+  for (const [x0, x1, l, n, key, ok] of cells) {
+    doc.rect(x0, top, x1 - x0, H);
+    font('normal', 8.37); T(l, x0 + 3.7, base(top + 5.6, 8.37)); const lw = doc.getTextWidth(l); font('bold', 8.37); T(n, x0 + 3.7 + lw, base(top + 5.6, 8.37));
+    font('normal', 5.95); T('Signature:', x0 + 3.7, base(top + 17.9, 5.95));
+    if (ok) { const im = await pdfImage(key, 600, true).catch(() => null); if (im) { const bw = x1 - x0 - 44, bh = 22; const sc = Math.min(bw / im.w, bh / im.h); doc.addImage(im.d, im.f, x0 + 36, top + 14.5, im.w * sc, im.h * sc); } }
+  }
+  return top + H;
+}
+async function buildPdf(j, mode) {
+  const jsPDF = await loadPdfLib(); const r = j.report; if (!r || r.draft) throw new Error('There is no submitted report for this ticket yet.');
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' }); const k = pdfKit(doc); const { T, font, base } = k;
+  doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.8); doc.setTextColor(0, 0, 0);
+  if (mode === 'photos') return await photoAppendix(doc, k, j);
+  doc.addImage(await letterhead(), 'PNG', 20.5, 29, 553.6, 783, 'letterhead', 'FAST');
+  factsTable(doc, k, jobFacts(j), 139.7);
+  font('bold', 8.37); T('Checklist and Comments', 244.64, base(215.8, 8.37));
   // checklist table
-  let y = 234; const LH = 10.4, PADT = 11.6;
-  const rowBox = (h) => { doc.rect(X0, y, XM - X0, h); doc.rect(XM, y, X1 - XM, h); };
-  rowBox(18.3); font('bold', 8.5); T('Checklist', X0 + 6, y + 12); T('Comments', XM + 6, y + 12); y += 18.3;
+  const XL = 57.4, XM = 217.1, XR = 537.2, LH = 10.5, PAD = 7.4, CX = 294.64;
+  let y = 234.8;
+  doc.rect(XL, y, XM - XL, 17.9); doc.rect(XM, y, XR - XM, 17.9);
+  font('bold', 8.37); T('Checklist', 61.1, base(y + 5.6, 8.37)); T('Comments', 220.9, base(y + 5.6, 8.37)); y += 17.9;
   for (const [b, q, a, sub] of appleRows(j)) {
-    font(b ? 'normal' : 'bold', 8.5); const qLines = doc.splitTextToSize(b + q, XM - X0 - 12);
+    font(b ? 'normal' : 'bold', 8.37); const qLines = doc.splitTextToSize(b + q, XM - XL - 7.4);
     let aLines = [];
-    if (sub) { font('normal', 8.5); sub.forEach(([l, v]) => { const wl = doc.splitTextToSize(l + ' ' + (v || ''), X1 - XM - 12); aLines.push(...wl.map((t, k) => ({ t, l: k === 0 ? l : '' }))); }); }
-    else { font('normal', 8.5); aLines = doc.splitTextToSize(a || '', X1 - XM - 12).map((t) => ({ t, l: '' })); }
-    const h = Math.max(qLines.length, aLines.length, 1) * LH + 7.4; rowBox(h);
-    qLines.forEach((t, k) => {
-      if (b && k === 0 && t.startsWith(b)) { font('bold', 8.5); T(b, X0 + 6, y + PADT); const bw = doc.getTextWidth(b); font('normal', 8.5); T(t.slice(b.length), X0 + 6 + bw, y + PADT); }
-      else { font(b ? 'normal' : 'bold', 8.5); T(t, X0 + 6, y + PADT + k * LH); }
+    if (sub) { font('normal', 8.37); sub.forEach(([l, v]) => { doc.splitTextToSize(l + ' ' + (v || ''), XR - XM - 7.6).forEach((t, n) => aLines.push({ t, l: n === 0 ? l : '' })); }); }
+    else { font('normal', 8.37); aLines = doc.splitTextToSize(a || '', XR - XM - 7.6).map((t) => ({ t, l: '' })); }
+    const h = Math.max(qLines.length, aLines.length, 1) * LH + PAD;
+    doc.rect(XL, y, XM - XL, h); doc.rect(XM, y, XR - XM, h);
+    qLines.forEach((t, n) => {
+      const yy = base(y + 5.6 + n * LH, 8.37);
+      if (b && n === 0 && t.startsWith(b)) { font('bold', 8.37); T(b, 61.1, yy); const bw = doc.getTextWidth(b); font('normal', 8.37); T(t.slice(b.length), 61.1 + bw, yy); }
+      else { font(b ? 'normal' : 'bold', 8.37); T(t, 61.1, yy); }
     });
-    aLines.forEach((o, k) => { if (o.l) { font('bold', 8.5); T(o.l, XM + 6, y + PADT + k * LH); const lw = doc.getTextWidth(o.l + ' '); font('normal', 8.5); T(o.t.slice(o.l.length).trimStart(), XM + 6 + lw, y + PADT + k * LH); } else { font('normal', 8.5); T(o.t, XM + 6, y + PADT + k * LH); } });
+    aLines.forEach((o, n) => { const yy = base(y + 5.6 + n * LH, 8.37); if (o.l) { font('bold', 8.37); T(o.l, 220.9, yy); const lw = doc.getTextWidth(o.l + ' '); font('normal', 8.37); T(o.t.slice(o.l.length).trimStart(), 220.9 + lw, yy); } else { font('normal', 8.37); T(o.t, 220.9, yy); } });
     y += h;
   }
-  // notes
-  y += 16; font('bold', 8.5); T('Notes:', X0, y);
-  const notes = (r.comments || '').trim(); font('normal', 8.5); const nl = notes ? doc.splitTextToSize(notes, X1 - X0) : []; nl.forEach((t, k) => T(t, X0, y + 12 + k * LH));
-  y += Math.max(30, 12 + nl.length * LH + 18);
-  if (y > 690) { doc.addPage(); y = 70; }
-  font('bold', 9); T('Works completed as per Scope of Works from Apple to the satisfaction of:', W / 2, y, { align: 'center' }); y += 16;
-  const sh = 46, half = 297.6;
-  doc.rect(X0, y, half - X0, sh); doc.rect(half, y, X1 - half, sh);
-  const who = [[X0, 'Lead Installer: ', nameOf(j.installer), isigKey(j), r.instSigned], [half, 'Store Manager: ', r.contact || '', sigKey(j), r.signed]];
-  for (const [x, l, n, key, ok] of who) {
-    font('normal', 9); T(l, x + 5, y + 12); const lw = doc.getTextWidth(l); font('bold', 9); T(n, x + 5 + lw, y + 12);
-    font('normal', 6); T('Signature:', x + 5, y + 22);
-    if (ok) { const im = await pdfImage(key, 600, true).catch(() => null); if (im) { const bw = 150, bh = 26; const sc = Math.min(bw / im.w, bh / im.h); doc.addImage(im.d, im.f, x + 40, y + 16, im.w * sc, im.h * sc); } }
-  }
-  y += sh + 18;
-  font('bold', 8.6); doc.splitTextToSize('*NOTE TO MANAGEMENT OR VENDOR REPRESENTATIVE: Your signature on this document certifies that aside from any issues documented above, all work is completed on the above date to your satisfaction.', X1 - X0 - 20).forEach((t, k) => T(t, W / 2, y + k * 11, { align: 'center' }));
-  pageNumbers(doc, font, T);
+  // notes, then the sign-off
+  let ny = y + 12.3; font('bold', 8.37); T('Notes:', 57.4, base(ny, 8.37));
+  const nw = doc.getTextWidth('Notes: '); font('normal', 8.37);
+  const notes = (r.comments || '').trim(); const nl = notes ? doc.splitTextToSize(notes, XR - XL - nw) : [];
+  nl.forEach((t, n) => T(t, 57.4 + nw, base(ny + n * LH, 8.37)));
+  let wy = ny + 31.5 + Math.max(0, nl.length - 1) * LH;
+  font('bold', 8.37); T('Works completed as per Scope of Works from Apple to the satisfaction of:', 146.74, base(wy, 8.37));
+  const sb = await signatureRow(doc, k, j, wy + 19.1);
+  font('bold', 8.37);
+  T('*NOTE TO MANAGEMENT OR VENDOR REPRESENTATIVE: Your signature on this document certifies that aside from', 60.7, base(sb + 12.3, 8.37));
+  T('any issues documented above, all work is completed on the above date to your satisfaction.', 111.6, base(sb + 22.8, 8.37));
+  font('italic', 5.58); T('Page 1/1', 490.3, base(783.3, 5.58));
   return doc;
 }
-function pageNumbers(doc, font, T) { const n = doc.getNumberOfPages(); for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setTextColor(0, 0, 0); font('italic', 7); T(`Page ${i}/${n}`, 512, 785, { align: 'right' }); } }
+/* Photo appendix: the same job details and both signatures on top, then the photos. No questions and answers, no logos. */
+async function photoAppendix(doc, k, j) {
+  const { T, font, base } = k; const W = 595.28;
+  const bar = () => { doc.setFillColor(68, 102, 175); doc.rect(56.4, 61.1, 485.3, 21.4, 'F'); doc.setTextColor(255, 255, 255); font('bold', 11.8); T('PHOTO APPENDIX', W / 2, 76.2, { align: 'center' }); doc.setTextColor(0, 0, 0); };
+  bar();
+  let y = factsTable(doc, k, jobFacts(j), 100);
+  y = await signatureRow(doc, k, j, y);
+  await photoPages(doc, j, { X0: 57.4, X1: 537.2, T, font }, y + 18);
+  return doc;
+}
+function pageNumbers(doc, font, T) { const n = doc.getNumberOfPages(); for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setTextColor(0, 0, 0); font('italic', 5.58); T(`Page ${i}/${n}`, 490.3, 783.3 + 5.58 * 0.793); } }
 async function photoPages(doc, j, P, startY) {
   const { X0, X1, T, font } = P; const r = j.report;
   const groups = [];
