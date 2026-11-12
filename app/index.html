@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
@@ -471,7 +472,7 @@ body.desk .toast { left: calc(50% + 124px); bottom: 30px; }
 <div id="app" class="app"></div>
 <div id="overlay"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="vendor/supabase-2.45.4.js"></script>
 <script>
 (function () {
 'use strict';
@@ -658,9 +659,9 @@ function phPut(k, dataUrl) {
 }
 async function phGet(k) {
   if (PH.has(k) && (PHT.get(k) || 0) > Date.now()) return PH.get(k);
-  const r = await sb.storage.from('photos').createSignedUrl(k, 3600);
+  const r = await sb.storage.from('photos').createSignedUrl(k, 600);
   if (r.error || !r.data) return null;
-  PH.set(k, r.data.signedUrl); PHT.set(k, Date.now() + 50 * 60000);
+  PH.set(k, r.data.signedUrl); PHT.set(k, Date.now() + 8 * 60000);
   return r.data.signedUrl;
 }
 function phDel(k) { PH.delete(k); PHT.delete(k); sb.storage.from('photos').remove([k]).then(() => {}, () => {}); }
@@ -672,9 +673,9 @@ const pimg = (k, alt) => `<img data-pk="${esc(k)}" alt="${esc(alt || '')}" src="
 const VU = new Map();
 async function vidUrl(path) {
   const c = VU.get(path); if (c && c.t > Date.now()) return c.u;
-  const r = await sb.storage.from('videos').createSignedUrl(path, 3600);
+  const r = await sb.storage.from('videos').createSignedUrl(path, 900);
   if (r.error || !r.data) return null;
-  VU.set(path, { u: r.data.signedUrl, t: Date.now() + 50 * 60000 }); return r.data.signedUrl;
+  VU.set(path, { u: r.data.signedUrl, t: Date.now() + 12 * 60000 }); return r.data.signedUrl;
 }
 const posterImg = (v, cls) => v && v.poster ? `<img class="${cls || ''}" data-vk="${esc(v.poster)}" alt="" src="${(VU.get(v.poster) || {}).u || BLANK}">` : `<span class="${cls || ''} noposter">${I.play}</span>`;
 function hydrate() {
@@ -1624,8 +1625,8 @@ function renderSheet() {
       ${U.err ? `<p class="err" role="alert">${esc(U.err)}</p>` : ''}
       <button class="btn" type="submit" id="pwgo" disabled>Save new password</button></form>`;
   } else if (kind === 'forgot') {
-    const admins = U.admins.map((a) => ({ name: a.name, c: a.country, phone: '' }));
-    body = `<div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 4px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--blue-bg)">${I.key('var(--blue)')}</span><b style="font-size:20px">Forgot your password?</b><span class="muted" style="font-size:15px;line-height:21px">Ask a Brand Butlers admin to reset it. They do it under Team in the app. The next time you sign in here, you'll create a new password.</span></div>
+    const admins = [];
+    body = `<div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 4px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--blue-bg)">${I.key('var(--blue)')}</span><b style="font-size:20px">Forgot your password?</b><span class="muted" style="font-size:15px;line-height:21px">Reach out to your local admin. They can reset it under Manage in the app. The next time you sign in here, you'll create a new password.</span></div>
       ${admins.length ? `<span class="cap">Admins</span><div class="group">${admins.map((u) => `<div class="row"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(u.name)}</span><span class="grow"><span>${esc(u.name)}</span><span class="sub">${C[u.c].name}${u.phone ? ' · ' + esc(u.phone) : ''}</span></span>${u.phone ? `<a class="ico" style="width:34px;height:34px;background:var(--green)" href="tel:${esc(u.phone.replace(/\s/g, ''))}" aria-label="Call ${esc(u.name)}">${I.phone('#FFFFFF', 15)}</a>` : ''}</div>`).join('')}</div>` : ''}
       <button type="button" class="btn sec" data-a="closeSheet">OK</button>`;
   } else if (kind === 'add') {
@@ -2239,8 +2240,7 @@ function appleRows(j) {
 let PDFLIB = null;
 function loadPdfLib() {
   if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
-  const get = (src) => new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = () => (window.jspdf ? res(window.jspdf.jsPDF) : rej(new Error('PDF tool missing'))); sc.onerror = () => { sc.remove(); rej(new Error('No connection.')); }; document.head.appendChild(sc); });
-  if (!PDFLIB) PDFLIB = get('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js').catch(() => get('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')).catch((e) => { PDFLIB = null; throw e; });
+  if (!PDFLIB) PDFLIB = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'vendor/jspdf-2.5.1.umd.min.js'; sc.onload = () => (window.jspdf ? res(window.jspdf.jsPDF) : rej(new Error('PDF tool missing'))); sc.onerror = () => { sc.remove(); PDFLIB = null; rej(new Error('No connection.')); }; document.head.appendChild(sc); });
   return PDFLIB;
 }
 async function pdfImage(key, max, png) {
@@ -2392,6 +2392,23 @@ function pwRules() {
 }
 function busy(form, label) { const b = form && form.querySelector('button[type="submit"]'); if (b) { b.disabled = true; b.dataset.label = b.textContent; b.textContent = label; } }
 function noCrypto() { return !(window.crypto && crypto.subtle); }
+/* Passwords never leave the device in readable form: they are hashed with SHA-256 (salted with the email)
+   here, and Supabase then stores that value only as a salted bcrypt hash. */
+async function pwHash(email, pw) {
+  const data = new TextEncoder().encode('brand-butlers:v1:' + String(email).trim().toLowerCase() + ':' + pw);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+/* sign in with the hashed password; accounts made before hashing are moved over once, right after a successful sign-in */
+async function signInHashed(email, pw) {
+  const h = await pwHash(email, pw);
+  let r = await sb.auth.signInWithPassword({ email, password: h });
+  if (r.error && /invalid/i.test(r.error.message)) {
+    const old = await sb.auth.signInWithPassword({ email, password: pw });
+    if (!old.error) { await sb.auth.updateUser({ password: h }).catch(() => {}); r = old; }
+  }
+  return r;
+}
 
 /* =================================================================== */
 /* ACTIONS                                                             */
@@ -2414,21 +2431,24 @@ const FORMS = {
     try { st = ok(await sb.rpc('account_status', { p_email: e })); }
     catch (err) { S.login = { step: 'email', email: e, err: friendly(err), acc: null }; render(false); return; }
     if (!st || st.status === 'none') { S.login = { step: 'email', email: e, err: 'There is no account for this email. Ask a Brand Butlers admin to add you.', acc: null }; render(false); return; }
-    S.login = { step: st.status === 'active' ? 'password' : 'create', email: e, err: '', country: st.country != null ? st.country : 0, acc: { email: e, name: st.name || '', status: st.status, reset: st.status === 'reset' } };
+    S.login = { step: st.status === 'active' ? 'password' : 'create', email: e, err: '', country: null, acc: { email: e, name: '', status: st.status, reset: st.status === 'reset' } };
     render(false);
-    const nx = document.getElementById(st.status === 'active' ? 'lpw' : (st.name ? 'pw1' : 'cname')); if (nx) nx.focus();
+    const nx = document.getElementById(st.status === 'active' ? 'lpw' : 'cname'); if (nx) nx.focus();
   },
   async create(f) {
     const a = S.login.acc; if (!a) return;
     const nm = f.querySelector('#cname');
     a.name = nm.value;
     if (!nm.value.trim()) { S.login.err = 'Enter your full name.'; render(false); document.getElementById('cname').focus(); return; }
+    if (S.login.country == null) { S.login.err = 'Choose your country.'; render(false); return; }
     if (!pwRules()) return;
+    if (noCrypto()) { S.login.err = 'This browser can\u2019t protect your password. Open the app in Safari or Chrome.'; render(false); return; }
     const pw = document.getElementById('pw1').value;
     busy(f, 'Creating…');
-    try { await callFn('account', { action: 'claim', email: a.email, password: pw, name: nm.value, country: S.login.country }); }
+    const h = await pwHash(a.email, pw);
+    try { await callFn('account', { action: 'claim', email: a.email, password: h, name: nm.value, country: S.login.country }); }
     catch (err) { S.login.err = err.message; render(false); return; }
-    const r = await sb.auth.signInWithPassword({ email: a.email, password: pw });
+    const r = await sb.auth.signInWithPassword({ email: a.email, password: h });
     if (r.error) { S.login = { step: 'password', email: a.email, err: 'Your password is saved. Sign in with it.', acc: Object.assign({}, a, { status: 'active' }) }; render(false); return; }
     await afterSignIn();
     const me = meU(); if (me) toast('Password created. Welcome, ' + first(me.name) + '!');
@@ -2438,7 +2458,7 @@ const FORMS = {
     const pw = f.querySelector('#lpw').value;
     if (!pw) { S.login.err = 'Enter your password.'; render(false); return; }
     busy(f, 'Signing in…');
-    const r = await sb.auth.signInWithPassword({ email: a.email, password: pw });
+    const r = await signInHashed(a.email, pw);
     if (r.error) {
       S.login.err = /invalid/i.test(r.error.message) ? 'That password isn’t right. Try again, or tap Forgot password.' : friendly(r.error);
       render(false); const el = document.getElementById('lpw'); if (el) el.focus(); return;
@@ -2449,9 +2469,9 @@ const FORMS = {
     const me = meU();
     if (!pwRules()) return;
     busy(f, 'Saving…');
-    const r1 = await sb.auth.signInWithPassword({ email: me.email, password: f.querySelector('#cp0').value });
+    const r1 = await signInHashed(me.email, f.querySelector('#cp0').value);
     if (r1.error) { U.err = 'Your current password isn’t right.'; renderSheet(); return; }
-    const r2 = await sb.auth.updateUser({ password: document.getElementById('pw1').value });
+    const r2 = await sb.auth.updateUser({ password: await pwHash(me.email, document.getElementById('pw1').value) });
     if (r2.error) { U.err = friendly(r2.error); renderSheet(); return; }
     U.sheet = null; U.err = ''; renderSheet(); toast('Password changed');
   }
@@ -2472,12 +2492,12 @@ const A = {
   set(v, el) { S[el.dataset.k] = Number(v); render(); },
   sheet(v) {
     U.sheet = v; U.err = ''; U.confirm = null; renderSheet();
-    if (v === 'forgot') sb.rpc('admin_names').then((r) => { U.admins = r.data || []; if (U.sheet === 'forgot') renderSheet(); }, () => {});
+
   },
   closeSheet() { if (U.sheet === 'upload' && U.form && U.form.progress != null) return; if (U.sheet === 'upload' && U.form && U.form.items) U.form.items.forEach((it) => { if (it.posterUrl) URL.revokeObjectURL(it.posterUrl); }); if (U.sheet === 'upload' && U.form && U.form.back === 'pick') { U.sheet = 'pickvideos'; U.form = null; renderSheet(); return; } U.sheet = null; U.cant = null; U.err = ''; U.confirm = null; renderSheet(); },
   confirm(v) { U.confirm = v || null; if (U.sheet) renderSheet(); else render(); },
   switchRole(v) { const me = meU(); if (v === 'admin' && !me.admin) return; if (v === 'installer' && !me.installer) return; const fromSubmit = S.view && S.view.kind === 'submitted'; S.role = v; S.tab = v === 'admin' ? (fromSubmit ? 'approvals' : 'overview') : 'jobs'; S.view = null; U.sheet = null; render(false); },
-  async signOut() { await sb.auth.signOut().catch(() => {}); const keep = S.lastEmail; S = Object.assign(fresh(), { loading: false, lastEmail: keep }); PREF_KEYS.forEach((k) => { if (k !== 'lastEmail') { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); if (p[k] !== undefined) S[k] = p[k]; } catch (e) { /* defaults */ } } }); PH.clear(); PHT.clear(); U.sheet = null; render(false); },
+  async signOut() { await sb.auth.signOut().catch(() => {}); S = Object.assign(fresh(), { loading: false, lastEmail: '' }); VU.clear(); PREF_KEYS.forEach((k) => { if (k !== 'lastEmail') { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); if (p[k] !== undefined) S[k] = p[k]; } catch (e) { /* defaults */ } } }); PH.clear(); PHT.clear(); U.sheet = null; render(false); },
   chpw() { U.sheet = 'chpw'; U.err = ''; renderSheet(); },
   copy(v) { const done = () => toast('Number copied'); try { navigator.clipboard.writeText(v).then(done, () => toast(v)); } catch (e) { toast(v); } },
 
