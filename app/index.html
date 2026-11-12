@@ -388,6 +388,8 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 body.desk .sig2 { grid-template-columns: 1fr 1fr; }
 .dlbtn { flex-shrink: 0; border: none; border-radius: 8px; background: var(--blue-bg); color: var(--blue-fg); font-size: 13px; font-weight: 700; padding: 6px 12px; }
 .dlbtn:disabled { opacity: .6; }
+.mine { display: inline-flex; gap: 2px; }
+.mine.big { gap: 3px; }
 /* ---------- desktop (admins on wide screens) ---------- */
 body.desk { padding-left: 0; padding-right: 0; }
 body.desk .app { max-width: 900px; margin: 0 auto 0 248px; padding: 28px 40px 60px; }
@@ -560,7 +562,7 @@ const friendly = (e) => {
   if (/fetch|network|Failed/i.test(m)) return 'No connection. Check your internet and try again.';
   return m && m.length < 140 ? m : 'Something went wrong. Try again.';
 };
-const toUser = (p) => ({ id: p.id, email: p.email, name: p.name || '', phone: p.phone || '', c: p.country, admin: p.is_admin, installer: p.is_installer, status: p.status, active: p.active, hash: p.status === 'active', reset: p.status === 'reset' });
+const toUser = (p) => ({ id: p.id, email: p.email, name: p.name || '', phone: p.phone || '', c: p.country, cs: (p.countries && p.countries.length ? p.countries : [p.country]).map(Number), admin: p.is_admin, installer: p.is_installer, status: p.status, active: p.active, hash: p.status === 'active', reset: p.status === 'reset' });
 const toJob = (r) => ({
   id: r.id, ticket: r.ticket, c: r.country, storeId: r.store_id || null, store: r.store_name, addr: r.address || '', installer: r.installer, second: r.second || null,
   date: r.date, time: r.time, status: r.status, fixture: r.fixture || '', tools: r.tools || [], parts: r.parts || [], note: r.note || '', last: r.last_note || '',
@@ -703,7 +705,7 @@ const userBy = (id) => S.users.find((u) => u.id === id);
 const meU = () => userBy(S.me);
 const nameOf = (id) => { const u = userBy(id); return u ? (u.name || u.email) : (NAMES[id] || 'Removed user'); };
 const validEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
-const installers = (c) => S.users.filter((u) => u.installer && u.active).sort((a, b) => ((a.c === c ? 0 : 1) - (b.c === c ? 0 : 1)) || (a.name || a.email).localeCompare(b.name || b.email));
+const installers = (c) => S.users.filter((u) => u.installer && u.active).sort((a, b) => (((a.cs || [a.c]).includes(c) ? 0 : 1) - ((b.cs || [b.c]).includes(c) ? 0 : 1)) || (a.name || a.email).localeCompare(b.name || b.email));
 const storesFor = (c) => S.stores.filter((s) => s.c === c).sort((a, b) => a.name.localeCompare(b.name));
 const flag = (c, w = 20, h = 14) => { const f = C[c].flag; return `<svg width="${w}" height="${h}" viewBox="0 0 22 16" aria-hidden="true" style="border-radius:2px;flex-shrink:0;box-shadow:0 0 0 0.5px rgba(0,0,0,0.2)"><rect width="22" height="16" fill="${f[0]}"/><rect x="6" width="4" height="16" fill="${f[1]}"/><rect y="6" width="22" height="4" fill="${f[1]}"/><rect x="7" width="2" height="16" fill="${f[2]}"/><rect y="7" width="22" height="2" fill="${f[2]}"/></svg>`; };
 const nordicMark = (w = 24, h = 16) => `<svg width="${w}" height="${h}" viewBox="0 0 30 20" aria-hidden="true"><rect width="16" height="11" rx="1.5" fill="#BA0C2F"/><rect x="4.4" width="2.9" height="11" fill="#fff"/><rect y="4.1" width="16" height="2.9" fill="#fff"/><rect x="5.1" width="1.5" height="11" fill="#00205B"/><rect y="4.8" width="16" height="1.5" fill="#00205B"/><g transform="translate(7 4.5)"><rect width="16" height="11" rx="1.5" fill="#006AA7" stroke="#fff" stroke-width="0.8"/><rect x="4.4" width="2.9" height="11" fill="#FECC02"/><rect y="4.1" width="16" height="2.9" fill="#FECC02"/></g><g transform="translate(14 9)"><rect width="16" height="11" rx="1.5" fill="#C8102E" stroke="#fff" stroke-width="0.8"/><rect x="4.4" width="2.9" height="11" fill="#fff"/><rect y="4.1" width="16" height="2.9" fill="#fff"/></g></svg>`;
@@ -876,7 +878,13 @@ function viewAdmin() {
   if (S.tab === 'insights') return adminInsights();
   return adminOverview();
 }
+const myCs = () => { const m = meU(); return m && m.cs && m.cs.length ? m.cs : [m ? m.c : 0]; };
+const regionCs = (R) => (R === 4 ? [0, 1, 2, 3] : R === 5 ? myCs() : [R]);
+const inR = (c, R) => regionCs(R).includes(c);
+const regionName = (R) => (R === 4 ? 'all countries' : R === 5 ? myCs().map((c) => C[c].name).join(', ') : C[R].name);
+const csLabel = (cs) => (cs.length > 2 ? cs.length + ' countries' : cs.map((c) => C[c].name).join(' + '));
 function regionSeg(key, val) {
+  if (myCs().length > 1) return `<div class="seg tall" role="group" aria-label="Country"><button type="button" class="${val === 5 ? 'on' : ''}" aria-pressed="${val === 5}" data-a="set" data-k="${key}" data-v="5"><span class="mine">${myCs().map((c) => flag(c, 14, 10)).join('')}</span>Mine</button>${[0, 1, 2, 3, 4].map((i) => `<button type="button" class="${val === i ? 'on' : ''}" aria-pressed="${val === i}" data-a="set" data-k="${key}" data-v="${i}">${i < 4 ? flag(i) : nordicMark()}${i < 4 ? C[i].name : 'Nordic'}</button>`).join('')}</div>`;
   return `<div class="seg tall" role="group" aria-label="Country">${[0, 1, 2, 3, 4].map((i) => `<button type="button" class="${val === i ? 'on' : ''}" aria-pressed="${val === i}" data-a="set" data-k="${key}" data-v="${i}">${i < 4 ? flag(i) : nordicMark()}${i < 4 ? C[i].name : 'Nordic'}</button>`).join('')}</div>`;
 }
 function periodSeg(key, val) {
@@ -885,8 +893,9 @@ function periodSeg(key, val) {
 function who(j) { return esc(nameOf(j.installer)) + (j.second ? ' + ' + esc(first(nameOf(j.second))) : ''); }
 function adminOverview() {
   const me = meU();
-  const R = S.region, nordic = R === 4;
-  const scope = S.jobs.filter((j) => nordic || j.c === R);
+  if (S.region === 5 && myCs().length < 2) S.region = me.c;
+  const R = S.region, nordic = R === 4 || R === 5;
+  const scope = S.jobs.filter((j) => inR(j.c, R));
   const inP = scope.filter((j) => inPeriod(j, S.period));
   const open = inP.filter((j) => OPEN.includes(effStatus(j))).sort((a, b) => jobTs(a) - jobTs(b));
   const done = inP.filter((j) => ['waiting', 'approved'].includes(j.status)).sort((a, b) => jobTs(b) - jobTs(a));
@@ -897,9 +906,11 @@ function adminOverview() {
   const problems = scope.filter((j) => j.report && j.report.problem && j.status === 'waiting');
   let h = header('Overview', longToday());
   h += `<div style="margin-top:14px">${regionSeg('region', R)}</div>`;
-  const here = nordic
+  const here = R === 5
+    ? `<span class="mine big">${myCs().map((c) => flag(c, 26, 19)).join('')}</span><span class="grow"><b>Your countries</b><span class="sub">${esc(regionName(5))} together</span></span>`
+    : nordic
     ? `${nordicMark(40, 27)}<span class="grow"><b>Nordic overview</b><span class="sub">Norway, Sweden, Denmark and Finland together</span></span>`
-    : `${flag(R, 40, 29)}<span class="grow"><span style="display:flex;align-items:center;gap:8px"><b>${C[R].name}</b>${R === me.c ? '<span class="pill p-blue" style="font-size:11px">Your country</span>' : ''}</span><span class="sub">Support: ${C[R].support[0]} · ${C[R].support[1]} · ${C[R].cur}</span></span>`;
+    : `${flag(R, 40, 29)}<span class="grow"><span style="display:flex;align-items:center;gap:8px"><b>${C[R].name}</b>${myCs().includes(R) ? '<span class="pill p-blue" style="font-size:11px">Your country</span>' : ''}</span><span class="sub">Support: ${C[R].support[0]} · ${C[R].support[1]} · ${C[R].cur}</span></span>`;
   h += `<div class="row" style="margin-top:10px;border-radius:16px;border:none">${here}</div>`;
   if (!S.jobs.length) {
     h += `<div class="empty" style="margin-top:16px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--blue-bg)">${small(TABICON.new, 'var(--blue)').replace('width="16" height="16"', 'width="24" height="24"')}</span><b>No tickets yet</b><span>Create the first ticket and assign it to an installer. ${S.users.length < 2 ? 'Add your installers under Team first, or assign it to yourself to try the flow.' : ''}</span><button type="button" class="btn small" style="width:auto;padding:0 18px;margin-top:6px" data-a="tab" data-v="new">Create a ticket</button></div>`;
@@ -912,9 +923,9 @@ function adminOverview() {
   declined.forEach((j) => alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--red-bg)">${I.flagP('var(--redbtn)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${esc(nameOf(j.installer))} declined a job</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)}, ${esc(whenLabel(j))}</span>${j.declineReason ? `<span class="muted" style="font-size:13px">“${esc(j.declineReason)}”</span>` : ''}</span></div><button type="button" class="btn small" data-a="openJob" data-v="${j.id}">Assign someone else</button></div>`));
   requests.forEach((j) => { const [d, t] = j.request.to.split(' '); alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--orange-bg)">${small(TABICON.jobs, 'var(--orange)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${esc(nameOf(j.installer))} asked to reschedule</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)}, ${esc(whenLabel(j))} → ${esc(whenLabel({ date: d, time: t }))}</span>${j.request.reason ? `<span class="muted" style="font-size:13px">“${esc(j.request.reason)}”</span>` : ''}</span></div><div class="btn2"><button type="button" class="btn small sec" data-a="denyReq" data-v="${j.id}">Keep time</button><button type="button" class="btn small" data-a="approveReq" data-v="${j.id}">Approve</button></div></div>`); });
   if (isDesk()) return overviewDesk({ R, nordic, scope, inP, alerts });
-  h += alerts.length ? `<div class="stack" style="margin-top:10px">${alerts.join('')}</div>` : `<div class="banner" style="margin-top:10px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 16)}Nothing needs your attention in ${nordic ? 'the Nordics' : C[R].name}</div>`;
+  h += alerts.length ? `<div class="stack" style="margin-top:10px">${alerts.join('')}</div>` : `<div class="banner" style="margin-top:10px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 16)}Nothing needs your attention in ${R === 4 ? 'the Nordics' : esc(regionName(R))}</div>`;
   if (nordic) {
-    h += `<h2 class="sec">By country</h2><div class="group">${[0, 1, 2, 3].map((c) => { const mine = S.jobs.filter((j) => j.c === c && inPeriod(j, S.period)); const td = mine.filter((j) => OPEN.includes(effStatus(j))).length; const dn = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).length; return `<button type="button" class="row" data-a="set" data-k="region" data-v="${c}">${flag(c, 28, 20)}<span class="grow"><span>${C[c].name}</span><span class="sub">Support: ${C[c].support[0]}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end"><b class="num" style="font-size:15px">${td} to do</b><span class="num" style="font-size:13px;color:var(--green)">${dn} done</span></span>${I.chev}</button>`; }).join('')}</div>`;
+    h += `<h2 class="sec">By country</h2><div class="group">${regionCs(R).map((c) => { const mine = S.jobs.filter((j) => j.c === c && inPeriod(j, S.period)); const td = mine.filter((j) => OPEN.includes(effStatus(j))).length; const dn = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).length; return `<button type="button" class="row" data-a="set" data-k="region" data-v="${c}">${flag(c, 28, 20)}<span class="grow"><span>${C[c].name}</span><span class="sub">Support: ${C[c].support[0]}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end"><b class="num" style="font-size:15px">${td} to do</b><span class="num" style="font-size:13px;color:var(--green)">${dn} done</span></span>${I.chev}</button>`; }).join('')}</div>`;
   }
   h += `<div style="margin-top:16px">${periodSeg('period', S.period)}</div>`;
   h += `<div class="tiles" style="margin-top:12px"><div class="tile"><span class="k">To do</span><span class="v num">${open.filter((j) => j.status !== 'progress').length}</span></div><div class="tile"><span class="k">In progress</span><span class="v num" style="color:var(--orange)">${open.filter((j) => j.status === 'progress').length}</span></div><div class="tile"><span class="k">Done</span><span class="v num" style="color:var(--green)">${done.length}</span></div></div>`;
@@ -977,7 +988,7 @@ function adminNew() {
   if (lockInstaller) h += `<div class="row"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(nameOf(d.lead))}</span><span class="grow"><span>${esc(nameOf(d.lead))}${d.second ? ' + ' + esc(nameOf(d.second)) : ''}</span><span class="sub">Can\u2019t be changed after the report is started</span></span></div>`;
   else if (!ins.length) h += `<div class="row"><span class="grow"><span>No installers yet</span><span class="sub">Add people with installer access under Team.</span></span><button type="button" class="btn small" style="width:auto;padding:0 14px" data-a="tab" data-v="team">Team</button></div>`;
   else {
-    h += ins.map((u) => { const lead = u.id === d.lead, sec = d.secondOn && u.id === d.second; const n = S.jobs.filter((j) => (j.installer === u.id || j.second === u.id) && j.date === d.date && OPEN.includes(effStatus(j))).length; return `<button type="button" class="row" aria-pressed="${lead || sec}" data-a="draftPerson" data-v="${u.id}"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || u.email)}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub">${u.c !== d.c ? C[u.c].name + ' · ' : ''}${n ? n + (n === 1 ? ' job' : ' jobs') + ' that day' : 'Free that day'}</span></span>${d.secondOn ? (lead ? '<span class="pill p-blue">Lead</span>' : sec ? '<span class="pill p-grey">Second</span>' : '') : ''}${lead || sec ? I.tick('var(--blue)', 18) : ''}</button>`; }).join('');
+    h += ins.map((u) => { const lead = u.id === d.lead, sec = d.secondOn && u.id === d.second; const n = S.jobs.filter((j) => (j.installer === u.id || j.second === u.id) && j.date === d.date && OPEN.includes(effStatus(j))).length; return `<button type="button" class="row" aria-pressed="${lead || sec}" data-a="draftPerson" data-v="${u.id}"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || u.email)}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub">${!(u.cs || [u.c]).includes(d.c) ? C[u.c].name + ' · ' : ''}${n ? n + (n === 1 ? ' job' : ' jobs') + ' that day' : 'Free that day'}</span></span>${d.secondOn ? (lead ? '<span class="pill p-blue">Lead</span>' : sec ? '<span class="pill p-grey">Second</span>' : '') : ''}${lead || sec ? I.tick('var(--blue)', 18) : ''}</button>`; }).join('');
     if (ins.length > 1) h += !d.secondOn ? `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftSecond">+ Add a second installer <span class="muted" style="font-size:13px">· rarely needed</span></button>` : `<div class="row" style="font-size:13px"><span class="grow muted">${d.second ? esc(first(nameOf(d.lead))) + ' leads and submits the report. The installer share is split.' : 'Tap who joins ' + esc(first(nameOf(d.lead)) || 'the lead') + '.'}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="draftNoSecond">Remove</button></div>`;
   }
   h += `</div>${errL('installer')}`;
@@ -1061,15 +1072,16 @@ function adminTeam() {
   let h = header('Manage', 'Accounts and access');
   h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" class="on" data-a="setManage" data-v="people">People</button><button type="button" data-a="setManage" data-v="videos">Videos & pictures</button></div>`;
   h += `<div style="margin-top:16px"><button type="button" class="btn" data-a="addPerson">+ Add person</button></div>`;
-  h += `<h2 class="sec">Accounts · ${list.length}</h2><div class="group">${list.map((u) => `<button type="button" class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px" data-a="openUser" data-v="${u.id}"><span class="avatar" style="margin:2px 0 0;width:38px;height:38px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub" style="word-break:break-all">${esc(u.email)}</span><span class="tags">${flag(u.c, 16, 11)}${u.admin ? '<span class="pill p-blue">Admin</span>' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}${statusPill(u)}</span></span><span style="align-self:center">${I.chev}</span></button>`).join('')}</div>`;
+  h += `<h2 class="sec">Accounts · ${list.length}</h2><div class="group">${list.map((u) => `<button type="button" class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px" data-a="openUser" data-v="${u.id}"><span class="avatar" style="margin:2px 0 0;width:38px;height:38px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub" style="word-break:break-all">${esc(u.email)}</span><span class="tags">${(u.cs || [u.c]).map((c) => flag(c, 16, 11)).join('')}${u.admin ? '<span class="pill p-blue">Admin</span>' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}${statusPill(u)}</span></span><span style="align-self:center">${I.chev}</span></button>`).join('')}</div>`;
   h += `<p class="foot">New people create their own password the first time they sign in. If someone forgets theirs, open their account and tap Reset password.</p>`;
   return h;
 }
 
 function adminInsights() {
   if (isDesk()) return insightsDesk();
-  const R = S.insRegion, P = S.insPeriod, nordic = R === 4;
-  const inScope = (j) => (nordic || j.c === R);
+  if (S.insRegion === 5 && myCs().length < 2) S.insRegion = meU().c;
+  const R = S.insRegion, P = S.insPeriod, nordic = R === 4 || R === 5;
+  const inScope = (j) => inR(j.c, R);
   const sc = S.jobs.filter((j) => inScope(j) && inPeriod(j, P));
   const done = sc.filter((j) => j.status === 'approved' || j.status === 'waiting');
   const appr = sc.filter((j) => j.status === 'approved');
@@ -1083,7 +1095,7 @@ function adminInsights() {
   h += `<div class="grid2" style="margin-top:14px"><div class="tile"><span class="k">Jobs done</span><span class="v num">${done.length}</span></div><div class="tile"><span class="k">Avg time on site</span><span class="v num">${avg == null ? '–' : fmtDur(avg)}</span></div><div class="tile"><span class="k">Photo retakes</span><span class="v num">${retake == null ? '–' : retake + '%'}</span></div><div class="tile"><span class="k">Overdue now</span><span class="v num" style="color:${overdueNow ? 'var(--red)' : 'var(--fg)'}">${overdueNow}</span></div></div>`;
   h += `<div class="card pipecard" style="margin-top:12px">${pipeline(R)}</div>`;
   if (nordic) {
-    h += `<h2 class="sec">By country · approved</h2><div class="group">${[0, 1, 2, 3].map((i) => { const a = appr.filter((j) => j.c === i); return `<button type="button" class="row" data-a="set" data-k="insRegion" data-v="${i}">${flag(i, 28, 20)}<span class="grow"><span>${C[i].name}</span><span class="sub num">${a.length} ${a.length === 1 ? 'job' : 'jobs'}</span></span><b class="num" style="font-size:15px">${money(i, a.reduce((t, j) => t + (Number(j.price) || 0), 0))}</b>${I.chev}</button>`; }).join('')}</div>
+    h += `<h2 class="sec">By country · approved</h2><div class="group">${regionCs(R).map((i) => { const a = appr.filter((j) => j.c === i); return `<button type="button" class="row" data-a="set" data-k="insRegion" data-v="${i}">${flag(i, 28, 20)}<span class="grow"><span>${C[i].name}</span><span class="sub num">${a.length} ${a.length === 1 ? 'job' : 'jobs'}</span></span><b class="num" style="font-size:15px">${money(i, a.reduce((t, j) => t + (Number(j.price) || 0), 0))}</b>${I.chev}</button>`; }).join('')}</div>
     <h2 class="sec">Where the money goes</h2><div class="card" style="gap:4px">${moneySplit(appr, R, ['today', 'this week', 'this month'][P])}</div>`;
   } else {
     const tot = appr.reduce((t, j) => t + (Number(j.price) || 0), 0);
@@ -1091,7 +1103,7 @@ function adminInsights() {
     parts.push(['Brand Butlers', tot - parts[0][1] - parts[1][1], 'var(--blue)']);
     h += `<h2 class="sec">Revenue · approved</h2><div class="card" style="gap:12px"><span class="num" style="font-size:28px;font-weight:700">${money(R, tot)}</span>${tot ? `<div role="img" aria-label="Revenue split" style="display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px">${parts.map((p) => `<span style="flex:${Math.max(p[1], 0)};background:${p[2]}"></span>`).join('')}</div>` : ''}<b style="font-size:15px;margin-top:4px">Where the money goes</b>${moneySplit(appr, R, ['today', 'this week', 'this month'][P])}</div>`;
   }
-  const ins = S.users.filter((u) => u.installer && (nordic || u.c === R || appr.some((j) => j.installer === u.id || j.second === u.id)));
+  const ins = S.users.filter((u) => u.installer && (R === 4 || (u.cs || [u.c]).some((c) => inR(c, R)) || appr.some((j) => j.installer === u.id || j.second === u.id)));
   const rows = ins.map((u) => { const mine = appr.filter((j) => j.installer === u.id || j.second === u.id); return { u, n: mine.length, sums: sumByCur(mine.map((j) => [j.c, shareOf(j)])) }; }).sort((a, b) => b.n - a.n);
   h += `<h2 class="sec">Installer earnings</h2><div class="group">${rows.length ? rows.map((r) => `<div class="row">${flag(r.u.c)}<span class="grow"><span>${esc(r.u.name || r.u.email)}</span><span class="sub num">${r.n} ${r.n === 1 ? 'job' : 'jobs'} approved</span></span><b class="num" style="font-size:15px;text-align:right">${r.sums.length ? r.sums.join('<br>') : money(r.u.c, 0)}</b></div>`).join('') : '<div class="row muted">No installers in this country yet.</div>'}</div>`;
   h += `<p class="foot">Money counts approved reports only. Time on site runs from “start report” to submit.</p>`;
@@ -1114,7 +1126,7 @@ function renderSide() {
   el.innerHTML = `<div class="sbrand">${LOGO(36)}<div><b>Brand Butlers</b><span>${PREVIEW ? 'Test version' : 'Fixture reporting'}</span></div></div>
     <nav class="snav">${items.map(([k, l]) => `<button type="button" class="nav ${S.tab === k && (!S.view || S.view.kind === 'edit') ? 'on' : ''}" data-a="tab" data-v="${k}" ${S.tab === k ? 'aria-current="page"' : ''}>${TABICON[k]}<span>${l}</span>${k === 'approvals' && waiting ? `<span class="sbadge">${waiting}</span>` : ''}</button>`).join('')}</nav>
     <div class="sfoot">${me.installer ? `<button type="button" class="nav" data-a="switchRole" data-v="installer">${TABICON.jobs}<span>Installer view</span></button>` : ''}
-      <button type="button" class="sacct" data-a="sheet" data-v="account"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(me.name || me.email)}</span><span class="grow"><b>${esc(me.name || me.email)}</b><span>${C[me.c].name} · Admin</span></span></button></div>`;
+      <button type="button" class="sacct" data-a="sheet" data-v="account"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(me.name || me.email)}</span><span class="grow"><b>${esc(me.name || me.email)}</b><span>${esc(csLabel(me.cs || [me.c]))} · Admin</span></span></button></div>`;
   return el;
 }
 
@@ -1146,14 +1158,14 @@ function overviewDesk(ctx) {
     .sort((a, b) => { const ao = OPEN.includes(effStatus(a)), bo = OPEN.includes(effStatus(b)); return ao !== bo ? (ao ? -1 : 1) : ao ? jobTs(a) - jobTs(b) : jobTs(b) - jobTs(a); });
   const cnt = (f) => inP.filter((j) => { const st = effStatus(j); return f(st); }).length;
   const kpis = [['To do', cnt((s) => ['scheduled', 'overdue', 'declined', 'changes'].includes(s)), 'var(--fg)', 'todo'], ['In progress', cnt((s) => s === 'progress'), 'var(--orange)', 'progress'], ['Waiting for approval', scope.filter((j) => j.status === 'waiting').length, 'var(--blue)', 'waiting'], ['Approved', cnt((s) => s === 'approved'), 'var(--green)', 'approved'], ['Overdue now', scope.filter((j) => effStatus(j) === 'overdue').length, 'var(--red)', 'todo']];
-  let h = `<div class="dhead"><div><div class="date">${esc(longToday())}</div><h1>Overview</h1></div><div class="dtools"><div style="width:440px">${regionSeg('region', R).replace('seg tall', 'seg tall dseg')}</div><button type="button" class="btn" style="width:auto;padding:0 20px" data-a="tab" data-v="new">+ New ticket</button></div></div>`;
+  let h = `<div class="dhead"><div><div class="date">${esc(longToday())}</div><h1>Overview</h1></div><div class="dtools"><div style="width:${myCs().length > 1 ? 560 : 440}px">${regionSeg('region', R).replace('seg tall', 'seg tall dseg')}</div><button type="button" class="btn" style="width:auto;padding:0 20px" data-a="tab" data-v="new">+ New ticket</button></div></div>`;
   h += `<div class="kpis">${kpis.map(([l, n, col, f]) => `<button type="button" class="kpi${F === f && f !== 'todo' ? ' on' : ''}" data-a="setStatusF" data-v="${F === f ? 'all' : f}"><span class="k">${l}</span><span class="v num" style="color:${n ? col : 'var(--fg)'}">${n}</span></button>`).join('')}</div>`;
   const left = `<div class="dtbar"><input class="box dsearch" id="dsearch" data-desk-search="1" value="${esc(S.q || '')}" placeholder="Search store, ticket or installer" aria-label="Search" autocomplete="off">
       <div class="seg" style="flex:0 0 auto">${[['all', 'All'], ['todo', 'To do'], ['progress', 'In progress'], ['waiting', 'Waiting'], ['approved', 'Approved']].map(([k, l]) => `<button type="button" class="${F === k ? 'on' : ''}" style="padding:4px 12px" data-a="setStatusF" data-v="${k}">${l}</button>`).join('')}</div>
       <div class="seg" style="flex:0 0 auto">${['Day', 'Week', 'Month'].map((l, i) => `<button type="button" class="${S.period === i ? 'on' : ''}" style="padding:4px 12px" data-a="set" data-k="period" data-v="${i}">${l}</button>`).join('')}</div></div>
-    ${deskTable(rows, nordic)}<p class="foot">${rows.length} ${rows.length === 1 ? 'ticket' : 'tickets'} · ${['today', 'this week', 'this month'][S.period]}${nordic ? ' · all countries' : ' · ' + C[R].name}. Click a row to open it on the right.</p>`;
+    ${deskTable(rows, nordic)}<p class="foot">${rows.length} ${rows.length === 1 ? 'ticket' : 'tickets'} · ${['today', 'this week', 'this month'][S.period]}${' \u00b7 ' + regionName(R)}. Click a row to open it on the right.</p>`;
   const right = S.panel ? deskPanel() : `<div class="dside"><h2 class="sec" style="margin-top:0">Needs attention</h2>${alerts.length ? `<div class="stack">${alerts.join('')}</div>` : `<div class="banner" style="background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 16)}Nothing needs your attention</div>`}
-    ${nordic ? `<h2 class="sec">By country</h2><div class="group">${[0, 1, 2, 3].map((c) => { const mine = S.jobs.filter((j) => j.c === c && inPeriod(j, S.period)); const td = mine.filter((j) => OPEN.includes(effStatus(j))).length; const dn = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).length; return `<button type="button" class="row" data-a="set" data-k="region" data-v="${c}">${flag(c, 28, 20)}<span class="grow"><span>${C[c].name}</span><span class="sub">Support: ${C[c].support[0]}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end"><b class="num" style="font-size:15px">${td} to do</b><span class="num" style="font-size:13px;color:var(--green)">${dn} done</span></span></button>`; }).join('')}</div>`
+    ${nordic ? `<h2 class="sec">By country</h2><div class="group">${regionCs(R).map((c) => { const mine = S.jobs.filter((j) => j.c === c && inPeriod(j, S.period)); const td = mine.filter((j) => OPEN.includes(effStatus(j))).length; const dn = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).length; return `<button type="button" class="row" data-a="set" data-k="region" data-v="${c}">${flag(c, 28, 20)}<span class="grow"><span>${C[c].name}</span><span class="sub">Support: ${C[c].support[0]}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end"><b class="num" style="font-size:15px">${td} to do</b><span class="num" style="font-size:13px;color:var(--green)">${dn} done</span></span></button>`; }).join('')}</div>`
       : `<h2 class="sec">${C[R].name}</h2><div class="group"><div class="row">${flag(R, 28, 20)}<span class="grow"><span>Support: ${C[R].support[0]}</span><span class="sub">${C[R].support[1]} · ${C[R].cur}</span></span></div></div>`}</div>`;
   h += `<div class="dgrid"><div class="dmain">${left}</div><div class="dright">${right}</div></div>`;
   return h;
@@ -1250,16 +1262,16 @@ function ntSummary(d, editing) {
 
 /* who gets what: approved (in the chosen period) next to what is still to be approved (any date) */
 function moneySplit(appr, R, pName) {
-  const pend = S.jobs.filter((j) => (R === 4 || j.c === R) && j.status !== 'approved');
+  const pend = S.jobs.filter((j) => inR(j.c, R) && j.status !== 'approved');
   const sp = (a) => { const pr = (j) => Number(j.price) || 0; const t = a.reduce((x, j) => x + pr(j), 0); const i = a.reduce((x, j) => x + pr(j) * j.split[0] / 100, 0); const ad = a.reduce((x, j) => x + pr(j) * j.split[1] / 100, 0); return [i, ad, t - i - ad, t]; };
   const A = sp(appr), P = sp(pend);
   const rows = [['Installers', 'var(--green)'], ['Admin', 'var(--orange)'], ['Brand Butlers', 'var(--blue)']];
   return `<table class="mtbl"><thead><tr><th></th><th>Approved</th><th>To be approved</th></tr></thead><tbody>${rows.map(([l, col], k) => `<tr><td><i style="background:${col}"></i>${l}</td><td class="num"><b>${fmt(A[k])}</b></td><td class="num">${fmt(P[k])}</td></tr>`).join('')}<tr class="tot"><td>Total</td><td class="num"><b>${fmt(A[3])}</b></td><td class="num"><b>${fmt(P[3])}</b></td></tr></tbody></table>
-    <p class="foot" style="margin:10px 0 0">DKK · ${R === 4 ? 'all countries' : C[R].name}. Approved: ${esc(pName)}. To be approved: ${pend.length} ${pend.length === 1 ? 'ticket' : 'tickets'} not approved yet, any date.</p>`;
+    <p class="foot" style="margin:10px 0 0">DKK · ${esc(regionName(R))}. Approved: ${esc(pName)}. To be approved: ${pend.length} ${pend.length === 1 ? 'ticket' : 'tickets'} not approved yet, any date.</p>`;
 }
 /* revenue on tickets that are not approved yet (all dates), split by where they are */
 function pipeline(R) {
-  const sc = S.jobs.filter((j) => (R === 4 || j.c === R) && j.status !== 'approved');
+  const sc = S.jobs.filter((j) => inR(j.c, R) && j.status !== 'approved');
   const sum = (a) => a.reduce((t, j) => t + (Number(j.price) || 0), 0);
   const parts = [
     ['Waiting for approval', sc.filter((j) => j.status === 'waiting'), 'var(--blue)'],
@@ -1268,7 +1280,7 @@ function pipeline(R) {
   const tot = sum(sc);
   return `<span class="k" style="font-size:13px;color:var(--muted);font-weight:500">Revenue not approved yet</span>
     <span class="num" style="font-size:28px;font-weight:700;letter-spacing:-0.4px">DKK ${fmt(tot)}</span>
-    <span class="muted" style="font-size:13px">${sc.length} ${sc.length === 1 ? 'ticket' : 'tickets'} · all dates${R === 4 ? ' · all countries' : ' · ' + C[R].name}</span>
+    <span class="muted" style="font-size:13px">${sc.length} ${sc.length === 1 ? 'ticket' : 'tickets'} · all dates${' · ' + esc(regionName(R))}</span>
     ${tot ? `<div class="splitbar" role="img" aria-label="Not approved yet, split by status">${parts.map(([l, a, col]) => `<span style="flex:${sum(a)};background:${col}" title="${l}"></span>`).join('')}</div>` : ''}
     <div class="pipe">${parts.map(([l, a, col]) => `<button type="button" class="prow" data-a="${l === 'Waiting for approval' ? 'tab' : 'pipeGo'}" data-v="${l === 'Waiting for approval' ? 'approvals' : l === 'In progress' ? 'progress' : 'todo'}"><i style="background:${col}"></i><span class="grow">${l} <span class="muted num">· ${a.length}</span></span><b class="num">DKK ${fmt(sum(a))}</b></button>`).join('')}</div>`;
 }
@@ -1276,8 +1288,9 @@ function pipeline(R) {
 const CCOL = ['var(--c0)', 'var(--c1)', 'var(--c2)', 'var(--c3)'];
 function isoWeek(d) { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 864e5 + 1) / 7); }
 function insightsDesk() {
-  const R = S.insRegion, nordic = R === 4; const P = S.insDP == null ? 1 : S.insDP; const days = [7, 31, 92][P]; const pName = ['week', 'month', 'quarter'][P];
-  const inScope = (j) => nordic || j.c === R;
+  if (S.insRegion === 5 && myCs().length < 2) S.insRegion = meU().c;
+  const R = S.insRegion, nordic = R === 4 || R === 5; const P = S.insDP == null ? 1 : S.insDP; const days = [7, 31, 92][P]; const pName = ['week', 'month', 'quarter'][P];
+  const inScope = (j) => inR(j.c, R);
   const isDone = (j) => j.status === 'approved' || j.status === 'waiting';
   const dd = (j) => dayDiff(j.date);
   const cur = S.jobs.filter((j) => inScope(j) && isDone(j) && dd(j) <= 0 && dd(j) > -days);
@@ -1295,13 +1308,13 @@ function insightsDesk() {
     ['Revenue · approved', 'DKK ' + fmt(rev(appr)), delta(rev(appr), rev(apprPrev))],
     ['Avg time on site', tNow == null ? '–' : fmtDur(tNow), tNow != null && tPrev != null ? `<span class="kd muted">${tNow <= tPrev ? '− ' : '+ '}${fmtDur(Math.abs(tNow - tPrev))} vs last ${pName}</span>` : '<span class="kd muted">From “start report” to submit</span>'],
     ['Approved first time', firstOk == null ? '–' : firstOk + ' %', `<span class="kd muted">${sentBack} sent back for changes</span>`]];
-  let h = `<div class="dhead"><div><div class="date">Admins only</div><h1>Insights</h1></div><div class="dtools"><div style="width:440px">${regionSeg('insRegion', R).replace('seg tall', 'seg tall dseg')}</div><div class="seg" style="width:260px">${['Week', 'Month', 'Quarter'].map((l, i) => `<button type="button" class="${P === i ? 'on' : ''}" aria-pressed="${P === i}" data-a="set" data-k="insDP" data-v="${i}">${l}</button>`).join('')}</div></div></div>`;
+  let h = `<div class="dhead"><div><div class="date">Admins only</div><h1>Insights</h1></div><div class="dtools"><div style="width:${myCs().length > 1 ? 560 : 440}px">${regionSeg('insRegion', R).replace('seg tall', 'seg tall dseg')}</div><div class="seg" style="width:260px">${['Week', 'Month', 'Quarter'].map((l, i) => `<button type="button" class="${P === i ? 'on' : ''}" aria-pressed="${P === i}" data-a="set" data-k="insDP" data-v="${i}">${l}</button>`).join('')}</div></div></div>`;
   h += `<div class="kpis k4">${kpis.map(([l, v, sub]) => `<div class="kpi"><span class="k">${l}</span><span class="v num">${v}</span>${sub}</div>`).join('')}</div>`;
   // buckets: days for a week, calendar weeks otherwise
   const t0 = today0(); const buckets = [];
   if (P === 0) for (let i = 6; i >= 0; i--) { const dt = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() - i); buckets.push({ lab: i === 0 ? 'Today' : WD[dt.getDay()], full: i === 0 ? 'Today' : WD[dt.getDay()] + ' ' + dt.getDate() + ' ' + MO[dt.getMonth()], test: (j) => dd(j) === -i }); }
   else { const n = P === 1 ? 5 : 13; const mon = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() - ((t0.getDay() + 6) % 7)); for (let i = n - 1; i >= 0; i--) { const a = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() - 7 * i); const b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 7); buckets.push({ lab: 'W' + isoWeek(a), full: 'Week ' + isoWeek(a) + (i === 0 ? ' (this week)' : ''), test: (j) => { const x = parseD(j.date).getTime(); return x >= a.getTime() && x < b.getTime() && dd(j) <= 0; } }); } }
-  const series = nordic ? [0, 1, 2, 3] : [R];
+  const series = regionCs(R);
   const pool = S.jobs.filter((j) => inScope(j) && isDone(j));
   const data = buckets.map((b) => series.map((c) => pool.filter((j) => j.c === c && b.test(j)).length));
   const maxT = Math.max(0, ...data.map((r) => r.reduce((a, x) => a + x, 0)));
@@ -1314,7 +1327,7 @@ function insightsDesk() {
   const legend = series.length > 1 ? `<div class="clegend">${series.map((c) => `<span><i style="background:${CCOL[c]}"></i>${C[c].name}</span>`).join('')}</div>` : `<span class="muted" style="font-size:13px">${C[R].name}</span>`;
   let side;
   if (nordic) {
-    const rows = [0, 1, 2, 3].map((c) => ({ c, v: rev(appr.filter((j) => j.c === c)) })); const mx = Math.max(1, ...rows.map((r) => r.v));
+    const rows = regionCs(R).map((c) => ({ c, v: rev(appr.filter((j) => j.c === c)) })); const mx = Math.max(1, ...rows.map((r) => r.v));
     side = `<h3 class="ctitle">Revenue by country</h3><div class="hbars">${rows.map((r) => `<div class="hb"><span class="hbl">${C[r.c].name}</span><span class="hbt"><span style="width:${r.v / mx * 100}%;background:${CCOL[r.c]}"></span></span><b class="num">${fmt(r.v)}</b></div>`).join('')}</div><p class="foot" style="margin:14px 0 0">Approved reports only · DKK</p><h3 class="ctitle" style="margin-top:22px">Where the money goes</h3>${moneySplit(appr, R, 'this ' + pName)}`;
   } else {
     const tot = rev(appr); const parts = [['Installers', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[0] / 100, 0)], ['Admin', appr.reduce((t, j) => t + (Number(j.price) || 0) * j.split[1] / 100, 0)]]; parts.push(['Brand Butlers', tot - parts[0][1] - parts[1][1]]);
@@ -1322,7 +1335,7 @@ function insightsDesk() {
     side = `<h3 class="ctitle">Where the money goes</h3>${moneySplit(appr, R, 'this ' + pName)}`;
   }
   h += `<div class="igrid"><div class="icard"><div class="chead"><h3 class="ctitle">Jobs done per ${P === 0 ? 'day' : 'week'}</h3>${legend}</div>${chart}</div><div class="istack"><div class="icard pipecard">${pipeline(R)}</div><div class="icard">${side}</div></div></div>`;
-  const ins = S.users.filter((u) => u.installer && (nordic || u.c === R || cur.some((j) => j.installer === u.id || j.second === u.id)));
+  const ins = S.users.filter((u) => u.installer && (R === 4 || (u.cs || [u.c]).some((c) => inR(c, R)) || cur.some((j) => j.installer === u.id || j.second === u.id)));
   const rows = ins.map((u) => { const mine = cur.filter((j) => j.installer === u.id || j.second === u.id); const ap = mine.filter((j) => j.status === 'approved'); const tm = avgT(mine.filter((j) => j.installer === u.id)); return { u, n: mine.length, tm, fo: ap.length ? Math.round(ap.filter((j) => !(j.sentBack > 0)).length / ap.length * 100) : null, earn: ap.reduce((t, j) => t + shareOf(j), 0) }; }).sort((a, b) => b.n - a.n || b.earn - a.earn);
   const mxE = Math.max(1, ...rows.map((r) => r.earn));
   h += `<div class="icard" style="margin-top:20px;padding:0"><div class="chead" style="padding:18px 22px 6px"><h3 class="ctitle">Installers</h3><span class="muted" style="font-size:13px">This ${pName} · sorted by jobs done</span></div>
@@ -1567,7 +1580,8 @@ function personForm(f) {
     <label class="row" for="femail"><span class="lbl">Email</span><input id="femail" class="inl" type="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" data-fbind="email" value="${esc(f.email)}" placeholder="name@company.com" autocomplete="off"></label>
     <label class="row" for="fphone"><span class="lbl">Phone</span><input id="fphone" class="inl" type="tel" data-fbind="phone" value="${esc(f.phone)}" placeholder="Optional" autocomplete="off"></label>
   </div>
-  <span class="cap">Country</span><div class="seg tall" role="group" aria-label="Country">${[0, 1, 2, 3].map((i) => `<button type="button" class="${f.c === i ? 'on' : ''}" aria-pressed="${f.c === i}" data-a="fset" data-k="c" data-v="${i}">${flag(i)}${C[i].name}</button>`).join('')}</div>
+  <span class="cap">Countries \u00b7 ${f.cs.length}</span><div class="group">${[0, 1, 2, 3].map((i) => { const on = f.cs.includes(i), home = f.c === i; return `<div class="row"><button type="button" class="vbtn" aria-pressed="${on}" data-a="fcty" data-v="${i}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span>${flag(i)}<span>${C[i].name}</span></button>${home ? '<span class="pill p-blue">Home</span>' : on ? `<button type="button" class="link" style="font-size:14px;padding:4px" data-a="fhome" data-v="${i}">Make home</button>` : ''}</div>`; }).join('')}</div>
+  <p class="foot" style="margin:-4px 4px 0">Tick every country this person manages or works in. Home is their own country and the default view.</p>
   <span class="cap">Access</span><div class="group">
     <button type="button" class="row" aria-pressed="${f.admin}" data-a="ftog" data-k="admin"><span class="grow"><span>Admin</span><span class="sub">Tickets, approvals, team and insights</span></span><span class="tog ${f.admin ? 'on' : ''}"></span></button>
     <button type="button" class="row" aria-pressed="${f.installer}" data-a="ftog" data-k="installer"><span class="grow"><span>Installer</span><span class="sub">Gets jobs and files reports</span></span><span class="tog ${f.installer ? 'on' : ''}"></span></button>
@@ -2417,7 +2431,7 @@ async function afterSignIn() {
   await loadAll();
   const me = meU();
   if (!me) { S.login = { step: 'email', email: S.login.email, err: 'This account has no access. Ask a Brand Butlers admin.', acc: null }; render(false); return; }
-  S.lastEmail = me.email; S.region = me.c; S.insRegion = me.c; S.view = null; S.draft = null; S.focus = null;
+  S.lastEmail = me.email; S.region = me.cs && me.cs.length > 1 ? 5 : me.c; S.insRegion = S.region; S.view = null; S.draft = null; S.focus = null;
   if (me.admin && me.installer) { S.choosing = true; S.login = { step: 'workspace', email: '', err: '', acc: { email: me.email, name: me.name, status: 'active' } }; }
   else { S.choosing = false; S.role = me.admin ? 'admin' : 'installer'; S.tab = me.admin ? 'overview' : 'jobs'; S.login = { step: 'email', email: '', err: '', acc: null }; }
   render(false);
@@ -2502,9 +2516,11 @@ const A = {
   copy(v) { const done = () => toast('Number copied'); try { navigator.clipboard.writeText(v).then(done, () => toast(v)); } catch (e) { toast(v); } },
 
   // team (through the admin server function)
-  addPerson() { U.form = { name: '', email: '', phone: '', c: meU().c, admin: false, installer: true }; U.err = ''; U.sheet = 'add'; renderSheet(); const el = document.getElementById('fname'); if (el) el.focus(); },
-  openUser(v) { const u = userBy(v); U.form = { id: u.id, name: u.name, email: u.email, phone: u.phone || '', c: u.c, admin: u.admin, installer: u.installer }; U.err = ''; U.confirm = null; U.sheet = 'user:' + u.id; renderSheet(); },
+  addPerson() { U.form = { name: '', email: '', phone: '', c: meU().c, cs: [meU().c], admin: false, installer: true }; U.err = ''; U.sheet = 'add'; renderSheet(); const el = document.getElementById('fname'); if (el) el.focus(); },
+  openUser(v) { const u = userBy(v); U.form = { id: u.id, name: u.name, email: u.email, phone: u.phone || '', c: u.c, cs: (u.cs || [u.c]).slice(), admin: u.admin, installer: u.installer }; U.err = ''; U.confirm = null; U.sheet = 'user:' + u.id; renderSheet(); },
   fset(v, el) { U.form[el.dataset.k] = Number(v); renderSheet(); },
+  fcty(v) { const f = U.form; const c = Number(v); if (f.cs.includes(c)) { if (f.cs.length === 1) { U.err = 'Choose at least one country.'; renderSheet(); return; } f.cs = f.cs.filter((x) => x !== c); if (f.c === c) f.c = f.cs[0]; } else f.cs = f.cs.concat(c).sort(); U.err = ''; renderSheet(); },
+  fhome(v) { U.form.c = Number(v); renderSheet(); },
   ftog(v, el) { const k = el.dataset.k; U.form[k] = !U.form[k]; renderSheet(); },
   async savePerson() {
     const f = U.form; const name = (f.name || '').trim().replace(/\s+/g, ' '); const email = (f.email || '').trim().toLowerCase();
@@ -2514,7 +2530,7 @@ const A = {
     if (!f.admin && !f.installer) return fail('Give at least admin or installer access.');
     if (f.id === S.me && !f.admin) return fail('You can’t remove your own admin access.');
     const btns = document.querySelectorAll('.sheet [data-a="savePerson"]'); btns.forEach((b) => { b.disabled = true; });
-    try { await callFn('admin', { action: f.id ? 'update' : 'add', id: f.id, name, email, phone: f.phone, country: f.c, is_admin: f.admin, is_installer: f.installer }); }
+    try { await callFn('admin', { action: f.id ? 'update' : 'add', id: f.id, name, email, phone: f.phone, country: f.c, countries: f.cs, is_admin: f.admin, is_installer: f.installer }); }
     catch (e) { btns.forEach((b) => { b.disabled = false; }); return fail(e.message); }
     U.sheet = null; renderSheet();
     await act(async () => {}, f.id ? 'Saved' : first(name) + ' added. They create a password at first sign-in.');
