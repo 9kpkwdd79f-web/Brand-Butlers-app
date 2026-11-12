@@ -1208,17 +1208,28 @@ document.addEventListener('click', (e) => {
   save(); render();
 });
 
+
+/* the export choices for a finished report: each one is its own download */
+function exportButtons(j) {
+  const np = reportPhotos(j).length, nv = reportVideos(j).length;
+  return `<div class="group">
+    <button type="button" class="row" data-a="dlReport" data-v="${j.id}" data-m="statement"><span class="ico" style="background:var(--blue-bg)">${small(TABICON.approvals, 'var(--blue)')}</span><span class="grow"><span>Statement of completion</span><span class="sub">PDF · page 1 only, no photos</span></span>${I.chev}</button>
+    ${np ? `<button type="button" class="row" data-a="dlReport" data-v="${j.id}" data-m="photos"><span class="ico" style="background:var(--green-bg)">${I.cam.replace('width="26" height="26"', 'width="16" height="16"').replace('currentColor', 'var(--green)')}</span><span class="grow"><span>Photo appendix</span><span class="sub">PDF · all ${np} photos with the ticket details on top</span></span>${I.chev}</button>
+    <button type="button" class="row" data-a="dlPhotos" data-v="${j.id}"><span class="ico" style="background:var(--fill)">${I.cam.replace('width="26" height="26"', 'width="16" height="16"').replace('currentColor', 'var(--fg2)')}</span><span class="grow"><span>Pictures one by one</span><span class="sub">${np} JPEG files</span></span>${I.chev}</button>` : ''}
+    ${nv ? `<button type="button" class="row" data-a="dlVideos" data-v="${j.id}"><span class="ico" style="background:var(--fill)">${I.play.replace('rgba(0,0,0,0.55)', 'var(--fg2)')}</span><span class="grow"><span>Videos one by one</span><span class="sub">${nv} ${nv === 1 ? 'video' : 'videos'}</span></span>${I.chev}</button>` : ''}
+  </div>`;
+}
 function approvedList(desk) {
   const q = (S.apQ || '').trim().toLowerCase();
   const all = S.jobs.filter((j) => j.status === 'approved').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0));
   const list = all.filter((j) => !q || [j.store, j.ticket, nameOf(j.installer), j.addr].join(' ').toLowerCase().includes(q));
   const back = S.jobs.filter((j) => j.status === 'changes').sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0));
-  const row = (j) => `<div class="row${desk && S.panel && S.panel.id === j.id ? ' rsel' : ''}" style="gap:8px"><button type="button" class="vbtn" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow" style="display:flex;flex-direction:column;min-width:0"><span class="ell">${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(nameOf(j.installer))} \u00b7 ${j.handledAt ? esc(new Date(j.handledAt).toLocaleDateString('en-GB')) : ''}</span></span></button><button type="button" class="dlbtn" data-a="dlReport" data-v="${j.id}" aria-label="Download PDF for ${esc(j.store)}">PDF</button><button type="button" class="dlbtn" data-a="dlPhotos" data-v="${j.id}" aria-label="Export pictures for ${esc(j.store)}">Pictures</button>${reportVideos(j).length ? `<button type="button" class="dlbtn" data-a="dlVideos" data-v="${j.id}" aria-label="Export videos for ${esc(j.store)}">Videos</button>` : ''}</div>`;
+  const row = (j) => `<div class="row${desk && S.panel && S.panel.id === j.id ? ' rsel' : ''}" style="gap:8px"><button type="button" class="vbtn" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow" style="display:flex;flex-direction:column;min-width:0"><span class="ell">${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(nameOf(j.installer))} \u00b7 ${j.handledAt ? esc(new Date(j.handledAt).toLocaleDateString('en-GB')) : ''}</span></span></button><button type="button" class="dlbtn" data-a="sheet" data-v="export:${j.id}" aria-label="Export ${esc(j.store)}">Export</button></div>`;
   let h = '';
   if (back.length) h += `<h2 class="sec">Sent back for changes \u00b7 ${back.length}</h2><div class="group">${back.map((j) => `<button type="button" class="row${desk && S.panel && S.panel.id === j.id ? ' rsel' : ''}" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(nameOf(j.installer))}</span></span>${pillFor(j)}</button>`).join('')}</div>`;
   h += `<h2 class="sec">Approved \u00b7 ${all.length}</h2>${all.length > 5 || q ? `<input class="box" id="apsearch" data-desk-search="apQ" value="${esc(S.apQ || '')}" placeholder="Search store, ticket or installer" aria-label="Search approved reports" autocomplete="off" style="height:42px;margin-bottom:8px">` : ''}
     <div class="group">${list.length ? list.map(row).join('') : `<div class="row muted">${all.length ? 'No approved reports match.' : 'Nothing approved yet.'}</div>`}</div>
-    <p class="foot">PDF downloads the statement of completion again. Pictures and Videos save the report\u2019s photos or videos one by one.</p>`;
+    <p class="foot">Export: the statement of completion and the photo appendix as separate PDFs, or the pictures and videos one by one.</p>`;
   return h;
 }
 /* ---------- desktop: new ticket ---------- */
@@ -1544,12 +1555,10 @@ function approvalDetail(j) {
   if (j.status === 'waiting') {
     h += `<h2 class="sec">Note to ${esc(first(nameOf(j.installer)))}</h2><textarea id="anote" class="box" data-abind="1" placeholder="Only needed if you ask for changes">${esc(U.note)}</textarea>`;
     h += `<div class="btn2" style="margin-top:20px"><button type="button" class="btn sec" data-a="askChanges" data-v="${j.id}">Ask for changes</button><button type="button" class="btn" data-a="approve" data-v="${j.id}">Approve</button></div>`;
-    h += `<p class="foot">When you approve, the statement of completion for Apple downloads as a PDF. <button type="button" class="link" style="font-size:13px;padding:0" data-a="dlReport" data-v="${j.id}">Preview the PDF</button> \u00b7 <button type="button" class="link" style="font-size:13px;padding:0" data-a="dlPhotos" data-v="${j.id}">Export pictures only</button>${reportVideos(j).length ? ` \u00b7 <button type="button" class="link" style="font-size:13px;padding:0" data-a="dlVideos" data-v="${j.id}">Export videos only</button>` : ''}</p>`;
+    h += `<p class="foot">When you approve, the statement of completion downloads. Each export below is a separate file.</p><h2 class="sec">Export</h2>${exportButtons(j)}`;
   } else {
     h += `<div style="margin-top:16px">${pillFor(j)}</div>`;
-    if (j.status === 'approved') h += `<button type="button" class="btn" style="margin-top:14px" data-a="dlReport" data-v="${j.id}">${I.dl || ''}Download statement of completion (PDF)</button>`;
-    if (reportPhotos(j).length) h += `<button type="button" class="btn sec" style="margin-top:10px" data-a="dlPhotos" data-v="${j.id}">Export pictures only (${reportPhotos(j).length})</button>`;
-    if (reportVideos(j).length) h += `<button type="button" class="btn sec" style="margin-top:10px" data-a="dlVideos" data-v="${j.id}">Export videos only (${reportVideos(j).length})</button>`;
+    h += `<h2 class="sec">Export</h2>${exportButtons(j)}<p class="foot">Each export is a separate file.</p>`;
   }
   return h;
 }
@@ -1608,8 +1617,11 @@ function renderSheet() {
     setTimeout(hydrate, 0);
   } else if (kind === 'pdf') {
     const j = job(arg);
-    body = `${sheetHead('Statement of completion', 'Close')}<div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:6px 4px 4px"><span class="ico" style="width:64px;height:64px;border-radius:32px;background:var(--green)">${I.tick('#FFFFFF', 30)}</span><b style="font-size:20px">${esc(j ? j.store : '')} is approved</b><span class="muted" style="font-size:15px;line-height:21px">The statement of completion for Apple is ready${U.pdfAuto ? ' and is downloading' : ''}. You can download it again any time under Approvals.</span></div>
-      <button type="button" class="btn" data-a="dlReport" data-v="${esc(arg)}">Download PDF</button>`;
+    body = `${sheetHead('Approved', 'Close')}<div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:6px 4px 4px"><span class="ico" style="width:64px;height:64px;border-radius:32px;background:var(--green)">${I.tick('#FFFFFF', 30)}</span><b style="font-size:20px">${esc(j ? j.store : '')} is approved</b><span class="muted" style="font-size:15px;line-height:21px">${U.pdfAuto ? 'The statement of completion is downloading. ' : ''}Download each part separately below, now or any time later under Approvals.</span></div>
+      ${j ? exportButtons(j) : ''}`;
+  } else if (kind === 'export') {
+    const j = job(arg);
+    body = `${sheetHead('Export', 'Close')}<div style="padding:0 4px"><b style="font-size:18px">${esc(j ? j.store : '')}</b><div class="muted" style="font-size:14px">WO ${esc(j ? j.ticket : '')} \u00b7 ${esc(j ? nameOf(j.installer) : '')}</div></div>${j ? exportButtons(j) : ''}<p class="foot" style="margin:0 4px">Each one downloads as its own file.</p>`;
   } else if (kind === 'reopen') {
     const j = job(arg); if (!j) { U.sheet = null; overlay.innerHTML = ''; return; }
     body = `${sheetHead('Edit report', 'Cancel')}
@@ -2226,6 +2238,7 @@ async function fetchPhotos(j, onProg, list) {
   }
   return files;
 }
+const btnLabel = (btn, txt) => { if (!btn || !btn.isConnected) return; const sub = btn.querySelector('.sub'); if (sub) sub.textContent = txt; else btn.textContent = txt; };
 async function savePhotosOneByOne(files) {
   for (const f of files) {
     const url = URL.createObjectURL(f); const a = document.createElement('a'); a.href = url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
@@ -2268,7 +2281,7 @@ async function pdfImage(key, max, png) {
   } catch (e) { return null; } finally { URL.revokeObjectURL(url); }
 }
 const ddmmyyyy = (ts) => { const d = new Date(ts); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); };
-async function buildPdf(j) {
+async function buildPdf(j, mode) {
   const jsPDF = await loadPdfLib(); const r = j.report; if (!r || r.draft) throw new Error('There is no submitted report for this ticket yet.');
   const st = S.stores.find((x) => x.id === j.storeId) || {};
   const doc = new jsPDF({ unit: 'pt', format: 'a4' }); const W = 595.28, X0 = 56.9, X1 = 537, XM = 216.5, BLUE = [68, 102, 175];
@@ -2283,14 +2296,17 @@ async function buildPdf(j) {
     doc.setTextColor(0, 0, 0);
   };
   doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.6);
-  header('REACTIVE MAINTENANCE - STATEMENT OF COMPLETION');
+  const photosOnly = mode === 'photos';
+  header(photosOnly ? 'PHOTO APPENDIX' : 'REACTIVE MAINTENANCE - STATEMENT OF COMPLETION');
   // job facts
   const cw = (X1 - X0) / 3; const facts = [['WO:', j.ticket], ['City:', (st.city || cityFrom(j.addr || st.addr) || '').toUpperCase()], ['Country:', C[j.c].name.toUpperCase()], ['Apple ID:', st.appleId || ''], ['Store Name:', String(j.store || '').toUpperCase()], ['Completion Date:', ddmmyyyy(r.submittedTs || Date.now())]];
+  if (photosOnly) facts.push(['Lead Installer:', nameOf(j.installer)], ['Store Manager:', r.contact || ''], ['Photos:', String(reportPhotos(j).length)]);
   facts.forEach(([l, v], i) => {
     const cx = X0 + (i % 3) * cw, cy = 139.3 + Math.floor(i / 3) * 32; doc.rect(cx, cy, cw, 32);
     font('normal', 9); T(l, cx + cw / 2, cy + 11.5, { align: 'center' });
     let fs = 11.5; font('normal', fs); while (doc.getTextWidth(String(v)) > cw - 8 && fs > 7) { fs -= 0.5; doc.setFontSize(fs); } T(v, cx + cw / 2, cy + 26, { align: 'center' });
   });
+  if (photosOnly) return await photoPages(doc, j, { W, X0, X1, T, font, header }, 139.3 + 3 * 32 + 22);
   font('bold', 9); T('Checklist and Comments', W / 2, 222, { align: 'center' });
   // checklist table
   let y = 234; const LH = 10.4, PADT = 11.6;
@@ -2325,31 +2341,35 @@ async function buildPdf(j) {
   }
   y += sh + 18;
   font('bold', 8.6); doc.splitTextToSize('*NOTE TO MANAGEMENT OR VENDOR REPRESENTATIVE: Your signature on this document certifies that aside from any issues documented above, all work is completed on the above date to your satisfaction.', X1 - X0 - 20).forEach((t, k) => T(t, W / 2, y + k * 11, { align: 'center' }));
-  // photos, after the statement
+  pageNumbers(doc, font, T);
+  return doc;
+}
+function pageNumbers(doc, font, T) { const n = doc.getNumberOfPages(); for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setTextColor(0, 0, 0); font('italic', 7); T(`Page ${i}/${n}`, 512, 785, { align: 'right' }); } }
+async function photoPages(doc, j, P, startY) {
+  const { X0, X1, T, font } = P; const r = j.report;
   const groups = [];
   ANGLES.forEach((a, i) => groups.push({ label: (i + 1) + ' · ' + a.t, keys: [r.photos.before[i] && r.photos.before[i].k, r.photos.after[i] && r.photos.after[i].k], tags: ['Before', 'After'] }));
   const disp = (r.disposal || []).map((x) => x.k), extra = (r.extras || []).filter((x) => x.kind === 'image').map((x) => x.k);
   for (let i = 0; i < disp.length; i += 2) groups.push({ label: i === 0 ? 'Disposal photos' : '', keys: disp.slice(i, i + 2), tags: [] });
   for (let i = 0; i < extra.length; i += 2) groups.push({ label: i === 0 ? 'Extra photos' : '', keys: extra.slice(i, i + 2), tags: [] });
-  if (groups.some((g) => g.keys.some(Boolean))) {
-    doc.addPage(); header('PHOTOS'); font('normal', 9); T(`WO ${j.ticket}  ·  ${String(j.store || '').toUpperCase()}  ·  ${ddmmyyyy(r.submittedTs || Date.now())}`, W / 2, 133, { align: 'center' });
-    y = 148; const gw2 = (X1 - X0 - 12) / 2, maxH = 170;
-    for (const g of groups) {
-      const ims = await Promise.all(g.keys.map((k) => (k ? pdfImage(k, 1100, false).catch(() => null) : null)));
-      const hs = ims.map((im) => (im ? Math.min(maxH, gw2 * im.h / im.w) : 0)); const rh = Math.max(...hs, 0) + (g.label ? 16 : 4) + 10;
-      if (y + rh > 790) { doc.addPage(); y = 60; }
-      if (g.label) { font('bold', 9); T(g.label, X0, y + 9); y += 16; }
-      ims.forEach((im, k) => { if (!im) return; const w = Math.min(gw2, hs[k] * im.w / im.h), x = X0 + k * (gw2 + 12); doc.addImage(im.d, im.f, x, y, w, hs[k]); if (g.tags[k]) { font('bold', 7); doc.setFillColor(255, 255, 255); doc.rect(x + 4, y + 4, doc.getTextWidth(g.tags[k]) + 8, 11, 'F'); T(g.tags[k], x + 8, y + 12); } });
-      y += Math.max(...hs, 0) + 10;
-    }
+  let y = startY; const gw2 = (X1 - X0 - 12) / 2, maxH = 170;
+  for (const g of groups) {
+    const ims = await Promise.all(g.keys.map((k) => (k ? pdfImage(k, 1100, false).catch(() => null) : null)));
+    if (!ims.some(Boolean)) continue;
+    const hs = ims.map((im) => (im ? Math.min(maxH, gw2 * im.h / im.w) : 0)); const rh = Math.max(...hs, 0) + (g.label ? 16 : 4) + 10;
+    if (y + rh > 772) { doc.addPage(); y = 60; }
+    if (g.label) { font('bold', 9); T(g.label, X0, y + 9); y += 16; }
+    ims.forEach((im, k) => { if (!im) return; const w = Math.min(gw2, hs[k] * im.w / im.h), x = X0 + k * (gw2 + 12); doc.addImage(im.d, im.f, x, y, w, hs[k]); if (g.tags[k]) { font('bold', 7); doc.setFillColor(255, 255, 255); doc.rect(x + 4, y + 4, doc.getTextWidth(g.tags[k]) + 8, 11, 'F'); T(g.tags[k], x + 8, y + 12); } });
+    y += Math.max(...hs, 0) + 10;
   }
-  const n = doc.getNumberOfPages(); for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setTextColor(0, 0, 0); font('italic', 7); T(`Page ${i}/${n}`, 512, 785, { align: 'right' }); }
+  pageNumbers(doc, font, T);
   return doc;
 }
-async function downloadReport(id) {
+async function downloadReport(id, mode) {
   const j = job(id); if (!j) throw new Error('Ticket not found.');
-  const doc = await buildPdf(j);
-  const name = ('Statement of completion WO ' + j.ticket + ' ' + j.store).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.pdf';
+  if (mode === 'photos' && !reportPhotos(j).length) throw new Error('This report has no pictures.');
+  const doc = await buildPdf(j, mode);
+  const name = ((mode === 'photos' ? 'Photo appendix WO ' : 'Statement of completion WO ') + j.ticket + ' ' + j.store).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.pdf';
   const blob = doc.output('blob'); const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
@@ -2807,31 +2827,31 @@ const A = {
   },
   async approve(v) { const j = job(v); if (!(await act(() => updWaiting(v, { status: 'approved', request: null, handled_at: new Date().toISOString(), handled_by: S.me }), ''))) { await refresh().catch(() => {}); if (isDesk()) S.panel = null; S.view = null; render(false); return; } S.view = null; if (isDesk()) S.panel = null; S.tab = 'approvals'; render(false);
     U.pdfAuto = !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); U.sheet = 'pdf:' + v; renderSheet();
-    if (U.pdfAuto) downloadReport(v).catch((e) => toast(friendly(e))); },
+    if (U.pdfAuto) downloadReport(v, 'statement').catch((e) => toast(friendly(e))); },
   async dlPhotos(v, btn) {
     const j = job(v); const n = reportPhotos(j).length; if (!n) { toast('This report has no pictures.'); return; }
-    const t = btn ? btn.textContent : ''; const prog = (i, all) => { if (btn && btn.isConnected) btn.textContent = 'Getting pictures ' + i + ' of ' + all + '\u2026'; };
+    const t = btn ? btn.innerHTML : ''; const prog = (i, all) => { if (btn && btn.isConnected) btnLabel(btn, 'Getting pictures ' + i + ' of ' + all + '\u2026'); };
     if (btn) btn.disabled = true;
     try {
       const files = await fetchPhotos(j, prog); U.photoFiles = files; U.mediaKind = 'image';
       if (isTouchDevice() && navigator.canShare && navigator.canShare({ files })) { U.sheet = 'photos:' + v; renderSheet(); }
-      else { if (btn && btn.isConnected) btn.textContent = 'Saving\u2026'; await savePhotosOneByOne(files); toast(files.length + (files.length === 1 ? ' picture saved' : ' pictures saved') + ' to your downloads'); }
+      else { if (btn && btn.isConnected) btnLabel(btn, 'Saving\u2026'); await savePhotosOneByOne(files); toast(files.length + (files.length === 1 ? ' picture saved' : ' pictures saved') + ' to your downloads'); }
     } catch (e) { toast('Couldn\u2019t get the pictures. ' + friendly(e)); }
-    if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = t; }
+    if (btn && btn.isConnected) { btn.disabled = false; btn.innerHTML = t; }
   },
   async dlVideos(v, btn) {
     const j = job(v); const list = reportVideos(j); if (!list.length) { toast('This report has no videos.'); return; }
-    const t = btn ? btn.textContent : ''; const prog = (i, all) => { if (btn && btn.isConnected) btn.textContent = 'Getting videos ' + i + ' of ' + all + '\u2026'; };
+    const t = btn ? btn.innerHTML : ''; const prog = (i, all) => { if (btn && btn.isConnected) btnLabel(btn, 'Getting videos ' + i + ' of ' + all + '\u2026'); };
     if (btn) btn.disabled = true;
     try {
       const files = await fetchPhotos(j, prog, list); U.photoFiles = files; U.mediaKind = 'video';
       if (isTouchDevice() && navigator.canShare && navigator.canShare({ files })) { U.sheet = 'photos:' + v; renderSheet(); }
-      else { if (btn && btn.isConnected) btn.textContent = 'Saving\u2026'; await savePhotosOneByOne(files); toast(files.length + (files.length === 1 ? ' video saved' : ' videos saved') + ' to your downloads'); }
+      else { if (btn && btn.isConnected) btnLabel(btn, 'Saving\u2026'); await savePhotosOneByOne(files); toast(files.length + (files.length === 1 ? ' video saved' : ' videos saved') + ' to your downloads'); }
     } catch (e) { toast('Couldn\u2019t get the videos. ' + friendly(e)); }
-    if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = t; }
+    if (btn && btn.isConnected) { btn.disabled = false; btn.innerHTML = t; }
   },
   async sharePhotos() { const files = U.photoFiles || []; try { await navigator.share({ files }); U.sheet = null; renderSheet(); } catch (e) { if (e && e.name !== 'AbortError') { await savePhotosOneByOne(files); } } },
-  async dlReport(v, btn) { const t = btn ? btn.textContent : ''; if (btn) { btn.disabled = true; btn.textContent = 'Making PDF\u2026'; } try { await downloadReport(v); } catch (e) { toast('Couldn\u2019t make the PDF. ' + friendly(e)); } if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = t; } },
+  async dlReport(v, btn) { const t = btn ? btn.innerHTML : ''; if (btn) { btn.disabled = true; btnLabel(btn, 'Making PDF\u2026'); } try { await downloadReport(v, btn && btn.dataset.m === 'photos' ? 'photos' : 'statement'); } catch (e) { toast('Couldn\u2019t make the PDF. ' + friendly(e)); } if (btn && btn.isConnected) { btn.disabled = false; btn.innerHTML = t; } },
   async askChanges(v) {
     const j = job(v); const note = (U.note || '').trim() || 'Please check the report and resubmit.';
     if (await act(async () => { await updWaiting(v, { status: 'changes', changes: note, handled_at: new Date().toISOString(), handled_by: S.me }); ok(await sb.from('reports').update({ draft: true }).eq('job_id', v)); }, 'Sent back to ' + first(nameOf(j.installer)))) { S.view = null; if (isDesk() && S.tab === 'approvals') S.panel = null; render(false); }
