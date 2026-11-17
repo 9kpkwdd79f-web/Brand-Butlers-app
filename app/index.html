@@ -1019,7 +1019,7 @@ function adminNew() {
   const amtRow = (k, id, label, sub) => `<label class="row" for="${id}"><span class="grow">${label}${sub ? `<span class="sub num" id="${id}-sub">${sub}</span>` : ''}</span><span class="muted">${cur}</span><input id="${id}" class="inl num" inputmode="decimal" data-bind="${k}" data-live="1" value="${esc(d[k] || '')}" placeholder="0" style="flex:0 0 96px;text-align:right;font-weight:600"></label>`;
   h += `<h2 class="sec">Price</h2><div class="group${E.price ? ' bad-field' : ''}">${amtRow('ainst', 'dinst', 'Installer' + (twoNames ? ' (' + esc(twoNames) + ')' : ''), perInst === 2 ? cur + ' ' + fmt(sp.inst / 2) + ' each' : '')}${amtRow('aadm', 'dadm', 'Admin', '')}${amtRow('abb', 'dbb', 'Brand Butlers', '')}
     <div class="row"><span class="grow"><b>Ticket price</b><span class="sub">The three amounts added up</span></span><b class="num" id="dtotal" style="font-size:17px">${cur} ${fmt(sp.price)}</b></div></div>${errL('price')}
-    <p class="foot">Type each amount. The installer only sees their own amount, never the others or the total.</p>`;
+    <p class="foot">Type each amount; 0 is fine and an empty field counts as 0. The installer only sees their own amount, never the others or the total.</p>`;
   cut('price');
   h += `<h2 class="sec">Note for installer</h2><textarea id="dnote" class="box" data-bind="note" placeholder="Anything they should know before arriving">${esc(d.note)}</textarea>`;
   cut('note');
@@ -1248,7 +1248,7 @@ function ntSummary(d, editing) {
   const miss = [];
   if (!t) miss.push('Apple ticket number'); else if (S.jobs.some((j) => j.ticket === t && j.id !== d.editId)) miss.push('A new ticket number (this one already exists)');
   if (!st) miss.push('Store'); if (!d.lead) miss.push('Installer');
-  if (sp.bad) miss.push('Amounts of 0 or more'); else if (!(sp.inst > 0)) miss.push('Installer amount');
+  if (sp.bad) miss.push('Amounts of 0 or more');
   const names = d.lead ? (per === 2 ? first(nameOf(d.lead)) + ' and ' + first(nameOf(d.second)) : first(nameOf(d.lead))) : '';
   const vs = d.videos.map(videoBy).filter(Boolean);
   const amt = [['Installer' + (per === 2 ? 's' : ''), sp.inst, 'var(--green)'], ['Admin', sp.adm, 'var(--orange)'], ['Brand Butlers', sp.bb, 'var(--blue)']];
@@ -1260,7 +1260,7 @@ function ntSummary(d, editing) {
       <div class="row">${flag(d.c, 24, 17)}<span class="grow"><span>Support: ${esc(C[d.c].support[0])}</span></span></div>
     </div>
     <div class="chips" style="margin-top:12px"><span class="chip sm">${d.tools.length} ${d.tools.length === 1 ? 'tool' : 'tools'}</span><span class="chip sm">${d.parts.length} ${d.parts.length === 1 ? 'part' : 'parts'}</span>${vs.length ? `<span class="chip sm" style="color:var(--blue-fg);background:var(--blue-bg)">▶ ${countLabel(vs)}</span>` : ''}</div>
-    <div style="display:flex;justify-content:space-between;margin-top:16px;font-size:14px"><span class="muted">Price split</span><b class="num">${sp.price > 0 ? cur + ' ' + fmt(sp.price) : '–'}</b></div>
+    <div style="display:flex;justify-content:space-between;margin-top:16px;font-size:14px"><span class="muted">Price split</span><b class="num">${cur + ' ' + fmt(sp.price)}</b></div>
     ${sp.price > 0 && !sp.bad ? `<div class="splitbar" role="img" aria-label="Price split">${amt.map(([l, v, col]) => `<span style="flex:${Math.max(v, 0)};background:${col}" title="${l}"></span>`).join('')}</div>
       <div class="splitlab">${amt.map(([l, v, col]) => `<span><i style="background:${col}"></i>${l} <b class="num">${fmt(v)}</b></span>`).join('')}</div>` : ''}
     ${miss.length ? `<div class="banner" style="margin-top:14px;background:var(--orange-bg);color:var(--fg2);flex-direction:column;align-items:flex-start;gap:2px"><b style="font-size:14px">Still needed</b><span style="font-size:14px">${miss.map(esc).join(' · ')}</span></div>`
@@ -2813,7 +2813,6 @@ const A = {
     if (!d.lead || !userBy(d.lead)) E.installer = 'Choose an installer.';
     const sp = splitNums(d);
     if (sp.bad) E.price = 'Amounts can\u2019t be negative.';
-    else if (!(sp.inst > 0)) E.price = 'Enter the installer\u2019s amount.';
     d.err = E;
     if (Object.keys(E).length) { render(); toast('Fill in the marked fields'); const el = document.querySelector('.bad-field'); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
     if (btn) { btn.disabled = true; btn.textContent = d.editId ? 'Saving…' : 'Creating…'; }
