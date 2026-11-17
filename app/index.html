@@ -589,6 +589,12 @@ function picToJpeg(file, max, q) {
 const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0, extras: [], apple: {}, disposal: [], instSigned: false });
 const toReport = (row) => { const ts = row.submitted_at ? Date.parse(row.submitted_at) : null; return Object.assign(emptyReport(), row.data || {}, { draft: row.draft, submittedTs: ts, submittedAt: ts ? hhmm(ts) : '' }); };
 
+/* privacy by design: files left behind by deleted tickets are removed (admins only, once per session) */
+let ORPHANS_DONE = false;
+function cleanOrphans() {
+  if (ORPHANS_DONE) return; ORPHANS_DONE = true;
+  try { Promise.resolve(sb.rpc('orphan_photo_files')).then((r) => { const names = (r.data || []).map((x) => (typeof x === 'string' ? x : x.orphan_photo_files)).filter(Boolean); if (names.length) sb.storage.from('photos').remove(names).then(() => {}, () => {}); }, () => {}); } catch (e) { /* try again next time */ }
+}
 async function loadAll() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { S.me = null; return; }
@@ -606,6 +612,7 @@ async function loadAll() {
     S.videos = ok(vd).map(toVideo).sort((a, b) => a.title.localeCompare(b.title));
     S.tools = ok(tl).map((t) => ({ id: t.id, name: t.name })).sort((a, b) => a.name.localeCompare(b.name));
     S.users = ok(ps).map(toUser); S.stores = ok(st).map((s) => ({ id: s.id, c: s.country, name: s.name, addr: s.address, appleId: s.apple_id || '', city: s.city || '' })); jobs = ok(js); reports = ok(rs);
+    cleanOrphans();
   } else {
     const [js, rs, vd] = await Promise.all([sb.rpc('my_jobs'), sb.from('reports').select('*'), sb.rpc('my_videos')]);
     S.users = [me]; S.stores = []; jobs = ok(js); reports = ok(rs); S.videos = (vd.data || []).map(toVideo);
