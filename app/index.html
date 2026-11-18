@@ -390,10 +390,70 @@ body.desk .sig2 { grid-template-columns: 1fr 1fr; }
 .dlbtn:disabled { opacity: .6; }
 .mine { display: inline-flex; gap: 2px; }
 .mine.big { gap: 3px; }
+
+.mseg button { font-size: 13px; }
+.ssub { display: flex; flex-direction: column; margin: 2px 0 6px 44px; gap: 1px; }
+.ssub button { border: none; background: none; text-align: left; padding: 6px 10px; border-radius: 8px; font-size: 13.5px; color: var(--fg2); }
+.ssub button:hover { background: var(--fill); }
+.ssub button.on { color: var(--blue-fg); font-weight: 600; background: var(--blue-bg); }
+.tag { display: inline-flex; align-items: center; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--fill); color: var(--fg2); }
+.tag.prog { background: var(--blue-bg); color: var(--blue-fg); }
+.tag.warn { background: var(--orange-bg); color: var(--orange); }
+.storecard { display: flex; align-items: center; gap: 14px; background: var(--card); border-radius: 14px; padding: 14px 16px; border: none; width: 100%; text-align: left; color: var(--fg); }
+.storecard b { font-size: 17px; display: block; }
+.storecard .sub { display: block; font-size: 14px; color: var(--muted); margin-top: 2px; }
+.storecard .tags { margin-top: 8px; }
+.storecard.empty-st b { color: var(--blue); }
+.stbtns { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.stbtns .btn { width: auto; padding: 0 16px; height: 34px; }
+.ppsearch { position: sticky; top: -14px; z-index: 3; background: var(--sheet, var(--bg)); padding: 6px 0; display: flex; align-items: center; gap: 10px; }
+.ppsearch .box { flex: 1; height: 44px; }
+.prow2.on { background: var(--blue-bg) !important; }
+.prow2 .vbtn { gap: 12px; min-height: 40px; }
+body.desk .sheet:has(#pplist), body.desk .sheet:has(#splist) { width: 680px; }
+.ptgrid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr); gap: 28px; align-items: start; }
+.sched { background: var(--card); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; }
+.schead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.schbig { font-size: 19px; display: block; }
+.schead .sub { font-size: 13px; color: var(--muted); }
+.calwrap { position: relative; flex-shrink: 0; }
+.calwrap .btn { width: auto; padding: 0 14px; height: 36px; gap: 6px; }
+.calin { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.strip { display: flex; align-items: stretch; gap: 6px; margin-top: 12px; }
+.wknav { flex-shrink: 0; width: 30px; border: none; border-radius: 10px; background: var(--fill); color: var(--fg2); font-size: 20px; }
+.days { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(52px, 1fr); gap: 6px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory; }
+.days::-webkit-scrollbar { display: none; }
+.dbtn { scroll-snap-align: start; border: 1.5px solid transparent; background: var(--bg); border-radius: 12px; padding: 7px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 1px; color: var(--fg); }
+.dbtn .dw { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+.dbtn .dn { font-size: 19px; font-weight: 700; line-height: 22px; }
+.dbtn .dm { font-size: 10.5px; color: var(--muted); }
+.dbtn .dots { display: flex; gap: 2px; height: 5px; margin-top: 2px; }
+.dbtn .dots i { width: 5px; height: 5px; border-radius: 3px; background: var(--orange); }
+.dbtn.today { border-color: var(--sep); }
+.dbtn.past { opacity: .45; }
+.dbtn.on { background: var(--blue); color: #fff; border-color: var(--blue); }
+.dbtn.on .dw, .dbtn.on .dm { color: rgba(255,255,255,.85); }
+.dbtn.on .dots i { background: #fff; }
+.tgrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.tbtn { position: relative; border: none; border-radius: 10px; background: var(--bg); padding: 10px 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--fg); }
+.tbtn i { position: absolute; top: 5px; right: 6px; width: 6px; height: 6px; border-radius: 3px; background: var(--orange); }
+.tbtn.busy { color: var(--fg2); }
+.tbtn.on { background: var(--blue); color: #fff; }
+.tbtn.on i { background: #fff; }
+.exact { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+.booked { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--sep); }
+.bk { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; background: var(--bg); margin-top: 6px; }
+.bk b { font-size: 15px; width: 44px; }
+.bk .grow { display: flex; flex-direction: column; min-width: 0; }
+.bk .sub { font-size: 12px; color: var(--muted); }
+.bk.clash { outline: 1.5px solid var(--orange); }
+.free { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--green-fg); }
+@media (max-width: 420px) { .tgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+body.desk .ntform .sched { margin-top: 0; }
 /* ---------- desktop (admins on wide screens) ---------- */
 body.desk { padding-left: 0; padding-right: 0; }
-body.desk .app { max-width: 900px; margin: 0 auto 0 248px; padding: 28px 40px 60px; }
-body.desk .app.dwide { max-width: 1480px; }
+body.desk .app { max-width: none; margin: 0 0 0 248px; padding: 28px 44px 60px; }
+body.desk .app.dwide { max-width: none; }
 body.desk .head .avatar { display: none; }
 body.desk .navbar { margin: 0 -40px; padding: 14px 40px; top: 0; }
 body.desk .tabbar { display: none; }
@@ -568,8 +628,10 @@ const toJob = (r) => ({
   date: r.date, time: r.time, status: r.status, fixture: r.fixture || '', tools: r.tools || [], parts: r.parts || [], note: r.note || '', last: r.last_note || '',
   price: r.price != null ? Number(r.price) : null, share: r.share != null ? Number(r.share) : null, amt: r.inst_amt != null ? { inst: Number(r.inst_amt), adm: Number(r.adm_amt) || 0, bb: Number(r.bb_amt) || 0 } : null, split: [Number(r.inst_pct != null ? r.inst_pct : 40), Number(r.adm_pct != null ? r.adm_pct : 10)],
   request: r.request || null, changes: r.changes || '', declineReason: r.decline_reason || '',
-  videos: r.video_ids || [], reopenedAt: r.reopened_at ? Date.parse(r.reopened_at) : null, sentBack: Number(r.sent_back) || 0, startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
+  videos: r.video_ids || [], partItems: Array.isArray(r.part_items) && r.part_items.length ? r.part_items.map((x) => ({ name: String(x.name), qty: Math.max(1, Number(x.qty) || 1) })) : (r.parts || []).map((n) => ({ name: n, qty: 1 })), reopenedAt: r.reopened_at ? Date.parse(r.reopened_at) : null, sentBack: Number(r.sent_back) || 0, startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
 });
+const toPart = (x) => ({ id: x.id, name: x.name, cat: x.category || '' });
+const partSort = (a, b) => (a.cat || '\uffff').localeCompare(b.cat || '\uffff') || a.name.localeCompare(b.name);
 const toVideo = (v) => ({ id: v.id, kind: v.kind || 'video', title: v.title, notes: v.notes || '', path: v.path, poster: v.poster || '', duration: v.duration != null ? Number(v.duration) : null, edit: v.edit || null, size: v.size != null ? Number(v.size) : null });
 const videoBy = (id) => S.videos.find((v) => v.id === id);
 const fmtLen = (sec) => { if (!sec && sec !== 0) return ''; const m = Math.floor(sec / 60), x = Math.round(sec % 60); return m + ':' + String(x).padStart(2, '0'); };
@@ -607,15 +669,15 @@ async function loadAll() {
   const me = toUser(meRow); S.me = me.id;
   let jobs, reports;
   if (me.admin) {
-    const [ps, st, js, rs, tp, tl, vd] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*'), sb.from('videos').select('*')]);
+    const [ps, st, js, rs, tp, tl, vd, pc] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*'), sb.from('videos').select('*'), sb.from('parts_catalog').select('*')]);
     S.templates = ok(tp).map((t) => ({ id: t.id, name: t.name, tools: t.tools || [], parts: t.parts || [], videos: t.video_ids || [] })).sort((a, b) => a.name.localeCompare(b.name));
     S.videos = ok(vd).map(toVideo).sort((a, b) => a.title.localeCompare(b.title));
     S.tools = ok(tl).map((t) => ({ id: t.id, name: t.name })).sort((a, b) => a.name.localeCompare(b.name));
-    S.users = ok(ps).map(toUser); S.stores = ok(st).map((s) => ({ id: s.id, c: s.country, name: s.name, addr: s.address, appleId: s.apple_id || '', city: s.city || '' })); jobs = ok(js); reports = ok(rs);
+    S.users = ok(ps).map(toUser); S.stores = ok(st).map((s) => ({ id: s.id, c: s.country, name: s.name, addr: s.address, appleId: s.apple_id || '', city: s.city || '', program: s.program || '' })); S.parts = (pc.data || []).map(toPart); jobs = ok(js); reports = ok(rs);
     cleanOrphans();
   } else {
-    const [js, rs, vd] = await Promise.all([sb.rpc('my_jobs'), sb.from('reports').select('*'), sb.rpc('my_videos')]);
-    S.users = [me]; S.stores = []; jobs = ok(js); reports = ok(rs); S.videos = (vd.data || []).map(toVideo);
+    const [js, rs, vd, pc] = await Promise.all([sb.rpc('my_jobs'), sb.from('reports').select('*'), sb.rpc('my_videos'), sb.from('parts_catalog').select('*')]);
+    S.users = [me]; S.stores = []; jobs = ok(js); reports = ok(rs); S.videos = (vd.data || []).map(toVideo); S.parts = (pc.data || []).map(toPart);
     jobs.forEach((j) => { if (j.installer) NAMES[j.installer] = j.installer_name; if (j.second) NAMES[j.second] = j.second_name; });
   }
   const keep = S.view && S.view.kind === 'report' ? job(S.view.id) : null;
@@ -792,7 +854,7 @@ function render(keepScroll = true) {
   app.innerHTML = html;
   const desk = isDesk();
   document.body.classList.toggle('desk', desk);
-  app.classList.toggle('dwide', desk && ((!S.view && (['overview', 'approvals', 'new', 'insights'].includes(S.tab) || (S.tab === 'team' && S.manage === 'videos'))) || (S.view && (S.view.kind === 'veditor' || S.view.kind === 'peditor'))));
+  app.classList.toggle('dwide', desk && ((!S.view && (['overview', 'approvals', 'new', 'insights', 'team'].includes(S.tab))) || (S.view && (S.view.kind === 'veditor' || S.view.kind === 'peditor'))));
   app.classList.toggle('noTabs', !S.me || S.choosing || S.loading || !!S.view);
   renderTabs();
   renderSheet();
@@ -947,7 +1009,7 @@ function adminOverview() {
 function newDraft() {
   const me = meU(); const c = me.c;
   const st = storesFor(c); const ins = installers(c);
-  return { ticket: '', template: null, tplName: '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: [], videos: [], c, store: st.length ? st[0].id : 'new', storeName: '', storeAddr: '', lead: ins.length === 1 ? ins[0].id : null, second: null, secondOn: false, date: new Date().getHours() >= 17 ? rel(1) : rel(0), time: new Date().getHours() >= 17 ? '09:00' : String(new Date().getHours() + 1).padStart(2, '0') + ':00', tools: [], price: '', ainst: '', aadm: '', abb: '', note: '', err: {} };
+  return { ticket: '', template: null, tplName: '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: [], videos: [], c, store: null, qty: {}, storeName: '', storeAddr: '', lead: ins.length === 1 ? ins[0].id : null, second: null, secondOn: false, date: new Date().getHours() >= 17 ? rel(1) : rel(0), time: new Date().getHours() >= 17 ? '09:00' : String(new Date().getHours() + 1).padStart(2, '0') + ':00', tools: [], price: '', ainst: '', aadm: '', abb: '', note: '', err: {} };
 }
 const num = (v) => Number(String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.')) || 0;
 /* the amounts typed on the ticket form; the ticket price is their sum */
@@ -957,7 +1019,7 @@ function splitNums(d) {
 }
 function adminNew() {
   const d = S.draft || (S.draft = newDraft());
-  if (d.metaFor !== d.store) { const s0 = S.stores.find((x) => x.id === d.store); d.storeApple = s0 ? s0.appleId : ''; d.storeCity = s0 ? s0.city || cityFrom(s0.addr) : ''; d.metaFor = d.store; }
+  if (!d.qty) d.qty = {};
   const E = d.err || {};
   const cur = C[d.c].cur;
   const stores = storesFor(d.c);
@@ -985,14 +1047,12 @@ function adminNew() {
   cut('tpl');
   h += `<h2 class="sec">Country</h2><div class="seg tall" role="group" aria-label="Country">${[0, 1, 2, 3].map((i) => `<button type="button" class="${d.c === i ? 'on' : ''}" aria-pressed="${d.c === i}" data-a="draftCountry" data-v="${i}">${flag(i)}${C[i].name}</button>`).join('')}</div>`;
   cut('country');
-  h += `<h2 class="sec">Store</h2><div class="group${E.store ? ' bad-field' : ''}">${stores.map((s) => `<button type="button" class="row" aria-pressed="${d.store === s.id}" data-a="draftStore" data-v="${s.id}"><span class="grow"><span>${esc(s.name)}</span><span class="sub">${esc(s.addr)}</span></span>${d.store === s.id ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}
-    ${d.store === 'new' || !stores.length ? `<label class="row" for="sname"><span class="lbl">Store</span><input id="sname" class="inl" data-bind="storeName" value="${esc(d.storeName)}" placeholder="e.g. Elkjøp Storo" autocomplete="off"></label><label class="row" for="saddr"><span class="lbl">Address</span><input id="saddr" class="inl" data-bind="storeAddr" value="${esc(d.storeAddr)}" placeholder="Street, postcode, city" autocomplete="off"></label>` : `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftStore" data-v="new">+ New store</button>`}</div>${errL('store')}
-    <div class="group" style="margin-top:8px"><label class="row" for="sapple"><span class="lbl">Apple ID</span><input id="sapple" class="inl num" data-bind="storeApple" value="${esc(d.storeApple || '')}" placeholder="Apple's store number, e.g. 252094" autocomplete="off" inputmode="numeric"></label><label class="row" for="scity"><span class="lbl">City</span><input id="scity" class="inl" data-bind="storeCity" value="${esc(d.storeCity || '')}" placeholder="e.g. Oslo" autocomplete="off" autocapitalize="words"></label></div>
-    <p class="foot">Apple ID and city go on the Apple statement of completion and are saved with the store. ${stores.length ? 'Stores you add are saved for next time.' : 'Stores you add are saved for next time. The store list from Excel can be imported later.'}</p>`;
+  const stSel = S.stores.find((x) => x.id === d.store && x.c === d.c);
+  h += `<h2 class="sec">Store</h2>${stSel ? `<div class="storecard${E.store ? ' bad-field' : ''}"><div class="grow" style="min-width:0"><b>${esc(stSel.name)}</b><span class="sub">${esc(storeLine(stSel)) || 'No address yet'}</span><span class="tags">${storeTags(stSel)}</span></div><div class="stbtns"><button type="button" class="btn small sec" data-a="pickStoreOpen">Change</button><button type="button" class="link" style="font-size:14px;padding:2px" data-a="storeEdit" data-v="${stSel.id}" data-back="ticket">Edit details</button></div></div>`
+    : `<button type="button" class="storecard empty-st${E.store ? ' bad-field' : ''}" data-a="pickStoreOpen"><span class="grow"><b>${d.storeName ? esc(d.storeName) : 'Choose a store'}</b><span class="sub">${d.storeName ? 'Not in the store list – choose it from the list' : storesFor(d.c).length + ' stores in ' + C[d.c].name + ' · search by name, city or Apple ID'}</span></span>${I.chev}</button>`}${errL('store')}`;
   h += `<div class="row" style="margin-top:10px;border-radius:12px;border:none"><span class="ico" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">Support: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · the installer can call or text</span></span></div>`;
   cut('store');
-  h += `<h2 class="sec">When</h2><div class="group"><label class="row" for="ddate"><span class="lbl">Date</span><input id="ddate" class="inl" type="date" data-bind="date" value="${esc(d.date)}" style="text-align:right"></label><div class="row"><span class="lbl">Time</span><span class="grow"></span><span class="t24" role="group" aria-label="Time, 24-hour clock"><select id="dhour" data-tpart="h" aria-label="Hour">${Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(0, 2) === x ? 'selected' : ''}>${x}</option>`).join('')}</select><b>:</b><select id="dmin" data-tpart="m" aria-label="Minutes">${Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(3, 5) === x ? 'selected' : ''}>${x}</option>`).join('')}</select></span></div></div>
-    ${dayPlan(d)}`;
+  h += scheduleBlock(d, editing);
   cut('when');
   h += `<h2 class="sec">Installer</h2><div class="group${E.installer ? ' bad-field' : ''}">`;
   if (lockInstaller) h += `<div class="row"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(nameOf(d.lead))}</span><span class="grow"><span>${esc(nameOf(d.lead))}${d.second ? ' + ' + esc(nameOf(d.second)) : ''}</span><span class="sub">Can\u2019t be changed after the report is started</span></span></div>`;
@@ -1010,9 +1070,9 @@ function adminNew() {
     <div class="row"><input id="newtool" class="inl" data-bind="newTool" data-enter="addTool" value="${esc(d.newTool)}" placeholder="${allTools.length ? 'Add a tool' : 'Add the first tool, e.g. Cordless drill'}" aria-label="Add a tool" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addTool">Add</button></div></div>
     <p class="foot">Tools you add are saved to the list for all admins.</p>`;
   cut('tools');
-  h += `<h2 class="sec">Parts on site · ${d.parts.length}</h2><div class="group">${d.parts.map((p, i) => `<div class="row"><span class="grow">${esc(p)}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removePart" data-v="${i}" aria-label="Remove ${esc(p)}">Remove</button></div>`).join('')}
-    <div class="row"><input id="newpart" class="inl" data-bind="newPart" data-enter="addPart" value="${esc(d.newPart)}" placeholder="Add a part the installer will replace" aria-label="Add a part" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addPart">Add</button></div></div>
-    <p class="foot">The installer ticks off what they replaced and can add parts on site.</p>`;
+  h += `<h2 class="sec">Parts to replace · ${d.parts.length}</h2><div class="group">${d.parts.map((p2) => `<div class="row"><span class="grow">${esc(p2)}</span><div class="step"><button type="button" aria-label="Fewer" data-a="dpQty" data-v="${esc(p2)}" data-d="-1">−</button><span class="num">${d.qty[p2] || 1}</span><button type="button" aria-label="More" data-a="dpQty" data-v="${esc(p2)}" data-d="1">+</button></div></div>`).join('')}
+    <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="partsOpen" data-v="ticket">+ ${d.parts.length ? 'Add more parts' : 'Add parts from the list'}<span class="muted" style="font-size:13px;margin-left:6px">${S.parts.length ? S.parts.length + ' in the list' : ''}</span></button></div>
+    <p class="foot">Search the parts list and set how many. The installer sees them on the job and ticks off what they replaced.</p>`;
   cut('parts');
   h += `<h2 class="sec">Video instructions · ${d.videos.length}</h2><div class="group">${d.videos.map((id) => { const v = videoBy(id); return v ? `<div class="row"><button type="button" class="vbtn" data-a="playVideo" data-v="${v.id}">${videoRow(v)}</button><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removeDraftVideo" data-v="${v.id}">Remove</button></div>` : ''; }).join('')}
     <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="pickVideos">+ Add videos or pictures from the library</button></div>
@@ -1063,10 +1123,12 @@ function videoRow(v, extra) {
   const uses = S.jobs.filter((j) => j.videos.includes(v.id)).length, tu = S.templates.filter((t) => t.videos.includes(v.id)).length;
   return `<span class="vthumb">${posterImg(v)}${isPic(v) ? '<span class="vlen">Picture</span>' : effDur(v) ? `<span class="vlen">${fmtLen(effDur(v))}</span>` : ''}</span><span class="grow"><span style="font-weight:500">${esc(v.title)}${isEdited(v) ? ' <span class="pill p-blue" style="font-size:10px;padding:1px 6px">Edited</span>' : ''}</span><span class="sub">${[uses ? uses + (uses === 1 ? ' ticket' : ' tickets') : '', tu ? tu + (tu === 1 ? ' template' : ' templates') : '', !uses && !tu ? 'Not used yet' : ''].filter(Boolean).join(' · ')}${extra || ''}</span></span>`;
 }
+const MANAGE = [['people', 'People'], ['stores', 'Stores'], ['parts', 'Parts & tools'], ['videos', 'Videos & pictures']];
+const manageSeg = (cur, style) => `<div class="seg mseg" style="${style || 'margin-top:14px'}" role="group" aria-label="Section">${MANAGE.map(([k, l]) => `<button type="button" class="${cur === k ? 'on' : ''}" aria-pressed="${cur === k}" data-a="setManage" data-v="${k}">${l}</button>`).join('')}</div>`;
 function adminVideos() {
   if (isDesk()) return videosDesk();
   let h = header('Manage', 'Instructions for installers');
-  h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" data-a="setManage" data-v="people">People</button><button type="button" class="on" data-a="setManage" data-v="videos">Videos & pictures</button></div>`;
+  h += manageSeg('videos');
   h += `<label class="btn" style="margin-top:16px;position:relative">+ Upload videos or pictures<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label>`;
   h += `<p class="foot">Pick one or several at once. Short videos (up to 50 MB, about a minute) and pictures that you can add to templates and tickets. Installers see them under Video instructions.</p>`;
   const F = S.libF || 'all'; const list = S.videos.filter((v) => F === 'all' || (F === 'image' ? isPic(v) : !isPic(v)));
@@ -1075,9 +1137,16 @@ function adminVideos() {
 }
 function adminTeam() {
   if (S.manage === 'videos') return adminVideos();
+  if (S.manage === 'stores') return adminStores();
+  if (S.manage === 'parts') return adminParts();
   const list = S.users.filter((u) => u.active).sort((a, b) => (a.id === S.me ? -1 : b.id === S.me ? 1 : (a.name || a.email).localeCompare(b.name || b.email)));
   let h = header('Manage', 'Accounts and access');
-  h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Section"><button type="button" class="on" data-a="setManage" data-v="people">People</button><button type="button" data-a="setManage" data-v="videos">Videos & pictures</button></div>`;
+  h += manageSeg('people');
+  if (isDesk()) {
+    h = `<div class="dhead"><div><div class="date">Manage</div><h1>People</h1></div><div class="dtools">${manageSeg('people', 'width:520px;margin:0')}<button type="button" class="btn" style="width:auto;padding:0 20px" data-a="addPerson">+ Add person</button></div></div>`;
+    h += `<table class="tbl" style="margin-top:20px"><thead><tr><th style="width:26%">Name</th><th style="width:28%">Email</th><th>Countries</th><th>Access</th><th>Status</th></tr></thead><tbody>${list.map((u) => `<tr class="r" data-a="openUser" data-v="${u.id}" tabindex="0"><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar" style="margin:0;width:32px;height:32px;font-size:12px">${initials(u.name || u.email)}</span><b class="ell" style="font-weight:600">${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted" style="font-weight:400">(you)</span>' : ''}</b></div></td><td class="ell">${esc(u.email)}</td><td>${(u.cs || [u.c]).map((c) => flag(c, 18, 13)).join(' ')}</td><td>${u.admin ? '<span class="pill p-blue">Admin</span> ' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}</td><td>${statusPill(u) || '<span class="pill p-green">Active</span>'}</td></tr>`).join('')}</tbody></table><p class="foot">${list.length} accounts. New people create their own password the first time they sign in. Click a row to edit, reset a password or remove someone.</p>`;
+    return h;
+  }
   h += `<div style="margin-top:16px"><button type="button" class="btn" data-a="addPerson">+ Add person</button></div>`;
   h += `<h2 class="sec">Accounts · ${list.length}</h2><div class="group">${list.map((u) => `<button type="button" class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px" data-a="openUser" data-v="${u.id}"><span class="avatar" style="margin:2px 0 0;width:38px;height:38px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub" style="word-break:break-all">${esc(u.email)}</span><span class="tags">${(u.cs || [u.c]).map((c) => flag(c, 16, 11)).join('')}${u.admin ? '<span class="pill p-blue">Admin</span>' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}${statusPill(u)}</span></span><span style="align-self:center">${I.chev}</span></button>`).join('')}</div>`;
   h += `<p class="foot">New people create their own password the first time they sign in. If someone forgets theirs, open their account and tap Reset password.</p>`;
@@ -1131,7 +1200,7 @@ function renderSide() {
   const items = [['overview', 'Overview'], ['new', 'New ticket'], ['approvals', 'Approvals'], ['team', 'Manage'], ['insights', 'Insights']];
   const el = document.createElement('aside'); el.className = 'side'; el.setAttribute('aria-label', 'Main menu');
   el.innerHTML = `<div class="sbrand">${LOGO(36)}<div><b>Brand Butlers</b><span>${PREVIEW ? 'Test version' : 'Fixture reporting'}</span></div></div>
-    <nav class="snav">${items.map(([k, l]) => `<button type="button" class="nav ${S.tab === k && (!S.view || S.view.kind === 'edit') ? 'on' : ''}" data-a="tab" data-v="${k}" ${S.tab === k ? 'aria-current="page"' : ''}>${TABICON[k]}<span>${l}</span>${k === 'approvals' && waiting ? `<span class="sbadge">${waiting}</span>` : ''}</button>`).join('')}</nav>
+    <nav class="snav">${items.map(([k, l]) => `<button type="button" class="nav ${S.tab === k && (!S.view || S.view.kind === 'edit') ? 'on' : ''}" data-a="tab" data-v="${k}" ${S.tab === k ? 'aria-current="page"' : ''}>${TABICON[k]}<span>${l}</span>${k === 'approvals' && waiting ? `<span class="sbadge">${waiting}</span>` : ''}</button>${k === 'team' ? `<div class="ssub">${MANAGE.map(([m, ml]) => `<button type="button" class="${S.tab === 'team' && (S.manage || 'people') === m ? 'on' : ''}" data-a="manageGo" data-v="${m}">${ml}</button>`).join('')}</div>` : ''}`).join('')}</nav>
     <div class="sfoot">${me.installer ? `<button type="button" class="nav" data-a="switchRole" data-v="installer">${TABICON.jobs}<span>Installer view</span></button>` : ''}
       <button type="button" class="sacct" data-a="sheet" data-v="account"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(me.name || me.email)}</span><span class="grow"><b>${esc(me.name || me.email)}</b><span>${esc(csLabel(me.cs || [me.c]))} · Admin</span></span></button></div>`;
   return el;
@@ -1192,6 +1261,37 @@ function approvalsDesk() {
 DESK_MQ.addEventListener('change', () => { if (S.me) render(); });
 
 
+
+/* ---------- scheduling: pick a day from a two-week strip, a time from a grid, and see what is already booked ---------- */
+const isoOf = (dt) => dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+const minsOf = (t) => { const [h, m] = String(t || '0:0').split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+function scheduleBlock(d, editing) {
+  const sel = parseD(d.date || rel(0)); const t0 = today0();
+  if (!d.schStart) { const mon = new Date(sel.getFullYear(), sel.getMonth(), sel.getDate() - ((sel.getDay() + 6) % 7)); d.schStart = isoOf(mon < t0 ? new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() - ((t0.getDay() + 6) % 7)) : mon); }
+  const start = parseD(d.schStart);
+  const people = [d.lead, d.secondOn ? d.second : null].filter(Boolean);
+  const visits = S.jobs.filter((j) => j.id !== d.editId && j.status !== 'declined' && (people.length ? people.includes(j.installer) || people.includes(j.second) : j.c === d.c));
+  const onDay = (iso) => visits.filter((j) => j.date === iso);
+  const who = people.length ? people.map((x) => first(nameOf(x))).join(' and ') : C[d.c].name;
+  const days = Array.from({ length: 14 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
+  const dayBtn = (dt) => { const iso = isoOf(dt); const n = onDay(iso).length; const past = dt < t0; return `<button type="button" class="dbtn${iso === d.date ? ' on' : ''}${iso === isoOf(t0) ? ' today' : ''}${past ? ' past' : ''}" data-a="schDay" data-v="${iso}" aria-pressed="${iso === d.date}" aria-label="${WD[dt.getDay()]} ${dt.getDate()} ${MO[dt.getMonth()]}${n ? ', ' + n + ' booked' : ''}"><span class="dw">${iso === isoOf(t0) ? 'Today' : WD[dt.getDay()]}</span><span class="dn num">${dt.getDate()}</span><span class="dm">${MO[dt.getMonth()]}</span><span class="dots">${n ? '<i></i>'.repeat(Math.min(3, n)) : ''}</span></button>`; };
+  const booked = onDay(d.date).sort((a, b) => minsOf(a.time) - minsOf(b.time));
+  const cur = minsOf(d.time); const DUR = 90;
+  const busyAt = (m) => booked.filter((j) => Math.abs(minsOf(j.time) - m) < DUR);
+  const slots = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+  const clash = busyAt(cur);
+  const daysTo = Math.round((sel - t0) / 86400000);
+  let h = `<h2 class="sec">When</h2><div class="sched">
+    <div class="schead"><div style="min-width:0"><b class="schbig">${WD[sel.getDay()]} ${sel.getDate()} ${MO[sel.getMonth()]} · <span class="num">${esc(d.time || '')}</span></b><span class="sub">${daysTo === 0 ? 'Today' : daysTo === 1 ? 'Tomorrow' : daysTo > 1 ? 'In ' + daysTo + ' days' : Math.abs(daysTo) + ' days ago'}${editing ? ' · booked before: ' + esc(whenLabel(editing)) : ''}</span></div>
+      <span class="calwrap"><button type="button" class="btn small sec" data-a="openCal">${small(TABICON.jobs, 'var(--blue)')} Calendar</button><input id="ddate" type="date" class="calin" data-bind="date" value="${esc(d.date)}" tabindex="-1" aria-label="Pick a date"></span></div>
+    <div class="strip"><button type="button" class="wknav" data-a="schWeek" data-v="-1" aria-label="Earlier">‹</button><div class="days">${days.map(dayBtn).join('')}</div><button type="button" class="wknav" data-a="schWeek" data-v="1" aria-label="Later">›</button></div>
+    <span class="cap" style="display:block;margin:14px 2px 6px">Time</span>
+    <div class="tgrid">${slots.map((t) => { const b = busyAt(minsOf(t)); return `<button type="button" class="tbtn${d.time === t ? ' on' : ''}${b.length ? ' busy' : ''}" data-a="schTime" data-v="${t}" title="${b.length ? esc(b.map((j) => j.time + ' ' + j.store).join(', ')) : 'Free'}">${t}${b.length ? '<i></i>' : ''}</button>`; }).join('')}</div>
+    <div class="exact"><span class="muted" style="font-size:14px">Exact time (24 h)</span><span class="t24" role="group" aria-label="Time, 24-hour clock"><select id="dhour" data-tpart="h" aria-label="Hour">${Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(0, 2) === x ? 'selected' : ''}>${x}</option>`).join('')}</select><b>:</b><select id="dmin" data-tpart="m" aria-label="Minutes">${Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(3, 5) === x ? 'selected' : ''}>${x}</option>`).join('')}</select></span></div>
+    <div class="booked">${booked.length ? `<span class="cap" style="display:block;margin:0 2px 6px">Already booked that day · ${esc(who)}</span>${booked.map((j) => `<div class="bk${clash.includes(j) ? ' clash' : ''}"><b class="num">${esc(j.time)}</b><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(nameOf(j.installer))}</span></span>${pillFor(j)}</div>`).join('')}${clash.length ? `<p class="foot" style="color:var(--orange);margin:6px 2px 0">${esc(d.time)} is close to another visit (within 1½ hours).</p>` : ''}` : `<span class="free">${I.tick('var(--green)', 14)} Nothing else booked that day for ${esc(who)}</span>`}</div>
+  </div>`;
+  return h;
+}
 /* 24-hour day planner on the ticket form: tap the day to pick a time, see other jobs that day */
 function dayPlan(d) {
   const people = [d.lead, d.secondOn ? d.second : null].filter(Boolean);
@@ -1208,6 +1308,7 @@ function dayPlan(d) {
     <div class="dplab num">${['00', '06', '12', '18', '24'].map((x) => `<span>${x}</span>`).join('')}</div>
     <p class="foot" style="margin-top:4px">${others.length ? `Grey: ${others.length} other ${others.length === 1 ? 'job' : 'jobs'} that day for ${esc(who)} (${others.map((j) => esc(j.time)).sort().join(', ')}).` : `No other jobs that day for ${esc(who)}.`}${clash ? ' <b style="color:var(--orange)">Close to another job.</b>' : ''} Tap the bar to pick a time, or set it exactly above. 24-hour clock, 00:00–23:59.</p>`;
 }
+document.addEventListener('click', (e) => { const ci = e.target.closest && e.target.closest('.calin'); if (ci) { try { if (ci.showPicker) ci.showPicker(); } catch (x) { /* the browser opens its own picker */ } } });
 document.addEventListener('click', (e) => {
   const dp = e.target.closest && e.target.closest('[data-dayplan]'); if (!dp || !S.draft) return;
   const b = dp.getBoundingClientRect(); const f = Math.max(0, Math.min(1, (e.clientX - b.left) / b.width));
@@ -1239,11 +1340,108 @@ function approvedList(desk) {
     <p class="foot">Export: the statement of completion and the photo report as separate PDFs, or the pictures and videos one by one.</p>`;
   return h;
 }
+
+/* ---------- Manage → Stores ---------- */
+const CODE = { NO: 0, NOR: 0, NORWAY: 0, NORGE: 0, SE: 1, SWE: 1, SWEDEN: 1, SVERIGE: 1, DK: 2, DEN: 2, DENMARK: 2, DANMARK: 2, FI: 3, FIN: 3, FINLAND: 3, SUOMI: 3 };
+const programs = () => Array.from(new Set(S.stores.map((x) => x.program).filter(Boolean))).sort();
+const storeLine = (st) => [st.addr, st.city && !String(st.addr || '').includes(st.city) ? st.city : ''].filter(Boolean).join(', ');
+const storeTags = (st) => `${st.appleId ? `<span class="tag">Apple ID ${esc(st.appleId)}</span>` : '<span class="tag warn">No Apple ID</span>'}${st.program ? `<span class="tag prog">${esc(st.program)}</span>` : ''}`;
+function adminStores() {
+  const q = (S.stQ || '').trim().toLowerCase(); const F = S.stF == null ? 4 : S.stF;
+  const list = S.stores.filter((x) => (F === 4 || x.c === F) && (!q || [x.name, x.addr, x.city, x.appleId, x.program].join(' ').toLowerCase().includes(q))).sort((a, b) => a.c - b.c || a.name.localeCompare(b.name));
+  const desk = isDesk();
+  let h = desk ? `<div class="dhead"><div><div class="date">Manage</div><h1>Stores</h1></div><div class="dtools">${manageSeg('stores', 'width:520px;margin:0')}</div></div>` : header('Manage', 'Stores') + manageSeg('stores');
+  h += `<div class="dtbar" style="margin-top:16px"><input class="box dsearch" style="flex:1 1 260px" id="stsearch" data-desk-search="stQ" value="${esc(S.stQ || '')}" placeholder="Search name, city, Apple ID or program" aria-label="Search stores" autocomplete="off">
+    <div class="chips" style="margin:0">${[4, 0, 1, 2, 3].map((c) => `<button type="button" class="chip ${F === c ? 'on' : ''}" data-a="set" data-k="stF" data-v="${c}">${c === 4 ? 'All' : flag(c, 16, 11) + ' ' + C[c].name} <span class="num" style="opacity:.6">${c === 4 ? S.stores.length : S.stores.filter((x) => x.c === c).length}</span></button>`).join('')}</div></div>
+    <div class="btn2" style="margin-top:10px${desk ? ';max-width:420px' : ''}"><button type="button" class="btn small" data-a="storeNew">+ Add store</button><button type="button" class="btn small sec" data-a="sheet" data-v="storeimport">Import a list</button></div>`;
+  if (!list.length) return h + `<div class="empty" style="margin-top:16px"><b>${S.stores.length ? 'No stores match' : 'No stores yet'}</b><span>${S.stores.length ? 'Try another search or country.' : 'Add stores one by one, or import a whole list at once.'}</span></div>`;
+  if (desk) return h + `<table class="tbl" style="margin-top:16px"><thead><tr><th style="width:30%">Store</th><th>City</th><th>Apple ID</th><th>Program</th><th style="width:120px">Country</th></tr></thead><tbody>${list.map((x) => `<tr class="r" data-a="storeEdit" data-v="${x.id}" tabindex="0"><td><b style="font-weight:600">${esc(x.name)}</b>${x.addr ? `<div class="muted ell" style="font-size:12px">${esc(x.addr)}</div>` : ''}</td><td>${esc(x.city || cityFrom(x.addr))}</td><td class="num">${x.appleId ? esc(x.appleId) : '<span class="muted">–</span>'}</td><td>${x.program ? `<span class="tag prog">${esc(x.program)}</span>` : '<span class="muted">–</span>'}</td><td>${flag(x.c, 18, 13)} ${C[x.c].name}</td></tr>`).join('')}</tbody></table><p class="foot">${list.length} ${list.length === 1 ? 'store' : 'stores'}. Click a row to edit.</p>`;
+  return h + [0, 1, 2, 3].filter((c) => list.some((x) => x.c === c)).map((c) => `<h2 class="sec">${C[c].name} · ${list.filter((x) => x.c === c).length}</h2><div class="group">${list.filter((x) => x.c === c).map((x) => `<button type="button" class="row" data-a="storeEdit" data-v="${x.id}"><span class="grow"><span>${esc(x.name)}</span><span class="sub">${esc(storeLine(x))}</span><span class="tags">${storeTags(x)}</span></span>${I.chev}</button>`).join('')}</div>`).join('');
+}
+function storeForm(f) {
+  return `<div class="group">
+    <label class="row"><span class="lbl">Name</span><input class="inl" data-fbind="name" value="${esc(f.name)}" placeholder="e.g. Elkjøp Storo" autocomplete="off" autocapitalize="words"></label>
+    <label class="row"><span class="lbl">Address</span><input class="inl" data-fbind="addr" value="${esc(f.addr)}" placeholder="Street, postcode" autocomplete="off"></label>
+    <label class="row"><span class="lbl">City</span><input class="inl" data-fbind="city" value="${esc(f.city)}" placeholder="e.g. Oslo" autocomplete="off" autocapitalize="words"></label>
+    <label class="row"><span class="lbl">Apple ID</span><input class="inl num" data-fbind="appleId" value="${esc(f.appleId)}" placeholder="Apple's store number" autocomplete="off" inputmode="numeric"></label>
+    <label class="row"><span class="lbl">Program</span><input class="inl" data-fbind="program" list="programs" value="${esc(f.program)}" placeholder="e.g. APR, Shop in shop" autocomplete="off"><datalist id="programs">${programs().map((x) => `<option value="${esc(x)}">`).join('')}</datalist></label>
+  </div>
+  <span class="cap">Country</span><div class="seg tall" role="group" aria-label="Country">${[0, 1, 2, 3].map((i) => `<button type="button" class="${f.c === i ? 'on' : ''}" data-a="fset" data-k="c" data-v="${i}">${flag(i)}${C[i].name}</button>`).join('')}</div>
+  ${U.err ? `<p class="err">${esc(U.err)}</p>` : ''}`;
+}
+function parseStoreList(text) {
+  const out = []; const bad = [];
+  const lines = String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const sep = lines.some((l) => l.includes('\t')) ? '\t' : lines.some((l) => l.includes(';')) ? ';' : ',';
+  const split = (l) => (sep === ',' ? l.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/) : l.split(sep)).map((x) => x.replace(/^"|"$/g, '').trim());
+  // Columns: Country; Store; Address; City; Apple ID; Program, or any order when the first line names them
+  let map = { country: 0, name: 1, address: 2, city: 3, apple_id: 4, program: 5 };
+  const head = lines.length ? split(lines[0]).map((x) => x.toLowerCase()) : [];
+  const find = (re) => head.findIndex((x) => re.test(x));
+  const hasHead = find(/^(country|land)/) >= 0 && find(/store|butik|name|navn/) >= 0;
+  if (hasHead) map = { country: find(/^(country|land)/), name: find(/store|butik|name|navn/), address: find(/address|adresse|street/), city: find(/city|by|town|ort/), apple_id: find(/apple/), program: find(/program/) };
+  lines.forEach((l, i) => {
+    if (hasHead && i === 0) return;
+    const cells = split(l); const g = (k) => (map[k] >= 0 ? cells[map[k]] || '' : '');
+    const c = CODE[g('country').toUpperCase()];
+    if (c == null || !g('name')) { bad.push(i + 1); return; }
+    out.push({ country: c, name: g('name'), address: g('address'), city: g('city'), apple_id: g('apple_id'), program: g('program') });
+  });
+  return { rows: out, bad };
+}
+
+/* ---------- Manage → Parts & tools ---------- */
+function adminParts() {
+  const q = (S.ptQ || '').trim().toLowerCase(); const desk = isDesk();
+  const list = S.parts.filter((x) => !q || (x.name + ' ' + x.cat).toLowerCase().includes(q)).sort(partSort);
+  const cats = Array.from(new Set(list.map((x) => x.cat)));
+  let h = desk ? `<div class="dhead"><div><div class="date">Manage</div><h1>Parts & tools</h1></div><div class="dtools">${manageSeg('parts', 'width:520px;margin:0')}</div></div>` : header('Manage', 'Parts & tools') + manageSeg('parts');
+  h += `<div class="${desk ? 'ptgrid' : ''}"><div>`;
+  h += `<h2 class="sec">Parts catalogue · ${S.parts.length}</h2><input class="box" id="ptsearch" data-desk-search="ptQ" value="${esc(S.ptQ || '')}" placeholder="Search parts" aria-label="Search parts" autocomplete="off" style="height:42px">
+    <div class="btn2" style="margin-top:10px"><button type="button" class="btn small" data-a="partNew">+ Add part</button><button type="button" class="btn small sec" data-a="sheet" data-v="partimport">Import a list</button></div>`;
+  h += list.length ? cats.map((c) => `<h2 class="sec">${esc(c || 'Other')} · ${list.filter((x) => x.cat === c).length}</h2><div class="group">${list.filter((x) => x.cat === c).map((x) => `<button type="button" class="row" data-a="partEdit" data-v="${x.id}"><span class="grow">${esc(x.name)}</span>${I.chev}</button>`).join('')}</div>`).join('')
+    : `<div class="empty" style="margin-top:12px"><b>${S.parts.length ? 'No parts match' : 'No parts yet'}</b><span>${S.parts.length ? 'Try another search.' : 'Import the full parts list at once, or add parts one by one.'}</span></div>`;
+  h += `<p class="foot">Admins pick from this list on tickets. Installers pick from it when they replaced something that wasn’t on the ticket.</p></div><div>`;
+  h += `<h2 class="sec">Tools · ${S.tools.length}</h2><div class="group">${S.tools.map((t) => `<div class="row"><span class="grow">${esc(t.name)}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removeTool" data-v="${t.id}">Remove</button></div>`).join('')}
+    <div class="row"><input id="newtool2" class="inl" data-mtool="1" placeholder="Add a tool, e.g. Peak alarm key" aria-label="Add a tool" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addToolM">Add</button></div></div>
+    <p class="foot">Admins tick the tools an installer must bring on each ticket.</p></div></div>`;
+  return h;
+}
+function parsePartList(text) {
+  return String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => { const cells = (l.includes('\t') ? l.split('\t') : l.split(';')).map((x) => x.trim()).filter(Boolean); return cells.length > 1 ? { category: cells[0], name: cells.slice(1).join(' ') } : { category: '', name: cells[0] }; }).filter((x) => x.name);
+}
+
+/* ---------- pickers: stores (ticket form) and parts (ticket form + installer report) ---------- */
+function storePickList() {
+  const d = S.draft; const q = (U.sq || '').trim().toLowerCase();
+  const list = storesFor(d.c).filter((x) => !q || [x.name, x.addr, x.city, x.appleId, x.program].join(' ').toLowerCase().includes(q));
+  return list.length ? `<div class="group">${list.map((x) => `<button type="button" class="row" data-a="pickStore" data-v="${x.id}"><span class="grow"><span>${esc(x.name)}</span><span class="sub">${esc(storeLine(x))}</span><span class="tags">${storeTags(x)}</span></span>${d.store === x.id ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}</div>`
+    : `<div class="empty"><b>No store found</b><span>${storesFor(d.c).length ? 'Try another search, or add it as a new store.' : 'There are no stores in ' + C[d.c].name + ' yet.'}</span></div>`;
+}
+function partPickState() {
+  const m = U.pm; if (m === 'ticket') { const d = S.draft; return { has: (n) => d.parts.includes(n), qty: (n) => (d.qty && d.qty[n]) || 1 }; }
+  const r = job(S.view.id).report; const find = (n) => r.parts.find(([x]) => x === n || x === n + ' (added on site)');
+  return { has: (n) => !!(find(n) && find(n)[1] > 0), qty: (n) => (find(n) ? find(n)[1] : 0) };
+}
+function partPickList() {
+  const q = (U.pq || '').trim().toLowerCase(); const st = partPickState();
+  const list = S.parts.filter((x) => !q || (x.name + ' ' + x.cat).toLowerCase().includes(q)).sort(partSort);
+  const exact = q && S.parts.some((x) => x.name.toLowerCase() === q);
+  const row = (n, sub) => { const on = st.has(n); return `<div class="row prow2${on ? ' on' : ''}"><button type="button" class="vbtn" data-a="ppToggle" data-v="${esc(n)}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span><span class="grow" style="display:flex;flex-direction:column;min-width:0"><span>${esc(n)}</span>${sub ? `<span class="sub">${esc(sub)}</span>` : ''}</span></button>${on ? `<div class="step"><button type="button" aria-label="Fewer" data-a="ppQty" data-v="${esc(n)}" data-d="-1">−</button><span class="num">${st.qty(n)}</span><button type="button" aria-label="More" data-a="ppQty" data-v="${esc(n)}" data-d="1">+</button></div>` : ''}</div>`; };
+  let h = '';
+  if (q && !exact) h += `<button type="button" class="row" style="border-radius:12px;border:none;color:var(--blue);margin-bottom:8px" data-a="ppAddNew">+ Add “${esc(U.pq.trim())}”${U.pm === 'ticket' ? ' to the list' : ' (not in the list)'}</button>`;
+  if (!list.length) return h + (S.parts.length ? '<p class="foot" style="margin:4px">No parts match.</p>' : `<p class="foot" style="margin:4px">The parts list is empty.${U.pm === 'ticket' ? ' Import it under Manage → Parts & tools, or type a part above.' : ' Type the part above.'}</p>`);
+  if (q) return h + `<div class="group">${list.map((x) => row(x.name, x.cat)).join('')}</div>`;
+  const cats = Array.from(new Set(list.map((x) => x.cat)));
+  return h + cats.map((c) => `<span class="cap" style="display:block;margin:12px 4px 6px">${esc(c || 'Other')}</span><div class="group">${list.filter((x) => x.cat === c).map((x) => row(x.name, '')).join('')}</div>`).join('');
+}
+function refreshPartPick() { const box = document.getElementById('pplist'); if (box) box.innerHTML = partPickList(); const n = document.getElementById('ppcount'); if (n) n.textContent = ppCount(); }
+function ppCount() { if (U.pm === 'ticket') { const k = S.draft.parts.length; return k ? k + ' selected' : ''; } const r = job(S.view.id).report; const k = r.parts.filter(([, q]) => q > 0).length; return k ? k + ' replaced' : ''; }
 /* ---------- desktop: new ticket ---------- */
 function newDesk(d, PT, editing) {
   const head = editing ? PT.head : `<div class="dhead"><div><div class="date">Client: Apple</div><h1>New ticket</h1></div></div>`;
   const cell = (x, full) => `<div class="ntc${full ? ' full' : ''}">${x}</div>`;
-  return head + `<div class="dgrid nt"><div class="dmain ntform">${cell(PT.ticket)}${cell(PT.when)}${cell(PT.tpl + PT.tplsave, true)}${cell(PT.country, true)}${cell(PT.store)}${cell(PT.inst)}${cell(PT.tools)}${cell(PT.parts)}${cell(PT.videos)}${cell(PT.note)}${cell(PT.price, true)}</div>
+  return head + `<div class="dgrid nt"><div class="dmain ntform">${cell(PT.ticket)}${cell(PT.country)}${cell(PT.store)}${cell(PT.inst)}${cell(PT.when, true)}${cell(PT.tpl + PT.tplsave, true)}${cell(PT.tools)}${cell(PT.parts)}${cell(PT.videos)}${cell(PT.note)}${cell(PT.price, true)}</div>
     <div class="dright"><div id="ntsum" class="dpanel ntsum">${ntSummary(d, editing)}</div></div></div>`;
 }
 function ntSummary(d, editing) {
@@ -1368,7 +1566,7 @@ function videosDesk() {
   const used = (v) => S.jobs.some((j) => j.videos.includes(v.id)) || S.templates.some((t) => t.videos.includes(v.id));
   const fl = { all: () => true, video: (v) => !isPic(v), image: isPic, used, unused: (v) => !used(v), edited: isEdited };
   const list = S.videos.filter(fl[F] || fl.all).filter((v) => !q || (v.title + ' ' + v.notes).toLowerCase().includes(q));
-  let h = `<div class="dhead"><div><div class="date">Instructions for installers</div><h1>Videos & pictures</h1></div><div class="dtools"><div class="seg" style="width:300px" role="group" aria-label="Section"><button type="button" data-a="setManage" data-v="people">People</button><button type="button" class="on" data-a="setManage" data-v="videos">Videos & pictures</button></div><label class="btn" style="width:auto;padding:0 22px;position:relative;cursor:pointer">+ Upload<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label></div></div>`;
+  let h = `<div class="dhead"><div><div class="date">Instructions for installers</div><h1>Videos & pictures</h1></div><div class="dtools">${manageSeg('videos', 'width:520px;margin:0')}<label class="btn" style="width:auto;padding:0 22px;position:relative;cursor:pointer">+ Upload<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label></div></div>`;
   const cnt = (k) => S.videos.filter(fl[k]).length;
   h += `<div class="dtbar" style="margin-top:20px"><input class="box dsearch" style="flex:1 1 320px" id="lsearch" data-desk-search="libQ" value="${esc(S.libQ || '')}" placeholder="Search titles and notes" aria-label="Search the library" autocomplete="off">
     <div class="chips" style="margin:0">${[['all', 'All'], ['video', 'Videos'], ['image', 'Pictures'], ['used', 'Used'], ['unused', 'Not used yet'], ['edited', 'Edited']].map(([k, l]) => `<button type="button" class="chip ${F === k ? 'on' : ''}" aria-pressed="${F === k}" data-a="setLibF" data-v="${k}">${l} <span class="num" style="opacity:.6">${cnt(k)}</span></button>`).join('')}</div></div>`;
@@ -1430,7 +1628,7 @@ function jobCard(j) {
     ${j.status === 'changes' ? `<div class="banner" style="background:var(--orange-bg);color:var(--fg2)"><span><b style="color:var(--orange)">From your admin:</b> ${esc(j.changes || 'Please check the report and resubmit.')}</span></div>` : ''}
     <div class="btn2">${j.addr ? `<a class="btn small sec" href="https://maps.apple.com/?q=${encodeURIComponent(j.store + ', ' + j.addr)}" target="_blank" rel="noopener">${I.dir} Directions</a>` : '<span></span>'}<button type="button" class="btn small sec" data-a="sheet" data-v="support:${j.c}">${I.phone()} Support</button></div>
     ${j.tools.length ? `<div class="split"><span class="cap">Bring with you</span><div class="grid2">${j.tools.map((t) => `<span style="display:flex;align-items:center;gap:8px;font-size:15px">${I.tick('var(--green)', 16)}${esc(t)}</span>`).join('')}</div></div>` : ''}
-    ${j.parts.length ? `<div class="split"><span class="cap">Parts on site</span><div class="chips">${j.parts.map((p) => `<span class="pill p-grey" style="font-size:13px;padding:5px 10px;font-weight:500">${esc(p)}</span>`).join('')}</div></div>` : ''}
+    ${j.partItems.length ? `<div class="split"><span class="cap">Parts to replace \u00b7 ${j.partItems.length}</span><div class="chips">${j.partItems.map((p) => `<span class="pill p-grey" style="font-size:13px;padding:5px 10px;font-weight:500">${p.qty > 1 ? p.qty + ' \u00d7 ' : ''}${esc(p.name)}</span>`).join('')}</div></div>` : ''}
     ${j.videos.some(videoBy) ? vidButton(j) : ''}
     ${j.note ? `<div class="split"><span class="cap">Note from admin</span><span style="font-size:15px;line-height:21px;color:var(--fg2)">${esc(j.note)}</span></div>` : ''}
     ${j.last ? `<div class="note"><b>From the last visit</b>${esc(j.last)}</div>` : ''}
@@ -1467,8 +1665,9 @@ function viewSub() {
 function navbar(left, title, right, extra = '') { if (PANEL_MODE) return ''; return `<div class="navbar">${left}<span class="t">${esc(title)}</span>${right || '<span></span>'}${extra}</div>`; }
 function ensureReport(j) {
   if (!j.report) j.report = Object.assign(emptyReport(), { draft: true });
-  if (!j.report.init) { j.report.parts = j.parts.map((p) => [p, 0]); j.report.init = true; }
-  else j.parts.forEach((p) => { if (!j.report.parts.some(([x]) => x === p)) j.report.parts.push([p, 0]); });
+  const names = j.partItems.map((x) => x.name);
+  if (!j.report.init) { j.report.parts = names.map((p) => [p, 0]); j.report.init = true; }
+  else names.forEach((p) => { if (!j.report.parts.some(([x]) => x === p)) j.report.parts.push([p, 0]); });
   return j.report;
 }
 function reportFlow(j) {
@@ -1484,9 +1683,11 @@ function reportFlow(j) {
     if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
     h += ynQ(r, 'checkedIn', 'Have you checked in?', 'Check in with the store before you start.');
     h += `<h2 class="sec">Store manager</h2><div class="group"><label class="row" for="rcontact"><span class="lbl">Name</span><input id="rcontact" class="inl" data-rbind="contact" value="${esc(r.contact)}" placeholder="Full name" autocomplete="off" autocapitalize="words"></label><div class="row" style="flex-wrap:wrap">${['Store manager', 'Department lead', 'Staff'].map((x) => `<button type="button" class="chip ${r.contactRole === x ? 'on' : ''}" data-a="rset" data-k="contactRole" data-v="${x}">${x}</button>`).join('')}</div></div>`;
-    h += `<h2 class="sec">Parts replaced</h2><div class="group">${r.parts.map(([p, q], i) => `<div class="row"><button type="button" style="flex:1;display:flex;align-items:center;gap:12px;border:none;background:none;padding:0;text-align:left;min-height:44px" data-a="partToggle" data-v="${i}" aria-pressed="${q > 0}"><span class="check ${q > 0 ? 'on' : ''}">${I.tick()}</span><span>${esc(p)}</span></button>${q > 0 ? `<div class="step"><button type="button" aria-label="Fewer" data-a="partQty" data-v="${i}" data-d="-1">−</button><span class="num">${q}</span><button type="button" aria-label="More" data-a="partQty" data-v="${i}" data-d="1">+</button></div>` : ''}</div>`).join('')}
-      <div class="row"><input id="rextra" class="inl" data-rbind="extra" value="${esc(r.extra)}" placeholder="${r.parts.length ? 'Add another part' : 'Add a part you replaced'}" aria-label="Add a part"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="partAdd">Add</button></div></div>
-      <p class="foot">Parts you add on site are flagged for the admin.</p>`;
+    const planned = Object.fromEntries(j.partItems.map((x) => [x.name, x.qty]));
+    if (j.tools.length) h += `<h2 class="sec">Bring with you \u00b7 ${j.tools.length}</h2><div class="group">${j.tools.map((t) => `<div class="row" style="font-size:15px">${I.tick('var(--green)', 16)}<span class="grow">${esc(t)}</span></div>`).join('')}</div>`;
+    h += `<h2 class="sec">Parts replaced</h2><div class="group">${r.parts.map(([p, q], i) => `<div class="row"><button type="button" style="flex:1;display:flex;align-items:center;gap:12px;border:none;background:none;padding:0;text-align:left;min-height:44px" data-a="partToggle" data-v="${i}" aria-pressed="${q > 0}"><span class="check ${q > 0 ? 'on' : ''}">${I.tick()}</span><span style="display:flex;flex-direction:column"><span>${esc(String(p).replace(/ \(added on site\)$/, ''))}</span><span class="sub" style="font-size:12px;color:var(--muted)">${planned[p] ? 'On the ticket \u00b7 ' + planned[p] + ' planned' : 'Added on site'}</span></span></button>${q > 0 ? `<div class="step"><button type="button" aria-label="Fewer" data-a="partQty" data-v="${i}" data-d="-1">−</button><span class="num">${q}</span><button type="button" aria-label="More" data-a="partQty" data-v="${i}" data-d="1">+</button></div>` : ''}</div>`).join('')}
+      <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="partsOpen" data-v="report">+ Add a part you replaced<span class="muted" style="font-size:13px;margin-left:6px">search the list</span></button></div>
+      <p class="foot">Tick what you replaced on the ticket. Anything extra you add is flagged for the admin.</p>`;
     h += `<h2 class="sec">Security: items replaced</h2><textarea class="box" data-abind2="secItems" placeholder="${esc(partsLine(r) || 'e.g. 4 pucks, 2 tethers, 1 riser')}" style="min-height:64px">${esc(r.apple.secItems || '')}</textarea><p class="foot">How many pucks, tethers, risers and so on. Leave empty to use the parts ticked above.</p>`;
     h += `<h2 class="sec">Note for the next visit</h2><textarea id="rnext" class="box" data-rbind="nextNote" placeholder="Parking, who to ask for, anything to check" style="min-height:64px">${esc(r.nextNote)}</textarea><p class="foot">Only for installers. Shown on the job card next time someone visits this store.</p>`;
     h += `<div style="margin-top:20px">${r.problem ? `<div class="banner" style="background:var(--red-bg);color:var(--fg2)">${I.flagP('var(--redbtn)')}<span style="flex:1"><b style="color:var(--red)">Problem reported:</b> ${esc(r.problem.type)}. ${esc(r.problem.text)}</span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="probRemove">Remove</button></div>`
@@ -1577,7 +1778,7 @@ function jobDetail(j) {
     ? `<div style="margin-top:14px"><button type="button" class="btn" data-a="editJob" data-v="${j.id}">Edit ticket</button></div>`
     : `<p class="foot" style="margin-top:12px">This ticket can\u2019t be edited because the report has been submitted.</p>`;
   if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
-  if (j.parts.length) h += `<h2 class="sec">Parts on site</h2><div class="group"><div class="row" style="font-size:15px">${j.parts.map(esc).join(', ')}</div></div>`;
+  if (j.partItems.length) h += `<h2 class="sec">Parts to replace</h2><div class="group">${j.partItems.map((p) => `<div class="row"><span class="grow">${esc(p.name)}</span><span class="val num">\u00d7 ${p.qty}</span></div>`).join('')}</div>`;
   if (j.tools.length) h += `<h2 class="sec">Tools</h2><div class="group"><div class="row" style="font-size:15px">${j.tools.map(esc).join(', ')}</div></div>`;
   if (j.note) h += `<h2 class="sec">Note</h2><div class="group"><div class="row" style="font-size:15px">${esc(j.note)}</div></div>`;
   if (['scheduled', 'declined'].includes(j.status)) {
@@ -1613,7 +1814,38 @@ function renderSheet() {
   const [kind, arg] = String(U.sheet).split(':');
   const me = meU();
   let body = '';
-  if (kind === 'photos') {
+  if (kind === 'store') {
+    const f = U.form; const isNew = arg === 'new';
+    body = `${sheetHead(isNew ? 'New store' : 'Store', 'Cancel', 'Save', 'saveStore')}${storeForm(f)}
+      ${!isNew ? (U.confirm === 'delstore' ? `<div class="card" style="gap:10px"><b>Delete \\u201c${esc(f.name)}\\u201d?</b><span class="muted" style="font-size:15px">Tickets already made keep the store name.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="deleteStore" data-v="${esc(arg)}">Delete</button></div></div>` : `<button type="button" class="btn sec" style="color:var(--red)" data-a="confirm" data-v="delstore">Delete store</button>`) : ''}`;
+  } else if (kind === 'storeimport') {
+    const f = U.form || (U.form = { text: '', replace: false });
+    const pr = parseStoreList(f.text);
+    body = `${sheetHead('Import stores', 'Cancel', 'Import' + (pr.rows.length ? ' ' + pr.rows.length : ''), 'importStores')}
+      <p class="foot" style="margin:0 4px">Paste from Excel or a CSV file: one store per line, columns in this order:<br><b>Country \\u00b7 Store name \\u00b7 Address \\u00b7 City \\u00b7 Apple ID \\u00b7 Program</b><br>Country can be NO, SE, DK, FI or the name.</p>
+      <textarea class="box" data-fbind="text" data-relist="1" placeholder="NO;Elkj\\u00f8p Storo;Vitaminveien 7, 0485 Oslo;Oslo;252094;APR" style="min-height:160px;font-family:ui-monospace,monospace;font-size:13px">${esc(f.text)}</textarea>
+      <div class="group"><button type="button" class="row" data-a="ftog" data-k="replace"><span class="grow"><span>Replace all current stores</span><span class="sub">Removes the ${S.stores.length} stores in the app first. Tickets keep their store names.</span></span><span class="tog ${f.replace ? 'on' : ''}"></span></button></div>
+      <p class="foot" id="impinfo" style="margin:0 4px">${pr.rows.length ? pr.rows.length + ' stores ready: ' + [0, 1, 2, 3].map((c) => pr.rows.filter((x) => x.country === c).length + ' ' + C[c].k).join(', ') : 'Nothing to import yet.'}${pr.bad.length ? ' \\u00b7 Lines not understood: ' + pr.bad.slice(0, 8).join(', ') : ''}</p>
+      ${U.err ? `<p class="err">${esc(U.err)}</p>` : ''}`;
+  } else if (kind === 'part') {
+    const f = U.form; const isNew = arg === 'new'; const cats = Array.from(new Set(S.parts.map((x) => x.cat).filter(Boolean))).sort();
+    body = `${sheetHead(isNew ? 'New part' : 'Part', 'Cancel', 'Save', 'savePart')}<div class="group"><label class="row"><span class="lbl">Name</span><input class="inl" data-fbind="name" value="${esc(f.name)}" placeholder="e.g. Puck" autocomplete="off" autocapitalize="sentences"></label><label class="row"><span class="lbl">Category</span><input class="inl" data-fbind="cat" list="pcats" value="${esc(f.cat)}" placeholder="Optional, e.g. Security" autocomplete="off"><datalist id="pcats">${cats.map((x) => `<option value="${esc(x)}">`).join('')}</datalist></label></div>
+      ${U.err ? `<p class="err">${esc(U.err)}</p>` : ''}${!isNew ? `<button type="button" class="btn sec" style="color:var(--red)" data-a="deletePart" data-v="${esc(arg)}">Delete part</button>` : ''}`;
+  } else if (kind === 'partimport') {
+    const f = U.form || (U.form = { text: '' }); const rows = parsePartList(f.text);
+    body = `${sheetHead('Import parts', 'Cancel', 'Import' + (rows.length ? ' ' + rows.length : ''), 'importParts')}
+      <p class="foot" style="margin:0 4px">Paste the list: one part per line. To group them, put the category first: <b>Category ; Part</b> (or two columns from Excel). Parts already in the list are skipped.</p>
+      <textarea class="box" data-fbind="text" data-relist="1" placeholder="Security;Puck&#10;Security;Tether&#10;Riser" style="min-height:200px;font-family:ui-monospace,monospace;font-size:13px">${esc(f.text)}</textarea>
+      <p class="foot" id="impinfo" style="margin:0 4px">${rows.length ? rows.length + ' parts ready' : 'Nothing to import yet.'}</p>${U.err ? `<p class="err">${esc(U.err)}</p>` : ''}`;
+  } else if (kind === 'pickstore') {
+    const d = S.draft;
+    body = `${sheetHead('Choose store', 'Close')}<div class="ppsearch"><input class="box" data-sq="1" value="${esc(U.sq || '')}" placeholder="Search ${storesFor(d.c).length} stores in ${C[d.c].name}" aria-label="Search stores" autocomplete="off"></div>
+      <div id="splist">${storePickList()}</div><button type="button" class="btn sec" data-a="storeNew" data-v="ticket">+ New store</button>`;
+    setTimeout(() => { const i = overlay.querySelector('[data-sq]'); if (i && !isTouchDevice()) i.focus(); }, 30);
+  } else if (kind === 'pickparts') {
+    body = `${sheetHead(U.pm === 'ticket' ? 'Parts to replace' : 'Parts you replaced', '', 'Done', 'ppDone')}<div class="ppsearch"><input class="box" data-pq="1" value="${esc(U.pq || '')}" placeholder="Search ${S.parts.length} parts" aria-label="Search parts" autocomplete="off"><span class="muted num" id="ppcount" style="font-size:13px">${ppCount()}</span></div><div id="pplist">${partPickList()}</div>`;
+    setTimeout(() => { const i = overlay.querySelector('[data-pq]'); if (i && !isTouchDevice()) i.focus(); }, 30);
+  } else if (kind === 'photos') {
     const j = job(arg); const n = (U.photoFiles || []).length; const vid = U.mediaKind === 'video'; const one = vid ? 'video' : 'picture', many = vid ? 'videos' : 'pictures';
     body = `${sheetHead(vid ? 'Videos' : 'Pictures', 'Close')}<div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:4px"><b style="font-size:20px">${n} ${n === 1 ? one : many} ready</b><span class="muted" style="font-size:15px;line-height:21px">${esc(j ? j.store + ' \u00b7 ' + j.ticket : '')}. Tap below, then choose \u201c${vid ? 'Save video' : 'Save images'}\u201d (or Save to Files) to store them one by one on this device.</span></div>
       <button type="button" class="btn" data-a="sharePhotos">Save ${n} ${n === 1 ? one : many}</button>`;
@@ -2631,13 +2863,14 @@ const A = {
     const tpl = S.templates.find((t) => t.name === j.fixture);
     const st = S.stores.find((x) => x.id === j.storeId) || S.stores.find((x) => x.c === j.c && x.name.toLowerCase() === j.store.toLowerCase());
     S.stash = S.draft;
-    S.draft = { editId: j.id, ticket: j.ticket, template: tpl ? tpl.id : null, tplName: tpl ? tpl.name : '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: j.parts.slice(), videos: j.videos.slice(), c: j.c,
+    S.draft = { editId: j.id, ticket: j.ticket, template: tpl ? tpl.id : null, tplName: tpl ? tpl.name : '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: j.partItems.map((x) => x.name), qty: Object.fromEntries(j.partItems.map((x) => [x.name, x.qty])), videos: j.videos.slice(), c: j.c,
       store: st ? st.id : 'new', storeName: st ? '' : j.store, storeAddr: st ? '' : j.addr, lead: j.installer, second: j.second, secondOn: !!j.second, date: j.date, time: j.time,
       tools: j.tools.slice(), price: String(j.price), ainst: String(Math.round(amounts(j).inst * 100) / 100), aadm: String(Math.round(amounts(j).adm * 100) / 100), abb: String(Math.round(amounts(j).bb * 100) / 100), note: j.note, err: {} };
     S.view = { kind: 'edit', id: j.id }; U.confirm = null; render(false);
   },
   cancelEdit() { const id = S.draft && S.draft.editId; S.draft = S.stash || null; S.stash = null; if (id) showJob(id); else S.view = null; render(false); },
   setManage(v) { S.manage = v; render(false); },
+  manageGo(v) { S.manage = v; A.tab('team'); },
   editVideo(v) { const x = videoBy(v); U.sheet = null; renderSheet(); edClose(); ED = { id: v, v: x, E: normEdit(x.edit, x.duration), dur: x.duration || 0, t: 0, sel: 0, tab: 'cut', hist: [], thumbs: [], blob: null, P: null, saved: JSON.stringify(normEdit(x.edit, x.duration)) }; S.view = { kind: 'veditor', id: v }; render(false); },
   edTab(v) { ED.tab = v; edPanel(); },
   extraDel(v) { const j = job(S.view.id); const r = j && j.report; if (!r || !r.draft) return; const x = r.extras[+v]; if (!x) return; r.extras.splice(+v, 1); phDel(x.k); if (x.poster) phDel(x.poster); queueReport(j); U.sheet = null; renderSheet(); render(); toast(x.kind === 'video' ? 'Video removed' : 'Photo removed'); },
@@ -2791,7 +3024,7 @@ const A = {
   },
   approveReq(v) { const j = job(v); const [d, t] = j.request.to.split(' '); act(() => upd(v, { date: d, time: t, request: null }), () => 'Moved to ' + whenLabel(job(v))); },
   denyReq(v) { act(() => upd(v, { request: null }), 'Kept the original time'); },
-  draftTpl(v) { const d = S.draft; U.confirm = null; if (d.template === v) { d.template = null; render(); return; } const t = S.templates.find((x) => x.id === v); d.template = v; d.tools = t.tools.slice(); d.parts = t.parts.slice(); d.videos = t.videos.slice(); d.tplName = t.name; render(); },
+  draftTpl(v) { const d = S.draft; U.confirm = null; if (d.template === v) { d.template = null; render(); return; } const t = S.templates.find((x) => x.id === v); d.template = v; d.tools = t.tools.slice(); d.parts = t.parts.slice(); d.qty = {}; d.videos = t.videos.slice(); d.tplName = t.name; render(); },
   tplOpen(v) { const d = S.draft; d.tplOpen = !!v; if (v && !d.tplName) { const t = S.templates.find((x) => x.id === d.template); d.tplName = t ? t.name : ''; } render(); if (v) { const el = document.getElementById('tplname'); if (el) el.focus(); } },
   async saveTemplate() {
     const d = S.draft; const name = (d.tplName || '').trim().replace(/\s+/g, ' ');
@@ -2820,7 +3053,7 @@ const A = {
   async removeTool(v) { const t = S.tools.find((x) => x.id === v); const d = S.draft; d.tools = d.tools.filter((x) => x !== t.name); await act(async () => ok(await sb.from('tools').delete().eq('id', v)), '\u201c' + t.name + '\u201d removed from the list'); },
   addPart() { const d = S.draft; const name = (d.newPart || '').trim().replace(/\s+/g, ' '); if (!name) return; if (!d.parts.some((p) => p.toLowerCase() === name.toLowerCase())) d.parts.push(name); d.newPart = ''; render(); const el = document.getElementById('newpart'); if (el) el.focus(); },
   removePart(v) { S.draft.parts.splice(+v, 1); render(); },
-  draftCountry(v) { const d = S.draft; d.c = +v; const st = storesFor(d.c); d.store = st.length ? st[0].id : 'new'; d.err = {}; render(); },
+  draftCountry(v) { const d = S.draft; d.c = +v; d.store = null; d.storeName = ''; d.err = {}; render(); },
   draftStore(v) { S.draft.store = v; render(); if (v === 'new') { const el = document.getElementById('sname'); if (el) el.focus(); } },
   draftPerson(v) { const d = S.draft; if (d.secondOn && d.lead) { if (v === d.lead) return; d.second = d.second === v ? null : v; } else d.lead = v; d.err.installer = ''; render(); },
   draftSecond() { S.draft.secondOn = true; render(); },
@@ -2831,10 +3064,8 @@ const A = {
     const t = (d.ticket || '').trim().toUpperCase();
     if (!t) E.ticket = 'Enter the ticket number from Apple’s system.';
     else if (S.jobs.some((j) => j.ticket === t && j.id !== d.editId)) E.ticket = 'A ticket with this number already exists.';
-    let store = null;
-    if (d.store !== 'new' && storesFor(d.c).length) store = S.stores.find((s) => s.id === d.store);
-    else if ((d.storeName || '').trim()) store = { c: d.c, name: d.storeName.trim().replace(/\s+/g, ' '), addr: (d.storeAddr || '').trim(), isNew: true };
-    if (!store) E.store = 'Choose a store or type its name.';
+    const store = S.stores.find((x) => x.id === d.store && x.c === d.c) || null;
+    if (!store) E.store = 'Choose the store from the list.';
     if (!d.lead || !userBy(d.lead)) E.installer = 'Choose an installer.';
     const sp = splitNums(d);
     if (sp.bad) E.price = 'Amounts can\u2019t be negative.';
@@ -2843,12 +3074,7 @@ const A = {
     if (btn) { btn.disabled = true; btn.textContent = d.editId ? 'Saving…' : 'Creating…'; }
     const tpl = S.templates.find((x) => x.id === d.template);
     const second = d.secondOn && d.second ? d.second : null;
-    const resolveStore = async () => {
-      const id = await resolveStore0(); const meta = { apple_id: (d.storeApple || '').trim(), city: (d.storeCity || '').trim() };
-      const s0 = S.stores.find((x) => x.id === id);
-      if (id && (!s0 || s0.appleId !== meta.apple_id || s0.city !== meta.city)) ok(await sb.from('stores').update(meta).eq('id', id));
-      return id;
-    };
+    const resolveStore = async () => resolveStore0();
     const resolveStore0 = async () => {
       if (!store.isNew) return store.id;
       const existing = S.stores.find((s) => s.c === d.c && s.name.toLowerCase() === store.name.toLowerCase());
@@ -2862,7 +3088,7 @@ const A = {
       const id = d.editId;
       const saved = await act(async () => {
         const storeId = await resolveStore();
-        const patch = { ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, date: d.date || j0.date, time: d.time || j0.time, fixture: tpl ? tpl.name : (S.templates.some((x) => x.name === j0.fixture) ? '' : j0.fixture), tools: d.tools.slice(), parts: d.parts.slice(), video_ids: d.videos.slice(), note: (d.note || '').trim(), price: sp.price, inst_amt: sp.inst, adm_amt: sp.adm, bb_amt: sp.bb, inst_pct: sp.price ? Math.round(sp.inst / sp.price * 10000) / 100 : 0, adm_pct: sp.price ? Math.round(sp.adm / sp.price * 10000) / 100 : 0 };
+        const patch = { ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, date: d.date || j0.date, time: d.time || j0.time, fixture: tpl ? tpl.name : (S.templates.some((x) => x.name === j0.fixture) ? '' : j0.fixture), tools: d.tools.slice(), parts: d.parts.slice(), part_items: d.parts.map((x) => ({ name: x, qty: (d.qty || {})[x] || 1 })), video_ids: d.videos.slice(), note: (d.note || '').trim(), price: sp.price, inst_amt: sp.inst, adm_amt: sp.adm, bb_amt: sp.bb, inst_pct: sp.price ? Math.round(sp.inst / sp.price * 10000) / 100 : 0, adm_pct: sp.price ? Math.round(sp.adm / sp.price * 10000) / 100 : 0 };
         if (!lockInstaller) { patch.installer = d.lead; patch.second = second; if (j0.status === 'declined' && d.lead !== j0.installer) { patch.status = 'scheduled'; patch.decline_reason = ''; } }
         if (j0.date !== patch.date || j0.time !== patch.time) patch.request = null;
         ok(await sb.from('jobs').update(patch).eq('id', id));
@@ -2874,7 +3100,7 @@ const A = {
     const prev = S.jobs.filter((j) => j.c === d.c && j.store.toLowerCase() === store.name.toLowerCase() && j.status === 'approved' && j.report && j.report.nextNote).sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0))[0];
     const done = await act(async () => {
       const storeId = await resolveStore();
-      ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl ? tpl.name : '', tools: d.tools.slice(), parts: d.parts.slice(), video_ids: d.videos.slice(), note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_amt: sp.inst, adm_amt: sp.adm, bb_amt: sp.bb, inst_pct: sp.price ? Math.round(sp.inst / sp.price * 10000) / 100 : 0, adm_pct: sp.price ? Math.round(sp.adm / sp.price * 10000) / 100 : 0, created_by: S.me }));
+      ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl ? tpl.name : '', tools: d.tools.slice(), parts: d.parts.slice(), part_items: d.parts.map((x) => ({ name: x, qty: (d.qty || {})[x] || 1 })), video_ids: d.videos.slice(), note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_amt: sp.inst, adm_amt: sp.adm, bb_amt: sp.bb, inst_pct: sp.price ? Math.round(sp.inst / sp.price * 10000) / 100 : 0, adm_pct: sp.price ? Math.round(sp.adm / sp.price * 10000) / 100 : 0, created_by: S.me }));
     }, 'Ticket ' + t + ' created for ' + first(nameOf(d.lead)) + (second ? ' and ' + first(nameOf(second)) : ''));
     if (done) { S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2; render(false); }
     else if (btn) { btn.disabled = false; btn.textContent = 'Create ticket'; }
@@ -2913,6 +3139,77 @@ const A = {
   },
 
   // installer
+  storeNew(v) { const d = S.draft; const c = v === 'ticket' && d ? d.c : (S.stF != null && S.stF < 4 ? S.stF : meU().c); U.form = { id: null, name: v === 'ticket' && U.sq ? U.sq.trim() : '', addr: '', city: '', appleId: '', program: '', c, back: v === 'ticket' ? 'ticket' : '' }; U.err = ''; U.confirm = null; U.sheet = 'store:new'; renderSheet(); },
+  storeEdit(v, el) { const x = S.stores.find((y) => y.id === v); if (!x) return; U.form = { id: x.id, name: x.name, addr: x.addr || '', city: x.city || '', appleId: x.appleId || '', program: x.program || '', c: x.c, back: el && el.dataset.back === 'ticket' ? 'ticket' : '' }; U.err = ''; U.confirm = null; U.sheet = 'store:' + x.id; renderSheet(); },
+  async saveStore() {
+    const f = U.form; const name = (f.name || '').trim().replace(/\s+/g, ' '); if (!name) { U.err = 'Give the store a name.'; renderSheet(); return; }
+    const row = { country: f.c, name, address: (f.addr || '').trim(), city: (f.city || '').trim(), apple_id: (f.appleId || '').trim(), program: (f.program || '').trim() };
+    if (S.stores.some((x) => x.id !== f.id && x.c === f.c && x.name.toLowerCase() === name.toLowerCase())) { U.err = 'There is already a store with this name in ' + C[f.c].name + '.'; renderSheet(); return; }
+    let id = f.id; const back = f.back;
+    const done = await act(async () => { if (id) ok(await sb.from('stores').update(row).eq('id', id)); else id = ok(await sb.from('stores').insert(row).select('id').single()).id; }, f.id ? 'Store saved' : '“' + name + '” added');
+    if (!done) return;
+    if (back === 'ticket' && S.draft) { S.draft.c = f.c; S.draft.store = id; S.draft.storeName = ''; if (S.draft.err) S.draft.err.store = ''; }
+    U.sheet = null; U.form = null; renderSheet(); render();
+  },
+  async deleteStore(v) {
+    U.sheet = null; U.confirm = null; renderSheet();
+    await act(async () => { ok(await sb.from('jobs').update({ store_id: null }).eq('store_id', v)); ok(await sb.from('stores').delete().eq('id', v)); }, 'Store deleted');
+  },
+  async importStores(v, btn) {
+    const f = U.form; const pr = parseStoreList(f.text); if (!pr.rows.length) return;
+    if (btn) btn.disabled = true;
+    const done = await act(async () => {
+      if (f.replace) { ok(await sb.from('jobs').update({ store_id: null }).not('store_id', 'is', null)); ok(await sb.from('stores').delete().not('id', 'is', null)); }
+      const have = f.replace ? [] : S.stores; const seen = new Set(have.map((x) => x.c + '|' + x.name.toLowerCase()));
+      const rows = pr.rows.filter((x) => { const k = x.country + '|' + x.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+      for (let i = 0; i < rows.length; i += 200) ok(await sb.from('stores').insert(rows.slice(i, i + 200)));
+    }, pr.rows.length + ' stores imported');
+    if (done) { U.sheet = null; U.form = null; renderSheet(); render(); } else if (btn) btn.disabled = false;
+  },
+  partNew() { U.form = { id: null, name: '', cat: '' }; U.err = ''; U.sheet = 'part:new'; renderSheet(); },
+  partEdit(v) { const x = S.parts.find((y) => y.id === v); if (!x) return; U.form = { id: x.id, name: x.name, cat: x.cat }; U.err = ''; U.sheet = 'part:' + x.id; renderSheet(); },
+  async savePart() {
+    const f = U.form; const name = (f.name || '').trim().replace(/\s+/g, ' '); const cat = (f.cat || '').trim();
+    if (!name) { U.err = 'Give the part a name.'; renderSheet(); return; }
+    if (S.parts.some((x) => x.id !== f.id && x.name.toLowerCase() === name.toLowerCase() && x.cat.toLowerCase() === cat.toLowerCase())) { U.err = 'This part is already in the list.'; renderSheet(); return; }
+    const done = await act(async () => { if (f.id) ok(await sb.from('parts_catalog').update({ name, category: cat }).eq('id', f.id)); else ok(await sb.from('parts_catalog').insert({ name, category: cat, created_by: S.me })); }, f.id ? 'Part saved' : '“' + name + '” added');
+    if (done) { U.sheet = null; renderSheet(); }
+  },
+  async deletePart(v) { U.sheet = null; renderSheet(); await act(async () => ok(await sb.from('parts_catalog').delete().eq('id', v)), 'Part deleted'); },
+  async importParts(v, btn) {
+    const rows = parsePartList(U.form.text); if (!rows.length) return; if (btn) btn.disabled = true;
+    const seen = new Set(S.parts.map((x) => x.cat.toLowerCase() + '|' + x.name.toLowerCase()));
+    const add = rows.filter((x) => { const k = x.category.toLowerCase() + '|' + x.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).map((x) => Object.assign(x, { created_by: S.me }));
+    const done = await act(async () => { for (let i = 0; i < add.length; i += 300) ok(await sb.from('parts_catalog').insert(add.slice(i, i + 300))); }, add.length + ' parts imported' + (rows.length > add.length ? ' (' + (rows.length - add.length) + ' already in the list)' : ''));
+    if (done) { U.sheet = null; U.form = null; renderSheet(); render(); } else if (btn) btn.disabled = false;
+  },
+  async addToolM() { const el = document.getElementById('newtool2'); const name = ((el && el.value) || '').trim().replace(/\s+/g, ' '); if (!name) { if (el) el.focus(); return; } if (S.tools.some((t) => t.name.toLowerCase() === name.toLowerCase())) { toast('That tool is already in the list'); return; } await act(async () => ok(await sb.from('tools').insert({ name, created_by: S.me })), '“' + name + '” added'); const n = document.getElementById('newtool2'); if (n) n.focus(); },
+  pickStoreOpen() { U.sq = ''; U.sheet = 'pickstore'; renderSheet(); },
+  pickStore(v) { const d = S.draft; d.store = v; d.storeName = ''; if (d.err) d.err.store = ''; U.sheet = null; renderSheet(); render(); },
+  partsOpen(v) { U.pm = v; U.pq = ''; U.sheet = 'pickparts'; renderSheet(); },
+  ppToggle(n) {
+    if (U.pm === 'ticket') { const d = S.draft; const i = d.parts.indexOf(n); if (i >= 0) d.parts.splice(i, 1); else { d.parts.push(n); d.qty[n] = d.qty[n] || 1; } }
+    else { const j = job(S.view.id); const r = j.report; const onTicket = j.partItems.some((x) => x.name === n); const key = onTicket ? n : n + ' (added on site)'; const row = r.parts.find(([x]) => x === key); if (row) row[1] = row[1] > 0 ? 0 : 1; else r.parts.push([key, 1]); queueReport(j); }
+    refreshPartPick();
+  },
+  ppQty(n, el) {
+    const dlt = Number(el.dataset.d);
+    if (U.pm === 'ticket') { const d = S.draft; const q = (d.qty[n] || 1) + dlt; if (q < 1) { d.parts = d.parts.filter((x) => x !== n); delete d.qty[n]; } else d.qty[n] = q; }
+    else { const j = job(S.view.id); const row = j.report.parts.find(([x]) => x === n || x === n + ' (added on site)'); if (row) row[1] = Math.max(0, row[1] + dlt); queueReport(j); }
+    refreshPartPick();
+  },
+  async ppAddNew() {
+    const name = (U.pq || '').trim().replace(/\s+/g, ' '); if (!name) return;
+    if (U.pm === 'ticket') { if (!S.parts.some((x) => x.name.toLowerCase() === name.toLowerCase())) { const r = await sb.from('parts_catalog').insert({ name, category: '', created_by: S.me }).select('*').single(); if (!r.error && r.data) S.parts.push(toPart(r.data)); } const d = S.draft; if (!d.parts.includes(name)) { d.parts.push(name); d.qty[name] = 1; } }
+    else { const j = job(S.view.id); const key = name + ' (added on site)'; const row = j.report.parts.find(([x]) => x === key); if (row) row[1] = Math.max(1, row[1]); else j.report.parts.push([key, 1]); queueReport(j); }
+    U.pq = ''; renderSheet();
+  },
+  ppDone() { U.sheet = null; renderSheet(); render(); },
+  dpQty(n, el) { const d = S.draft; const q = (d.qty[n] || 1) + Number(el.dataset.d); if (q < 1) { d.parts = d.parts.filter((x) => x !== n); delete d.qty[n]; } else d.qty[n] = q; render(); },
+  schDay(v) { const d = S.draft; d.date = v; render(); },
+  schWeek(v) { const d = S.draft; const st = parseD(d.schStart); d.schStart = isoOf(new Date(st.getFullYear(), st.getMonth(), st.getDate() + 7 * Number(v))); render(); },
+  schTime(v) { const d = S.draft; d.time = v; save(); render(); },
+  openCal() { const i = document.getElementById('ddate'); if (!i) return; try { if (i.showPicker) { i.showPicker(); return; } } catch (e) { /* not allowed */ } i.focus(); i.click(); },
   focusJob(v) { S.focus = v; render(false); },
   pipeGo(v) { S.tab = 'overview'; S.view = null; S.region = S.insRegion; S.statusF = v; S.period = 2; render(false); },
   async reopenReport(v, btn) {
@@ -3003,6 +3300,7 @@ document.addEventListener('keydown', (e) => {
     if (!typing && !U.sheet && !S.view && (e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey) { A.tab('new'); return; }
     if (!typing && !U.sheet && !S.view && e.key === '/') { const n = document.getElementById('dsearch') || document.getElementById('lsearch'); if (n) { e.preventDefault(); n.focus(); } return; }
   }
+  if (e.key === 'Enter' && e.target && e.target.dataset && e.target.dataset.mtool) { e.preventDefault(); A.addToolM(); return; }
   const el = e.target; if (e.key !== 'Enter' || !el.dataset || !el.dataset.enter || !A[el.dataset.enter]) return;
   e.preventDefault(); A[el.dataset.enter]();
 });
@@ -3015,6 +3313,10 @@ document.addEventListener('input', (e) => {
   const el = e.target;
   if (el.dataset.deskSearch) { S[el.dataset.deskSearch === '1' ? 'q' : el.dataset.deskSearch] = el.value; const pos = el.selectionStart; const fid = el.id; render(); const n = document.getElementById(fid); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } } return; }
   if (el.dataset.abind2 && S.view && S.view.kind === 'report') { const j = job(S.view.id); j.report.apple = j.report.apple || {}; j.report.apple[el.dataset.abind2] = el.value; queueReport(j); if (S.step === 3) updateMissing(j); return; }
+  if (el.dataset.pq) { U.pq = el.value; refreshPartPick(); return; }
+  if (el.dataset.sq) { U.sq = el.value; const b = document.getElementById('splist'); if (b) b.innerHTML = storePickList(); return; }
+  if (el.dataset.mtool) return;
+  if (el.dataset.relist && U.form) { U.form[el.dataset.fbind] = el.value; const info = document.getElementById('impinfo'); if (info) { if (U.sheet === 'storeimport') { const pr = parseStoreList(el.value); info.textContent = pr.rows.length ? pr.rows.length + ' stores ready: ' + [0, 1, 2, 3].map((c) => pr.rows.filter((x) => x.country === c).length + ' ' + C[c].k).join(', ') + (pr.bad.length ? ' \u00b7 Lines not understood: ' + pr.bad.slice(0, 8).join(', ') : '') : 'Nothing to import yet.'; } else { const n = parsePartList(el.value).length; info.textContent = n ? n + ' parts ready' : 'Nothing to import yet.'; } const hb = overlay.querySelector('.sheet [data-a="importStores"], .sheet [data-a="importParts"]'); if (hb) { const n = U.sheet === 'storeimport' ? parseStoreList(el.value).rows.length : parsePartList(el.value).length; hb.textContent = 'Import' + (n ? ' ' + n : ''); } } return; }
   if (el.dataset.ubind != null && U.form && U.form.items) { U.form.items[+el.dataset.ubind].title = el.value; return; }
   if (el.dataset.unotes != null && U.form && U.form.items) { U.form.items[+el.dataset.unotes].notes = el.value; return; }
   if (el.dataset.pw) { pwRules(); return; }
@@ -3077,7 +3379,7 @@ document.addEventListener('change', (e) => {
       render();
     }).catch(() => toast('Couldn\u2019t read that photo. Try again.'));
   }
-  if (el.dataset.bind === 'date' && S.draft) render();
+  if (el.dataset.bind === 'date' && S.draft) { S.draft.schStart = null; render(); }
   if (el.dataset.tpart && S.draft) { const [hh, mm] = (S.draft.time || '09:00').split(':'); S.draft.time = el.dataset.tpart === 'h' ? el.value + ':' + (mm || '00') : (hh || '09') + ':' + el.value; save(); render(); }
 });
 window.addEventListener('pageshow', (e) => { if (e.persisted) quietRefresh(); });
