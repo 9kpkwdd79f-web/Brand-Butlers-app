@@ -484,6 +484,18 @@ body.desk .toast { left: calc(50% + 124px); bottom: 30px; }
 .sacct:hover { background: var(--fill); }
 .dhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-top: 4px; }
 .dtools { display: flex; align-items: center; gap: 12px; }
+.mtools { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.mtools .mbtn { width: 168px; flex: none; padding: 0 16px; white-space: nowrap; }
+.mimpw { min-height: 30px; display: flex; justify-content: flex-end; }
+.mimp { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; padding: 6px 2px; }
+.mimp svg { width: 16px; height: 16px; }
+body.desk .mhead { align-items: flex-start; }
+body.desk .mhead > div:first-child { padding-top: 6px; }
+.psel { position: relative; display: inline-flex; align-items: center; }
+.psel select { appearance: none; -webkit-appearance: none; min-height: 36px; padding: 0 34px 0 14px; border-radius: 18px; border: none; background: var(--fill); color: var(--fg); font: inherit; font-size: 15px; max-width: 280px; cursor: pointer; }
+.psel::after { content: ''; position: absolute; right: 14px; top: 50%; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-70%) rotate(45deg); pointer-events: none; opacity: .6; }
+.psel.on select { background: var(--fg); color: var(--bg); }
+.psel.on::after { color: var(--bg); }
 .dseg button { min-height: 40px !important; flex-direction: row !important; gap: 6px !important; font-size: 12px !important; }
 .kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-top: 22px; }
 .kpi { background: var(--card); border: 1.5px solid transparent; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; text-align: left; color: var(--fg); }
@@ -783,6 +795,7 @@ const LOGO = (s = 72) => `<svg class="logo" width="${s}" height="${s}" viewBox="
   ? `<text x="36" y="38" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="26" font-weight="700" letter-spacing="-1" fill="var(--bg)">BB</text><text x="36" y="56" text-anchor="middle" font-family="-apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif" font-size="12" font-weight="800" letter-spacing="1.5" fill="#FF9F0A">TEST</text>`
   : `<text x="36" y="46.5" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="30" font-weight="700" letter-spacing="-1" fill="var(--bg)">BB</text>`}</svg>`;
 const I = {
+  imp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>',
   chev: '<svg class="chev" viewBox="0 0 10 16" fill="none" stroke="var(--chev)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l6 6-6 6"/></svg>',
   back: '<svg width="10" height="17" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2L2 8l6 6"/></svg>',
   tick: (c = '#FFFFFF', s = 12) => `<svg width="${s}" height="${s}" viewBox="0 0 16 16" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>`,
@@ -1125,11 +1138,15 @@ function videoRow(v, extra) {
 }
 const MANAGE = [['people', 'People'], ['stores', 'Stores'], ['parts', 'Parts & tools'], ['videos', 'Videos & pictures']];
 const manageSeg = (cur, style) => `<div class="seg mseg" style="${style || 'margin-top:14px'}" role="group" aria-label="Section">${MANAGE.map(([k, l]) => `<button type="button" class="${cur === k ? 'on' : ''}" aria-pressed="${cur === k}" data-a="setManage" data-v="${k}">${l}</button>`).join('')}</div>`;
+// Same header on all four Manage pages: section switch + main button fixed top right, import link right under it
+function manageHead(cur, title, date, btn, importV) {
+  const imp = importV ? `<button type="button" class="link mimp" data-a="sheet" data-v="${importV}">${I.imp} Import a list</button>` : '';
+  if (isDesk()) return `<div class="dhead mhead"><div><div class="date">${date}</div><h1>${title}</h1></div><div class="mtools"><div class="dtools">${manageSeg(cur, 'width:520px;margin:0')}${btn.replace('class="btn', 'class="btn mbtn')}</div><div class="mimpw">${imp}</div></div></div>`;
+  return header('Manage', date) + manageSeg(cur) + `<div style="margin-top:16px">${btn}</div>${imp ? `<div style="text-align:center">${imp}</div>` : ''}`;
+}
 function adminVideos() {
   if (isDesk()) return videosDesk();
-  let h = header('Manage', 'Instructions for installers');
-  h += manageSeg('videos');
-  h += `<label class="btn" style="margin-top:16px;position:relative">+ Upload videos or pictures<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label>`;
+  let h = manageHead('videos', 'Videos & pictures', 'Instructions for installers', '<label class="btn" style="position:relative;cursor:pointer">+ Upload videos or pictures<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label>');
   h += `<p class="foot">Pick one or several at once. Short videos (up to 50 MB, about a minute) and pictures that you can add to templates and tickets. Installers see them under Video instructions.</p>`;
   const F = S.libF || 'all'; const list = S.videos.filter((v) => F === 'all' || (F === 'image' ? isPic(v) : !isPic(v)));
   h += `<h2 class="sec">Library \u00b7 ${S.videos.length}<span class="seg" style="display:inline-grid;width:auto;margin:0">${[['all', 'All'], ['video', 'Videos'], ['image', 'Pictures']].map(([k, l]) => `<button type="button" class="${F === k ? 'on' : ''}" style="padding:2px 10px;min-height:26px;font-size:12px;text-transform:none" data-a="setLibF" data-v="${k}">${l}</button>`).join('')}</span></h2><div class="group">${list.length ? list.map((v) => `<button type="button" class="row" data-a="openVideo" data-v="${v.id}">${videoRow(v)}${I.chev}</button>`).join('') : `<div class="row muted">${S.videos.length ? 'Nothing here yet.' : 'The library is empty. Upload the first videos or pictures above.'}</div>`}</div>`;
@@ -1140,14 +1157,11 @@ function adminTeam() {
   if (S.manage === 'stores') return adminStores();
   if (S.manage === 'parts') return adminParts();
   const list = S.users.filter((u) => u.active).sort((a, b) => (a.id === S.me ? -1 : b.id === S.me ? 1 : (a.name || a.email).localeCompare(b.name || b.email)));
-  let h = header('Manage', 'Accounts and access');
-  h += manageSeg('people');
+  let h = manageHead('people', 'People', isDesk() ? 'Manage' : 'Accounts and access', '<button type="button" class="btn" data-a="addPerson">+ Add person</button>');
   if (isDesk()) {
-    h = `<div class="dhead"><div><div class="date">Manage</div><h1>People</h1></div><div class="dtools">${manageSeg('people', 'width:520px;margin:0')}<button type="button" class="btn" style="width:auto;padding:0 20px" data-a="addPerson">+ Add person</button></div></div>`;
     h += `<table class="tbl" style="margin-top:20px"><thead><tr><th style="width:26%">Name</th><th style="width:28%">Email</th><th>Countries</th><th>Access</th><th>Status</th></tr></thead><tbody>${list.map((u) => `<tr class="r" data-a="openUser" data-v="${u.id}" tabindex="0"><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar" style="margin:0;width:32px;height:32px;font-size:12px">${initials(u.name || u.email)}</span><b class="ell" style="font-weight:600">${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted" style="font-weight:400">(you)</span>' : ''}</b></div></td><td class="ell">${esc(u.email)}</td><td>${(u.cs || [u.c]).map((c) => flag(c, 18, 13)).join(' ')}</td><td>${u.admin ? '<span class="pill p-blue">Admin</span> ' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}</td><td>${statusPill(u) || '<span class="pill p-green">Active</span>'}</td></tr>`).join('')}</tbody></table><p class="foot">${list.length} accounts. New people create their own password the first time they sign in. Click a row to edit, reset a password or remove someone.</p>`;
     return h;
   }
-  h += `<div style="margin-top:16px"><button type="button" class="btn" data-a="addPerson">+ Add person</button></div>`;
   h += `<h2 class="sec">Accounts · ${list.length}</h2><div class="group">${list.map((u) => `<button type="button" class="row" style="align-items:flex-start;padding-top:12px;padding-bottom:12px" data-a="openUser" data-v="${u.id}"><span class="avatar" style="margin:2px 0 0;width:38px;height:38px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || 'Name not set yet')}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub" style="word-break:break-all">${esc(u.email)}</span><span class="tags">${(u.cs || [u.c]).map((c) => flag(c, 16, 11)).join('')}${u.admin ? '<span class="pill p-blue">Admin</span>' : ''}${u.installer ? '<span class="pill p-grey">Installer</span>' : ''}${statusPill(u)}</span></span><span style="align-self:center">${I.chev}</span></button>`).join('')}</div>`;
   h += `<p class="foot">New people create their own password the first time they sign in. If someone forgets theirs, open their account and tap Reset password.</p>`;
   return h;
@@ -1347,14 +1361,16 @@ const programs = () => Array.from(new Set(S.stores.map((x) => x.program).filter(
 const storeLine = (st) => [st.addr, st.city && !String(st.addr || '').includes(st.city) ? st.city : ''].filter(Boolean).join(', ');
 const storeTags = (st) => `${st.appleId ? `<span class="tag">Apple ID ${esc(st.appleId)}</span>` : '<span class="tag warn">No Apple ID</span>'}${st.program ? `<span class="tag prog">${esc(st.program)}</span>` : ''}`;
 function adminStores() {
-  const q = (S.stQ || '').trim().toLowerCase(); const F = S.stF == null ? 4 : S.stF;
-  const list = S.stores.filter((x) => (F === 4 || x.c === F) && (!q || [x.name, x.addr, x.city, x.appleId, x.program].join(' ').toLowerCase().includes(q))).sort((a, b) => a.c - b.c || a.name.localeCompare(b.name));
+  const q = (S.stQ || '').trim().toLowerCase(); const F = S.stF == null ? 4 : S.stF; const P = S.stP || '';
+  const inC = S.stores.filter((x) => F === 4 || x.c === F);
+  const progs = Array.from(new Set(inC.map((x) => x.program).filter(Boolean))).sort((a, b) => inC.filter((x) => x.program === b).length - inC.filter((x) => x.program === a).length || a.localeCompare(b));
+  const list = inC.filter((x) => (!P || x.program === P) && (!q || [x.name, x.addr, x.city, x.appleId, x.program].join(' ').toLowerCase().includes(q))).sort((a, b) => a.c - b.c || a.name.localeCompare(b.name));
   const desk = isDesk();
-  let h = desk ? `<div class="dhead"><div><div class="date">Manage</div><h1>Stores</h1></div><div class="dtools">${manageSeg('stores', 'width:520px;margin:0')}</div></div>` : header('Manage', 'Stores') + manageSeg('stores');
+  let h = manageHead('stores', 'Stores', desk ? 'Manage' : 'Stores', '<button type="button" class="btn" data-a="storeNew">+ Add store</button>', 'storeimport');
   h += `<div class="dtbar" style="margin-top:16px"><input class="box dsearch" style="flex:1 1 260px" id="stsearch" data-desk-search="stQ" value="${esc(S.stQ || '')}" placeholder="Search name, city, Apple ID or program" aria-label="Search stores" autocomplete="off">
-    <div class="chips" style="margin:0">${[4, 0, 1, 2, 3].map((c) => `<button type="button" class="chip ${F === c ? 'on' : ''}" data-a="set" data-k="stF" data-v="${c}">${c === 4 ? 'All' : flag(c, 16, 11) + ' ' + C[c].name} <span class="num" style="opacity:.6">${c === 4 ? S.stores.length : S.stores.filter((x) => x.c === c).length}</span></button>`).join('')}</div></div>
-    <div class="btn2" style="margin-top:10px${desk ? ';max-width:420px' : ''}"><button type="button" class="btn small" data-a="storeNew">+ Add store</button><button type="button" class="btn small sec" data-a="sheet" data-v="storeimport">Import a list</button></div>`;
-  if (!list.length) return h + `<div class="empty" style="margin-top:16px"><b>${S.stores.length ? 'No stores match' : 'No stores yet'}</b><span>${S.stores.length ? 'Try another search or country.' : 'Add stores one by one, or import a whole list at once.'}</span></div>`;
+    <div class="chips" style="margin:0">${[4, 0, 1, 2, 3].map((c) => `<button type="button" class="chip ${F === c ? 'on' : ''}" data-a="set" data-k="stF" data-v="${c}">${c === 4 ? 'All' : flag(c, 16, 11) + ' ' + C[c].name} <span class="num" style="opacity:.6">${c === 4 ? S.stores.length : S.stores.filter((x) => x.c === c).length}</span></button>`).join('')}</div>
+    <label class="psel ${P ? 'on' : ''}"><span class="vh">Program</span><select data-setk="stP" aria-label="Filter on program"><option value="">All programs · ${inC.length}</option>${progs.map((x) => `<option value="${esc(x)}" ${x === P ? 'selected' : ''}>${esc(x)} · ${inC.filter((y) => y.program === x).length}</option>`).join('')}${P && !progs.includes(P) ? `<option value="${esc(P)}" selected>${esc(P)} · 0</option>` : ''}</select></label></div>`;
+  if (!list.length) return h + `<div class="empty" style="margin-top:16px"><b>${S.stores.length ? 'No stores match' : 'No stores yet'}</b><span>${S.stores.length ? 'Try another search, country or program.' : 'Add stores one by one, or import a whole list at once.'}</span></div>`;
   if (desk) return h + `<table class="tbl" style="margin-top:16px"><thead><tr><th style="width:30%">Store</th><th>City</th><th>Apple ID</th><th>Program</th><th style="width:120px">Country</th></tr></thead><tbody>${list.map((x) => `<tr class="r" data-a="storeEdit" data-v="${x.id}" tabindex="0"><td><b style="font-weight:600">${esc(x.name)}</b>${x.addr ? `<div class="muted ell" style="font-size:12px">${esc(x.addr)}</div>` : ''}</td><td>${esc(x.city || cityFrom(x.addr))}</td><td class="num">${x.appleId ? esc(x.appleId) : '<span class="muted">–</span>'}</td><td>${x.program ? `<span class="tag prog">${esc(x.program)}</span>` : '<span class="muted">–</span>'}</td><td>${flag(x.c, 18, 13)} ${C[x.c].name}</td></tr>`).join('')}</tbody></table><p class="foot">${list.length} ${list.length === 1 ? 'store' : 'stores'}. Click a row to edit.</p>`;
   return h + [0, 1, 2, 3].filter((c) => list.some((x) => x.c === c)).map((c) => `<h2 class="sec">${C[c].name} · ${list.filter((x) => x.c === c).length}</h2><div class="group">${list.filter((x) => x.c === c).map((x) => `<button type="button" class="row" data-a="storeEdit" data-v="${x.id}"><span class="grow"><span>${esc(x.name)}</span><span class="sub">${esc(storeLine(x))}</span><span class="tags">${storeTags(x)}</span></span>${I.chev}</button>`).join('')}</div>`).join('');
 }
@@ -1395,10 +1411,9 @@ function adminParts() {
   const q = (S.ptQ || '').trim().toLowerCase(); const desk = isDesk();
   const list = S.parts.filter((x) => !q || (x.name + ' ' + x.cat).toLowerCase().includes(q)).sort(partSort);
   const cats = Array.from(new Set(list.map((x) => x.cat)));
-  let h = desk ? `<div class="dhead"><div><div class="date">Manage</div><h1>Parts & tools</h1></div><div class="dtools">${manageSeg('parts', 'width:520px;margin:0')}</div></div>` : header('Manage', 'Parts & tools') + manageSeg('parts');
+  let h = manageHead('parts', 'Parts & tools', desk ? 'Manage' : 'Parts & tools', '<button type="button" class="btn" data-a="partNew">+ Add part</button>', 'partimport');
   h += `<div class="${desk ? 'ptgrid' : ''}"><div>`;
-  h += `<h2 class="sec">Parts catalogue · ${S.parts.length}</h2><input class="box" id="ptsearch" data-desk-search="ptQ" value="${esc(S.ptQ || '')}" placeholder="Search parts" aria-label="Search parts" autocomplete="off" style="height:42px">
-    <div class="btn2" style="margin-top:10px"><button type="button" class="btn small" data-a="partNew">+ Add part</button><button type="button" class="btn small sec" data-a="sheet" data-v="partimport">Import a list</button></div>`;
+  h += `<h2 class="sec">Parts catalogue · ${S.parts.length}</h2><input class="box" id="ptsearch" data-desk-search="ptQ" value="${esc(S.ptQ || '')}" placeholder="Search parts" aria-label="Search parts" autocomplete="off" style="height:42px">`;
   h += list.length ? cats.map((c) => `<h2 class="sec">${esc(c || 'Other')} · ${list.filter((x) => x.cat === c).length}</h2><div class="group">${list.filter((x) => x.cat === c).map((x) => `<button type="button" class="row" data-a="partEdit" data-v="${x.id}"><span class="grow">${esc(x.name)}</span>${I.chev}</button>`).join('')}</div>`).join('')
     : `<div class="empty" style="margin-top:12px"><b>${S.parts.length ? 'No parts match' : 'No parts yet'}</b><span>${S.parts.length ? 'Try another search.' : 'Import the full parts list at once, or add parts one by one.'}</span></div>`;
   h += `<p class="foot">Admins pick from this list on tickets. Installers pick from it when they replaced something that wasn’t on the ticket.</p></div><div>`;
@@ -1566,7 +1581,7 @@ function videosDesk() {
   const used = (v) => S.jobs.some((j) => j.videos.includes(v.id)) || S.templates.some((t) => t.videos.includes(v.id));
   const fl = { all: () => true, video: (v) => !isPic(v), image: isPic, used, unused: (v) => !used(v), edited: isEdited };
   const list = S.videos.filter(fl[F] || fl.all).filter((v) => !q || (v.title + ' ' + v.notes).toLowerCase().includes(q));
-  let h = `<div class="dhead"><div><div class="date">Instructions for installers</div><h1>Videos & pictures</h1></div><div class="dtools">${manageSeg('videos', 'width:520px;margin:0')}<label class="btn" style="width:auto;padding:0 22px;position:relative;cursor:pointer">+ Upload<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label></div></div>`;
+  let h = manageHead('videos', 'Videos & pictures', 'Instructions for installers', '<label class="btn" style="position:relative;cursor:pointer">+ Upload<input type="file" accept="video/*,image/*" multiple data-video-file="library" class="vh"></label>');
   const cnt = (k) => S.videos.filter(fl[k]).length;
   h += `<div class="dtbar" style="margin-top:20px"><input class="box dsearch" style="flex:1 1 320px" id="lsearch" data-desk-search="libQ" value="${esc(S.libQ || '')}" placeholder="Search titles and notes" aria-label="Search the library" autocomplete="off">
     <div class="chips" style="margin:0">${[['all', 'All'], ['video', 'Videos'], ['image', 'Pictures'], ['used', 'Used'], ['unused', 'Not used yet'], ['edited', 'Edited']].map(([k, l]) => `<button type="button" class="chip ${F === k ? 'on' : ''}" aria-pressed="${F === k}" data-a="setLibF" data-v="${k}">${l} <span class="num" style="opacity:.6">${cnt(k)}</span></button>`).join('')}</div></div>`;
@@ -3353,6 +3368,7 @@ function pickFiles(files, back) {
 }
 document.addEventListener('change', (e) => {
   const el = e.target;
+  if (el.dataset.setk) { S[el.dataset.setk] = el.value; render(); return; }
   if (el.dataset.videoFile) {
     const files = Array.from(el.files || []); const back = el.dataset.videoFile; el.value = ''; pickFiles(files, back);
     return;
