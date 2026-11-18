@@ -1221,7 +1221,7 @@ function exportButtons(j) {
   const np = reportPhotos(j).length, nv = reportVideos(j).length;
   return `<div class="group">
     <button type="button" class="row" data-a="dlReport" data-v="${j.id}" data-m="statement"><span class="ico" style="background:var(--blue-bg)">${small(TABICON.approvals, 'var(--blue)')}</span><span class="grow"><span>Statement of completion</span><span class="sub">PDF · page 1 only, no photos</span></span>${I.chev}</button>
-    ${np ? `<button type="button" class="row" data-a="dlReport" data-v="${j.id}" data-m="photos"><span class="ico" style="background:var(--green-bg)">${I.cam.replace('width="26" height="26"', 'width="16" height="16"').replace('currentColor', 'var(--green)')}</span><span class="grow"><span>Photo appendix</span><span class="sub">PDF · all ${np} photos with the ticket details on top</span></span>${I.chev}</button>
+    ${np ? `<button type="button" class="row" data-a="dlReport" data-v="${j.id}" data-m="photos"><span class="ico" style="background:var(--green-bg)">${I.cam.replace('width="26" height="26"', 'width="16" height="16"').replace('currentColor', 'var(--green)')}</span><span class="grow"><span>Photo report</span><span class="sub">PDF · before & after and overview photos (${np})</span></span>${I.chev}</button>
     <button type="button" class="row" data-a="dlPhotos" data-v="${j.id}"><span class="ico" style="background:var(--fill)">${I.cam.replace('width="26" height="26"', 'width="16" height="16"').replace('currentColor', 'var(--fg2)')}</span><span class="grow"><span>Pictures one by one</span><span class="sub">${np} JPEG files</span></span>${I.chev}</button>` : ''}
     ${nv ? `<button type="button" class="row" data-a="dlVideos" data-v="${j.id}"><span class="ico" style="background:var(--fill)">${I.play.replace('rgba(0,0,0,0.55)', 'var(--fg2)')}</span><span class="grow"><span>Videos one by one</span><span class="sub">${nv} ${nv === 1 ? 'video' : 'videos'}</span></span>${I.chev}</button>` : ''}
   </div>`;
@@ -1236,7 +1236,7 @@ function approvedList(desk) {
   if (back.length) h += `<h2 class="sec">Sent back for changes \u00b7 ${back.length}</h2><div class="group">${back.map((j) => `<button type="button" class="row${desk && S.panel && S.panel.id === j.id ? ' rsel' : ''}" data-a="openApproval" data-v="${j.id}">${flag(j.c)}<span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} \u00b7 ${esc(nameOf(j.installer))}</span></span>${pillFor(j)}</button>`).join('')}</div>`;
   h += `<h2 class="sec">Approved \u00b7 ${all.length}</h2>${all.length > 5 || q ? `<input class="box" id="apsearch" data-desk-search="apQ" value="${esc(S.apQ || '')}" placeholder="Search store, ticket or installer" aria-label="Search approved reports" autocomplete="off" style="height:42px;margin-bottom:8px">` : ''}
     <div class="group">${list.length ? list.map(row).join('') : `<div class="row muted">${all.length ? 'No approved reports match.' : 'Nothing approved yet.'}</div>`}</div>
-    <p class="foot">Export: the statement of completion and the photo appendix as separate PDFs, or the pictures and videos one by one.</p>`;
+    <p class="foot">Export: the statement of completion and the photo report as separate PDFs, or the pictures and videos one by one.</p>`;
   return h;
 }
 /* ---------- desktop: new ticket ---------- */
@@ -2331,7 +2331,7 @@ async function signatureRow(doc, k, j, top) {
 }
 async function buildPdf(j, mode) {
   const jsPDF = await loadPdfLib(); const r = j.report; if (!r || r.draft) throw new Error('There is no submitted report for this ticket yet.');
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' }); const k = pdfKit(doc); const { T, font, base } = k;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: mode === 'photos' ? 'landscape' : 'portrait' }); const k = pdfKit(doc); const { T, font, base } = k;
   doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.8); doc.setTextColor(0, 0, 0);
   if (mode === 'photos') return await photoAppendix(doc, k, j);
   doc.addImage(await letterhead(), 'PNG', 20.5, 29, 553.6, 783, 'letterhead', 'FAST');
@@ -2371,14 +2371,32 @@ async function buildPdf(j, mode) {
   font('italic', 5.58); T('Page 1/1', 490.3, base(783.3, 5.58));
   return doc;
 }
-/* Photo appendix: the same job details and both signatures on top, then the photos. No questions and answers, no logos. */
+/* Photo report: an exact copy of the client's "Reactive Maintenance Report" photo pages (A4 landscape, measured from their PDF).
+   One "BEFORE & AFTER Photos" page per angle, then the other photos two per page as "AFTER OVERVIEW Photos". */
+const imgData = async (url) => { const b = await (await fetch(url)).blob(); return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(b); }); };
 async function photoAppendix(doc, k, j) {
-  const { T, font, base } = k; const W = 595.28;
-  const bar = () => { doc.setFillColor(68, 102, 175); doc.rect(56.4, 61.1, 485.3, 21.4, 'F'); doc.setTextColor(255, 255, 255); font('bold', 11.8); T('PHOTO APPENDIX', W / 2, 76.2, { align: 'center' }); doc.setTextColor(0, 0, 0); };
-  bar();
-  let y = factsTable(doc, k, jobFacts(j), 100);
-  y = await signatureRow(doc, k, j, y);
-  await photoPages(doc, j, { X0: 57.4, X1: 537.2, T, font }, y + 18);
+  const { T, font, base } = k; const r = j.report; const st = S.stores.find((x) => x.id === j.storeId) || {};
+  const [bar, logo] = await Promise.all([imgData('report/photo-bar.png'), imgData('report/apple-logo.png')]);
+  const right = 'Apple ID: ' + (st.appleId || '') + ' ' + C[j.c].name.toUpperCase();
+  const pages = [];
+  ANGLES.forEach((a, i) => { const b = r.photos.before[i], af = r.photos.after[i]; if (b || af) pages.push({ title: 'BEFORE & AFTER Photos', keys: [b && b.k, af && af.k], caps: ['Before', 'After'] }); });
+  const rest = (r.extras || []).filter((x) => x.kind === 'image').map((x) => x.k).concat((r.disposal || []).map((x) => x.k));
+  for (let i = 0; i < rest.length; i += 2) pages.push({ title: 'AFTER OVERVIEW Photos', keys: rest.slice(i, i + 2), caps: [] });
+  const BOX = [[111.48, 74.09], [516.66, 74.09]], BW = 213.75, BH = 380;
+  for (let n = 0; n < pages.length; n++) {
+    const pg = pages[n]; if (n > 0) doc.addPage('a4', 'landscape');
+    doc.setTextColor(0, 0, 0); font('bold', 14);
+    T(pg.title, 17.37, base(20.16, 14)); T(right, 824.52, base(20.16, 14), { align: 'right' });
+    doc.addImage(bar, 'PNG', 17.37, 38.07, 807.15, 28.83, 'photobar', 'FAST');
+    const ims = await Promise.all(pg.keys.map((key) => (key ? pdfImage(key, 1600, false).catch(() => null) : null)));
+    ims.forEach((im, i) => {
+      if (!im) return; const [bx, by] = BOX[i]; const sc = Math.min(BW / im.w, BH / im.h); const w = im.w * sc, h = im.h * sc;
+      doc.addImage(im.d, im.f, bx + (BW - w) / 2, by + (BH - h) / 2, w, h);
+      if (pg.caps[i]) { font('bold', 14); T(pg.caps[i], bx + BW / 2, base(464.07, 14), { align: 'center' }); }
+    });
+    font('bold', 9); T('Reactive Maintenance Report – Dynamic Resources', 14.17, base(571.64, 9));
+    doc.addImage(logo, 'PNG', 813.54, 566.93, 14.18, 17.22, 'applelogo', 'FAST');
+  }
   return doc;
 }
 function pageNumbers(doc, font, T) { const n = doc.getNumberOfPages(); for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setTextColor(0, 0, 0); font('italic', 5.58); T(`Page ${i}/${n}`, 490.3, 783.3 + 5.58 * 0.793); } }
@@ -2406,7 +2424,7 @@ async function downloadReport(id, mode) {
   const j = job(id); if (!j) throw new Error('Ticket not found.');
   if (mode === 'photos' && !reportPhotos(j).length) throw new Error('This report has no pictures.');
   const doc = await buildPdf(j, mode);
-  const name = ((mode === 'photos' ? 'Photo appendix WO ' : 'Statement of completion WO ') + j.ticket + ' ' + j.store).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.pdf';
+  const name = mode === 'photos' ? String(j.ticket).replace(/[\\/:*?"<>|\s]+/g, '') + '-Report.pdf' : ('Statement of completion WO ' + j.ticket + ' ' + j.store).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() + '.pdf';
   const blob = doc.output('blob'); const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
