@@ -422,6 +422,9 @@ div.pfh { cursor: default; }
 .pff .link { font-size: 14px; padding: 2px; }
 .pfadd { display: block; width: 100%; text-align: left; padding: 12px 16px 12px 68px; border: none; border-top: 0.5px solid var(--sep); background: none; color: var(--blue); font-size: 15px; cursor: pointer; }
 .pfadd .muted { font-size: 13px; }
+.pftags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.pf { position: relative; }
+.pfedit { position: absolute; right: 16px; bottom: 10px; border: none; background: none; color: var(--blue); font-size: 13px; padding: 2px; cursor: pointer; }
 .pfsupport { display: flex; align-items: center; gap: 14px; margin-top: 10px; padding: 10px 16px; border-radius: 14px; background: var(--card); font-size: 15px; font-weight: 500; }
 .pfsupport .pfi { width: 32px; height: 32px; border-radius: 10px; }
 .pfnew { border-radius: 12px; border: none; color: var(--blue); margin-bottom: 8px; }
@@ -440,8 +443,10 @@ div.pfh { cursor: default; }
 body.desk .sheet:has(#pplist), body.desk .sheet:has(#splist) { width: 680px; }
 .ptgrid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr); gap: 28px; align-items: start; }
 .sched { background: var(--card); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; }
-body.desk .ntc .schm, body.desk .ntc .schsp { display: none; }
-body.desk .ntc .sch-in { padding: 10px; }
+/* Store and Installer side by side, same height; When stretches across both underneath */
+body.desk .ntc.pair { display: flex; flex-direction: column; align-self: stretch; }
+body.desk .ntc.pair > .pf { flex: 1; display: flex; flex-direction: column; }
+body.desk .ntc.pair > .pf > .pfh { flex: 1; }
 .sch-in { border-top: 0.5px solid var(--sep); border-radius: 0; padding: 10px 12px 12px; background: none; }
 .schsum { text-transform: none; letter-spacing: 0; color: var(--fg); font-size: 13px; font-weight: 600; }
 .sch { background: var(--card); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -1150,10 +1155,9 @@ function adminNew() {
   cut('country');
   const stSel = S.stores.find((x) => x.id === d.store && x.c === d.c);
   h += `<h2 class="sec">Store</h2>` + (stSel
-    ? pf({ a: 'pickStoreOpen', ico: I.pfStore, title: esc(stSel.name), sub: esc(storeLine(stSel)) || 'No address yet', btn: 'Change', err: E.store,
-      body: `<div class="pff"><span class="tags">${storeTags(stSel)}</span><button type="button" class="link" data-a="storeEdit" data-v="${stSel.id}" data-back="ticket">Edit details</button></div>` })
+    ? pf({ a: 'pickStoreOpen', ico: I.pfStore, title: esc(stSel.name), sub: (esc(storeLine(stSel)) || 'No address yet') + `<span class="tags pftags">${storeTags(stSel)}</span>`, btn: 'Change', err: E.store,
+      body: `<button type="button" class="pfedit" data-a="storeEdit" data-v="${stSel.id}" data-back="ticket">Edit details</button>` })
     : pf({ a: 'pickStoreOpen', ico: I.pfStore, title: d.storeName ? esc(d.storeName) : 'Choose a store', sub: d.storeName ? 'Not in the store list – choose it from the list' : storesFor(d.c).length + ' stores in ' + C[d.c].name, btn: 'Choose', empty: true, err: E.store })) + errL('store');
-  h += `<div class="pfsupport"><span class="pfi" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span>Support: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · the installer can call or text</span></span></div>`;
   cut('store');
   h += scheduleBlock(d, editing);
   cut('when');
@@ -1576,8 +1580,8 @@ function ppCount() { if (U.pm === 'ticket') { const k = S.draft.parts.length; re
 /* ---------- desktop: new ticket ---------- */
 function newDesk(d, PT, editing) {
   const head = editing ? PT.head : `<div class="dhead"><div><div class="date">Client: Apple</div><h1>New ticket</h1></div></div>`;
-  const cell = (x, full) => `<div class="ntc${full ? ' full' : ''}">${x}</div>`;
-  return head + `<div class="dgrid nt"><div class="dmain ntform">${cell(PT.ticket)}${cell(PT.country)}${cell(PT.store)}${cell(PT.inst + PT.when)}${cell(PT.tpl + PT.tplsave, true)}${cell(PT.tools)}${cell(PT.parts)}${cell(PT.videos)}${cell(PT.note)}${cell(PT.price, true)}</div>
+  const cell = (x, full, k) => `<div class="ntc${full ? ' full' : ''}${k ? ' ' + k : ''}">${x}</div>`;
+  return head + `<div class="dgrid nt"><div class="dmain ntform">${cell(PT.ticket)}${cell(PT.country)}${cell(PT.store, false, 'pair')}${cell(PT.inst, false, 'pair')}${cell(PT.when, true)}${cell(PT.tpl + PT.tplsave, true)}${cell(PT.tools)}${cell(PT.parts)}${cell(PT.videos)}${cell(PT.note)}${cell(PT.price, true)}</div>
     <div class="dright"><div id="ntsum" class="dpanel ntsum">${ntSummary(d, editing)}</div></div></div>`;
 }
 function ntSummary(d, editing) {
@@ -1598,7 +1602,6 @@ function ntSummary(d, editing) {
     <div class="group" style="margin-top:12px">
       <div class="row"><span class="ico" style="background:var(--blue-bg)">${small(TABICON.jobs, 'var(--blue)')}</span><span class="grow"><span>${d.date ? esc(whenLabel({ date: d.date, time: d.time || '' })) : 'No date'}</span>${st && st.addr ? `<span class="sub">${esc(st.addr)}</span>` : ''}</span></div>
       <div class="row">${d.lead ? `<span class="avatar" style="margin:0;width:32px;height:32px;font-size:12px">${initials(nameOf(d.lead))}</span><span class="grow"><span>${esc(nameOf(d.lead))}${per === 2 ? ' + ' + esc(first(nameOf(d.second))) : ''}</span><span class="sub">Gets it in the app right away</span></span>` : '<span class="grow muted">No installer chosen</span>'}</div>
-      <div class="row">${flag(d.c, 24, 17)}<span class="grow"><span>Support: ${esc(C[d.c].support[0])}</span></span></div>
     </div>
     <div class="chips" style="margin-top:12px"><span class="chip sm">${d.tools.length} ${d.tools.length === 1 ? 'tool' : 'tools'}</span><span class="chip sm">${d.parts.length} ${d.parts.length === 1 ? 'part' : 'parts'}</span>${vs.length ? `<span class="chip sm" style="color:var(--blue-fg);background:var(--blue-bg)">▶ ${countLabel(vs)}</span>` : ''}</div>
     <div style="display:flex;justify-content:space-between;margin-top:16px;font-size:14px"><span class="muted">Price split</span><b class="num">${cur + ' ' + fmt(sp.price)}</b></div>
