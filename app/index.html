@@ -440,6 +440,8 @@ div.pfh { cursor: default; }
 body.desk .sheet:has(#pplist), body.desk .sheet:has(#splist) { width: 680px; }
 .ptgrid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr); gap: 28px; align-items: start; }
 .sched { background: var(--card); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; }
+body.desk .ntc .schm, body.desk .ntc .schsp { display: none; }
+body.desk .ntc .sch-in { padding: 10px; }
 .sch-in { border-top: 0.5px solid var(--sep); border-radius: 0; padding: 10px 12px 12px; background: none; }
 .schsum { text-transform: none; letter-spacing: 0; color: var(--fg); font-size: 13px; font-weight: 600; }
 .sch { background: var(--card); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -1575,7 +1577,7 @@ function ppCount() { if (U.pm === 'ticket') { const k = S.draft.parts.length; re
 function newDesk(d, PT, editing) {
   const head = editing ? PT.head : `<div class="dhead"><div><div class="date">Client: Apple</div><h1>New ticket</h1></div></div>`;
   const cell = (x, full) => `<div class="ntc${full ? ' full' : ''}">${x}</div>`;
-  return head + `<div class="dgrid nt"><div class="dmain ntform">${cell(PT.ticket)}${cell(PT.country)}${cell(PT.store)}${cell(PT.inst)}${cell(PT.when, true)}${cell(PT.tpl + PT.tplsave, true)}${cell(PT.tools)}${cell(PT.parts)}${cell(PT.videos)}${cell(PT.note)}${cell(PT.price, true)}</div>
+  return head + `<div class="dgrid nt"><div class="dmain ntform">${cell(PT.ticket)}${cell(PT.country)}${cell(PT.store)}${cell(PT.inst + PT.when)}${cell(PT.tpl + PT.tplsave, true)}${cell(PT.tools)}${cell(PT.parts)}${cell(PT.videos)}${cell(PT.note)}${cell(PT.price, true)}</div>
     <div class="dright"><div id="ntsum" class="dpanel ntsum">${ntSummary(d, editing)}</div></div></div>`;
 }
 function ntSummary(d, editing) {
