@@ -440,6 +440,7 @@ div.pfh { cursor: default; }
 body.desk .sheet:has(#pplist), body.desk .sheet:has(#splist) { width: 680px; }
 .ptgrid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr); gap: 28px; align-items: start; }
 .sched { background: var(--card); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; }
+.sch-in { border-top: 0.5px solid var(--sep); border-radius: 0; padding: 10px 12px 12px; background: none; }
 .schsum { text-transform: none; letter-spacing: 0; color: var(--fg); font-size: 13px; font-weight: 600; }
 .sch { background: var(--card); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .schr { display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -847,7 +848,8 @@ const userBy = (id) => S.users.find((u) => u.id === id);
 const meU = () => userBy(S.me);
 const nameOf = (id) => { const u = userBy(id); return u ? (u.name || u.email) : (NAMES[id] || 'Removed user'); };
 const validEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
-const installers = (c) => S.users.filter((u) => u.installer && u.active).sort((a, b) => (((a.cs || [a.c]).includes(c) ? 0 : 1) - ((b.cs || [b.c]).includes(c) ? 0 : 1)) || (a.name || a.email).localeCompare(b.name || b.email));
+// installers only show up for the countries they belong to (Manage → person → Countries)
+const installers = (c) => S.users.filter((u) => u.installer && u.active && (u.cs || [u.c]).includes(c)).sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
 const storesFor = (c) => S.stores.filter((s) => s.c === c).sort((a, b) => a.name.localeCompare(b.name));
 const flag = (c, w = 20, h = 14) => { const f = C[c].flag; return `<svg width="${w}" height="${h}" viewBox="0 0 22 16" aria-hidden="true" style="border-radius:2px;flex-shrink:0;box-shadow:0 0 0 0.5px rgba(0,0,0,0.2)"><rect width="22" height="16" fill="${f[0]}"/><rect x="6" width="4" height="16" fill="${f[1]}"/><rect y="6" width="22" height="4" fill="${f[1]}"/><rect x="7" width="2" height="16" fill="${f[2]}"/><rect y="7" width="22" height="2" fill="${f[2]}"/></svg>`; };
 const nordicMark = (w = 24, h = 16) => `<svg width="${w}" height="${h}" viewBox="0 0 30 20" aria-hidden="true"><rect width="16" height="11" rx="1.5" fill="#BA0C2F"/><rect x="4.4" width="2.9" height="11" fill="#fff"/><rect y="4.1" width="16" height="2.9" fill="#fff"/><rect x="5.1" width="1.5" height="11" fill="#00205B"/><rect y="4.8" width="16" height="1.5" fill="#00205B"/><g transform="translate(7 4.5)"><rect width="16" height="11" rx="1.5" fill="#006AA7" stroke="#fff" stroke-width="0.8"/><rect x="4.4" width="2.9" height="11" fill="#FECC02"/><rect y="4.1" width="16" height="2.9" fill="#FECC02"/></g><g transform="translate(14 9)"><rect width="16" height="11" rx="1.5" fill="#C8102E" stroke="#fff" stroke-width="0.8"/><rect x="4.4" width="2.9" height="11" fill="#fff"/><rect y="4.1" width="16" height="2.9" fill="#fff"/></g></svg>`;
@@ -1141,14 +1143,14 @@ function adminNew() {
   const avail = (id) => { const n = dayJobs(id); return d.date ? (n.length ? n.length + (n.length === 1 ? ' job' : ' jobs') + ' that day · ' + n.map((j) => j.time).filter(Boolean).sort().join(', ') : 'Free that day') : ''; };
   const av = (id) => `<span class="avatar pfav">${initials(nameOf(id))}</span>`;
   if (lockInstaller) h += pf({ ico: av(d.lead), title: esc(nameOf(d.lead)) + (d.second ? ' + ' + esc(nameOf(d.second)) : ''), sub: 'Can’t be changed after the report is started', btn: '', lock: true });
-  else if (!ins.length) h += pf({ a: 'tab', v: 'team', ico: I.pfPerson, title: 'No installers yet', sub: 'Add people with installer access under Manage → People', btn: 'People', empty: true });
+  else if (!ins.length) h += pf({ a: 'tab', v: 'team', ico: I.pfPerson, title: 'No installers in ' + C[d.c].name, sub: 'Give someone installer access for ' + C[d.c].name + ' under Manage → People', btn: 'People', empty: true });
   else {
     let body = '';
     if (d.lead && d.secondOn && d.second) body = `<div class="pfr">${av(d.second)}<span class="grow"><span>${esc(nameOf(d.second))} <span class="tag">Second</span></span><span class="sub">${esc(avail(d.second))} · the installer amount is split</span></span><button type="button" class="pfx" aria-label="Remove second installer" data-a="draftNoSecond">${I.x}</button></div>`;
     else if (d.lead && ins.length > 1) body = `<button type="button" class="pfadd" data-a="instOpen" data-v="second">+ Add a second installer <span class="muted">· rarely needed</span></button>`;
     h += d.lead
       ? pf({ a: 'instOpen', v: 'lead', ico: av(d.lead), title: esc(nameOf(d.lead)) + (d.lead === S.me ? ' <span class="muted">(you)</span>' : '') + (d.second ? ' <span class="tag">Lead</span>' : ''), sub: esc(avail(d.lead)), btn: 'Change', err: E.installer, body })
-      : pf({ a: 'instOpen', v: 'lead', ico: I.pfPerson, title: 'Choose an installer', sub: ins.length + (ins.length === 1 ? ' installer' : ' installers') + ' · see who is free that day', btn: 'Choose', empty: true, err: E.installer });
+      : pf({ a: 'instOpen', v: 'lead', ico: I.pfPerson, title: 'Choose an installer', sub: ins.length + (ins.length === 1 ? ' installer' : ' installers') + ' in ' + C[d.c].name + ' · see who is free', btn: 'Choose', empty: true, err: E.installer });
   }
   h += errL('installer');
   cut('inst');
@@ -1372,13 +1374,16 @@ function scheduleBlock(d, editing) {
   const dayBtn = (dt) => { const iso = isoOf(dt); const n = onDay(iso).length; return `<button type="button" class="sd${iso === d.date ? ' on' : ''}${iso === isoOf(t0) ? ' today' : ''}${dt < t0 ? ' past' : ''}" data-a="schDay" data-v="${iso}" aria-pressed="${iso === d.date}" aria-label="${WD[dt.getDay()]} ${dt.getDate()} ${MO[dt.getMonth()]}${n ? ', ' + n + ' booked' : ''}"><span>${WD[dt.getDay()].slice(0, 2)}</span><b class="num">${dt.getDate()}</b>${n ? '<i></i>' : ''}</button>`; };
   const slots = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
   const opt = (n, v) => Array.from({ length: n }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${v === x ? 'selected' : ''}>${x}</option>`).join('');
-  return `<h2 class="sec">When<span class="schsum">${WD[sel.getDay()]} ${sel.getDate()} ${MO[sel.getMonth()]} · <span class="num">${esc(d.time || '')}</span> <span class="muted">· ${rel2}</span></span></h2><div class="sch">
+  const status = booked.length ? (clash.length ? `<span style="color:var(--orange)">Close to another visit (${clash.map((j) => esc(j.time)).join(', ')})</span>` : booked.length + ' other ' + (booked.length === 1 ? 'visit' : 'visits') + ' that day') : 'Free that day' + (people.length ? ' for ' + esc(who) : '');
+  const head = pf({ a: 'schToggle', ico: small(TABICON.jobs, 'currentColor').replace('width="16" height="16"', 'width="21" height="21"'), title: `${WD[sel.getDay()]} ${sel.getDate()} ${MO[sel.getMonth()]} · <span class="num">${esc(d.time || '')}</span>`, sub: rel2 + ' · ' + status, btn: d.schOpen ? 'Done' : 'Change', body: d.schOpen ? '\u0001' : '' });
+  if (!d.schOpen) return `<h2 class="sec">When</h2>` + head;
+  return `<h2 class="sec">When</h2>` + head.replace('\u0001', `<div class="sch sch-in">
     <div class="schr"><span class="schm">${mo}</span><button type="button" class="schn" data-a="schWeek" data-v="-1" aria-label="Previous week">‹</button><div class="sdays">${days.map(dayBtn).join('')}</div><button type="button" class="schn" data-a="schWeek" data-v="1" aria-label="Next week">›</button>
       <span class="calwrap"><button type="button" class="schn cal" data-a="openCal" aria-label="Pick any date">${small(TABICON.jobs, 'currentColor')}</button><input id="ddate" type="date" class="calin" data-bind="date" value="${esc(d.date)}" tabindex="-1" aria-label="Pick a date"></span></div>
     <div class="schr"><span class="schm">Time</span><span class="schsp"></span><div class="stimes">${slots.map((t) => { const b = busyAt(minsOf(t)); return `<button type="button" class="st${d.time === t ? ' on' : ''}${b.length ? ' busy' : ''}" data-a="schTime" data-v="${t}" title="${b.length ? esc(b.map((j) => j.time + ' ' + j.store).join(', ')) : 'Free'}">${t.slice(0, 2)}</button>`; }).join('')}</div>
       <span class="t24 sch24" role="group" aria-label="Exact time, 24-hour clock"><select id="dhour" data-tpart="h" aria-label="Hour">${opt(24, (d.time || '').slice(0, 2))}</select><b>:</b><select id="dmin" data-tpart="m" aria-label="Minutes">${opt(60, (d.time || '').slice(3, 5))}</select></span></div>
-    <div class="schf">${booked.length ? `<span class="${clash.length ? 'warn' : 'muted'}">${clash.length ? '⚠ Close to another visit · ' : 'Also booked for ' + esc(who) + ': '}</span>${booked.map((j) => `<span class="bkc${clash.includes(j) ? ' clash' : ''}" title="${esc(j.ticket + ' · ' + nameOf(j.installer))}"><b class="num">${esc(j.time)}</b> ${esc(j.store)}</span>`).join('')}` : `<span class="free">${I.tick('var(--green)', 13)} Free that day for ${esc(who)}</span>`}${editing ? `<span class="muted" style="margin-left:auto">Before: ${esc(whenLabel(editing))}</span>` : ''}</div>
-  </div>`;
+    ${booked.length || editing ? `<div class="schf">${booked.length ? `<span class="${clash.length ? 'warn' : 'muted'}">${clash.length ? '⚠ Close to another visit · ' : 'Also booked for ' + esc(who) + ': '}</span>${booked.map((j) => `<span class="bkc${clash.includes(j) ? ' clash' : ''}" title="${esc(j.ticket + ' · ' + nameOf(j.installer))}"><b class="num">${esc(j.time)}</b> ${esc(j.store)}</span>`).join('')}` : ''}${editing ? `<span class="muted" style="margin-left:auto">Before: ${esc(whenLabel(editing))}</span>` : ''}</div>` : ''}
+  </div>`);
 }
 /* 24-hour day planner on the ticket form: tap the day to pick a time, see other jobs that day */
 function dayPlan(d) {
@@ -1507,10 +1512,10 @@ function pf(o) {
 }
 function instPickList() {
   const d = S.draft; const q = (U.iq || '').trim().toLowerCase(); const second = U.im === 'second';
-  const list = installers(d.c).filter((u) => !(second && u.id === d.lead)).filter((u) => !q || [u.name, u.email].concat((u.cs || [u.c]).map((c) => C[c].name)).join(' ').toLowerCase().includes(q));
+  const list = installers(d.c).filter((u) => !(second && u.id === d.lead)).filter((u) => !q || [u.name, u.email].join(' ').toLowerCase().includes(q));
   const sel = second ? d.second : d.lead;
   if (!list.length) return `<div class="empty"><b>No installer found</b><span>Try another name.</span></div>`;
-  return `<div class="group">${list.map((u) => { const n = S.jobs.filter((j) => (j.installer === u.id || j.second === u.id) && j.date === d.date && j.id !== d.editId && OPEN.includes(effStatus(j))); const away = !(u.cs || [u.c]).includes(d.c);
+  return `<div class="group">${list.map((u) => { const n = S.jobs.filter((j) => (j.installer === u.id || j.second === u.id) && j.date === d.date && j.id !== d.editId && OPEN.includes(effStatus(j))); const away = false;
     return `<button type="button" class="row${sel === u.id ? ' pick-on' : ''}" data-a="pickInst" data-v="${u.id}"><span class="avatar pfav">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || u.email)}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub">${away ? C[u.c].name + ' · ' : ''}${d.date ? (n.length ? `<span style="color:var(--orange)">${n.length} ${n.length === 1 ? 'job' : 'jobs'} that day · ${n.map((j) => j.time).filter(Boolean).sort().join(', ')}</span>` : '<span style="color:var(--green)">Free that day</span>') : ''}</span></span>${sel === u.id ? I.tick('var(--blue)', 18) : ''}</button>`; }).join('')}</div>`;
 }
 function toolPickList() {
@@ -3174,7 +3179,7 @@ const A = {
   async removeTool(v) { const t = S.tools.find((x) => x.id === v); const d = S.draft; d.tools = d.tools.filter((x) => x !== t.name); await act(async () => ok(await sb.from('tools').delete().eq('id', v)), '\u201c' + t.name + '\u201d removed from the list'); },
   addPart() { const d = S.draft; const name = (d.newPart || '').trim().replace(/\s+/g, ' '); if (!name) return; if (!d.parts.some((p) => p.toLowerCase() === name.toLowerCase())) d.parts.push(name); d.newPart = ''; render(); const el = document.getElementById('newpart'); if (el) el.focus(); },
   removePart(v) { S.draft.parts.splice(+v, 1); render(); },
-  draftCountry(v) { const d = S.draft; d.c = +v; d.store = null; d.storeName = ''; d.err = {}; render(); },
+  draftCountry(v) { const d = S.draft; d.c = +v; d.store = null; d.storeName = ''; d.err = {}; const ok2 = (id) => id && installers(d.c).some((u) => u.id === id); if (!ok2(d.lead)) { const ins = installers(d.c); d.lead = ins.length === 1 ? ins[0].id : null; } if (!ok2(d.second)) { d.second = null; d.secondOn = false; } render(); },
   draftStore(v) { S.draft.store = v; render(); if (v === 'new') { const el = document.getElementById('sname'); if (el) el.focus(); } },
   draftPerson(v) { const d = S.draft; if (d.secondOn && d.lead) { if (v === d.lead) return; d.second = d.second === v ? null : v; } else d.lead = v; d.err.installer = ''; render(); },
   draftSecond() { S.draft.secondOn = true; render(); },
@@ -3338,6 +3343,7 @@ const A = {
   },
   ppDone() { U.sheet = null; renderSheet(); render(); },
   dpQty(n, el) { const d = S.draft; const q = (d.qty[n] || 1) + Number(el.dataset.d); if (q < 1) { d.parts = d.parts.filter((x) => x !== n); delete d.qty[n]; } else d.qty[n] = q; render(); },
+  schToggle() { const d = S.draft; d.schOpen = !d.schOpen; if (d.schOpen) d.schStart = null; render(); },
   schDay(v) { const d = S.draft; d.date = v; render(); },
   schWeek(v) { const d = S.draft; const st = parseD(d.schStart); d.schStart = isoOf(new Date(st.getFullYear(), st.getMonth(), st.getDate() + 7 * Number(v))); render(); },
   schTime(v) { const d = S.draft; d.time = v; save(); render(); },
