@@ -399,6 +399,33 @@ body.desk .sig2 { grid-template-columns: 1fr 1fr; }
 .tag { display: inline-flex; align-items: center; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--fill); color: var(--fg2); }
 .tag.prog { background: var(--blue-bg); color: var(--blue-fg); }
 .tag.warn { background: var(--orange-bg); color: var(--orange); }
+.pf { background: var(--card); border-radius: 14px; overflow: hidden; }
+.pfh { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border: none; background: none; text-align: left; color: var(--fg); min-height: 68px; cursor: pointer; }
+div.pfh { cursor: default; }
+.pfh b { display: block; font-size: 17px; font-weight: 600; line-height: 22px; }
+.pfh .sub, .pfr .sub, .pfsupport .sub { display: block; font-size: 13.5px; color: var(--muted); margin-top: 2px; line-height: 18px; }
+.pfi { width: 38px; height: 38px; border-radius: 11px; background: var(--blue-bg); color: var(--blue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pfi svg { width: 21px; height: 21px; }
+.pfi .pfav { width: 38px; height: 38px; border-radius: 11px; font-size: 13px; }
+.pfav { margin: 0 !important; width: 34px; height: 34px; font-size: 12.5px; flex-shrink: 0; }
+.pfb { flex-shrink: 0; height: 32px; padding: 0 14px; border-radius: 16px; background: var(--fill); color: var(--blue); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; }
+.pfh .grow, .pfr .grow, .pfsupport .grow { flex: 1; min-width: 0; display: block; }
+.pff .link { white-space: nowrap; }
+.pf-empty .pfb { background: var(--blue); color: #fff; }
+.pfh:hover .pfb { filter: brightness(0.96); }
+.pfr { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 16px 6px 68px; border-top: 0.5px solid var(--sep); font-size: 16px; }
+.pfr > .avatar { margin-left: -52px !important; margin-right: 6px !important; }
+.pfr .vbtn { flex: 1; min-width: 0; }
+.pfx { width: 30px; height: 30px; border-radius: 15px; border: none; background: var(--fill); color: var(--muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; }
+.pfx:hover { color: var(--red); }
+.pff { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px 12px 68px; border-top: 0.5px solid var(--sep); }
+.pff .link { font-size: 14px; padding: 2px; }
+.pfadd { display: block; width: 100%; text-align: left; padding: 12px 16px 12px 68px; border: none; border-top: 0.5px solid var(--sep); background: none; color: var(--blue); font-size: 15px; cursor: pointer; }
+.pfadd .muted { font-size: 13px; }
+.pfsupport { display: flex; align-items: center; gap: 14px; margin-top: 10px; padding: 10px 16px; border-radius: 14px; background: var(--card); font-size: 15px; font-weight: 500; }
+.pfsupport .pfi { width: 32px; height: 32px; border-radius: 10px; }
+.pfnew { border-radius: 12px; border: none; color: var(--blue); margin-bottom: 8px; }
+.row.pick-on { background: var(--blue-bg); }
 .storecard { display: flex; align-items: center; gap: 14px; background: var(--card); border-radius: 14px; padding: 14px 16px; border: none; width: 100%; text-align: left; color: var(--fg); }
 .storecard b { font-size: 17px; display: block; }
 .storecard .sub { display: block; font-size: 14px; color: var(--muted); margin-top: 2px; }
@@ -795,6 +822,12 @@ const LOGO = (s = 72) => `<svg class="logo" width="${s}" height="${s}" viewBox="
   ? `<text x="36" y="38" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="26" font-weight="700" letter-spacing="-1" fill="var(--bg)">BB</text><text x="36" y="56" text-anchor="middle" font-family="-apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif" font-size="12" font-weight="800" letter-spacing="1.5" fill="#FF9F0A">TEST</text>`
   : `<text x="36" y="46.5" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="30" font-weight="700" letter-spacing="-1" fill="var(--bg)">BB</text>`}</svg>`;
 const I = {
+  pfStore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5 5.5 4h13L20 9.5"/><path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M5.5 12.5V20h13v-7.5"/><path d="M10 20v-4.5h4V20"/></svg>',
+  pfPerson: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg>',
+  pfTool: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0 5 5l-8.3 8.3a2.1 2.1 0 0 1-3-3l8.3-8.3a4 4 0 0 0-2-2z"/><path d="M14.5 6.5 17 4"/></svg>',
+  pfPart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>',
+  pfVideo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>',
+  x: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
   imp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>',
   chev: '<svg class="chev" viewBox="0 0 10 16" fill="none" stroke="var(--chev)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l6 6-6 6"/></svg>',
   back: '<svg width="10" height="17" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2L2 8l6 6"/></svg>',
@@ -1061,35 +1094,41 @@ function adminNew() {
   h += `<h2 class="sec">Country</h2><div class="seg tall" role="group" aria-label="Country">${[0, 1, 2, 3].map((i) => `<button type="button" class="${d.c === i ? 'on' : ''}" aria-pressed="${d.c === i}" data-a="draftCountry" data-v="${i}">${flag(i)}${C[i].name}</button>`).join('')}</div>`;
   cut('country');
   const stSel = S.stores.find((x) => x.id === d.store && x.c === d.c);
-  h += `<h2 class="sec">Store</h2>${stSel ? `<div class="storecard${E.store ? ' bad-field' : ''}"><div class="grow" style="min-width:0"><b>${esc(stSel.name)}</b><span class="sub">${esc(storeLine(stSel)) || 'No address yet'}</span><span class="tags">${storeTags(stSel)}</span></div><div class="stbtns"><button type="button" class="btn small sec" data-a="pickStoreOpen">Change</button><button type="button" class="link" style="font-size:14px;padding:2px" data-a="storeEdit" data-v="${stSel.id}" data-back="ticket">Edit details</button></div></div>`
-    : `<button type="button" class="storecard empty-st${E.store ? ' bad-field' : ''}" data-a="pickStoreOpen"><span class="grow"><b>${d.storeName ? esc(d.storeName) : 'Choose a store'}</b><span class="sub">${d.storeName ? 'Not in the store list – choose it from the list' : storesFor(d.c).length + ' stores in ' + C[d.c].name + ' · search by name, city or Apple ID'}</span></span>${I.chev}</button>`}${errL('store')}`;
-  h += `<div class="row" style="margin-top:10px;border-radius:12px;border:none"><span class="ico" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">Support: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · the installer can call or text</span></span></div>`;
+  h += `<h2 class="sec">Store</h2>` + (stSel
+    ? pf({ a: 'pickStoreOpen', ico: I.pfStore, title: esc(stSel.name), sub: esc(storeLine(stSel)) || 'No address yet', btn: 'Change', err: E.store,
+      body: `<div class="pff"><span class="tags">${storeTags(stSel)}</span><button type="button" class="link" data-a="storeEdit" data-v="${stSel.id}" data-back="ticket">Edit details</button></div>` })
+    : pf({ a: 'pickStoreOpen', ico: I.pfStore, title: d.storeName ? esc(d.storeName) : 'Choose a store', sub: d.storeName ? 'Not in the store list – choose it from the list' : storesFor(d.c).length + ' stores in ' + C[d.c].name, btn: 'Choose', empty: true, err: E.store })) + errL('store');
+  h += `<div class="pfsupport"><span class="pfi" style="background:var(--green-bg)">${I.phone('var(--green)')}</span><span class="grow"><span>Support: ${C[d.c].support[0]}</span><span class="sub">${C[d.c].support[1]} · the installer can call or text</span></span></div>`;
   cut('store');
   h += scheduleBlock(d, editing);
   cut('when');
-  h += `<h2 class="sec">Installer</h2><div class="group${E.installer ? ' bad-field' : ''}">`;
-  if (lockInstaller) h += `<div class="row"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(nameOf(d.lead))}</span><span class="grow"><span>${esc(nameOf(d.lead))}${d.second ? ' + ' + esc(nameOf(d.second)) : ''}</span><span class="sub">Can\u2019t be changed after the report is started</span></span></div>`;
-  else if (!ins.length) h += `<div class="row"><span class="grow"><span>No installers yet</span><span class="sub">Add people with installer access under Team.</span></span><button type="button" class="btn small" style="width:auto;padding:0 14px" data-a="tab" data-v="team">Team</button></div>`;
+  h += `<h2 class="sec">Installer</h2>`;
+  const dayJobs = (id) => S.jobs.filter((j) => (j.installer === id || j.second === id) && j.date === d.date && j.id !== d.editId && OPEN.includes(effStatus(j)));
+  const avail = (id) => { const n = dayJobs(id); return d.date ? (n.length ? n.length + (n.length === 1 ? ' job' : ' jobs') + ' that day · ' + n.map((j) => j.time).filter(Boolean).sort().join(', ') : 'Free that day') : ''; };
+  const av = (id) => `<span class="avatar pfav">${initials(nameOf(id))}</span>`;
+  if (lockInstaller) h += pf({ ico: av(d.lead), title: esc(nameOf(d.lead)) + (d.second ? ' + ' + esc(nameOf(d.second)) : ''), sub: 'Can’t be changed after the report is started', btn: '', lock: true });
+  else if (!ins.length) h += pf({ a: 'tab', v: 'team', ico: I.pfPerson, title: 'No installers yet', sub: 'Add people with installer access under Manage → People', btn: 'People', empty: true });
   else {
-    h += ins.map((u) => { const lead = u.id === d.lead, sec = d.secondOn && u.id === d.second; const n = S.jobs.filter((j) => (j.installer === u.id || j.second === u.id) && j.date === d.date && OPEN.includes(effStatus(j))).length; return `<button type="button" class="row" aria-pressed="${lead || sec}" data-a="draftPerson" data-v="${u.id}"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || u.email)}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub">${!(u.cs || [u.c]).includes(d.c) ? C[u.c].name + ' · ' : ''}${n ? n + (n === 1 ? ' job' : ' jobs') + ' that day' : 'Free that day'}</span></span>${d.secondOn ? (lead ? '<span class="pill p-blue">Lead</span>' : sec ? '<span class="pill p-grey">Second</span>' : '') : ''}${lead || sec ? I.tick('var(--blue)', 18) : ''}</button>`; }).join('');
-    if (ins.length > 1) h += !d.secondOn ? `<button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="draftSecond">+ Add a second installer <span class="muted" style="font-size:13px">· rarely needed</span></button>` : `<div class="row" style="font-size:13px"><span class="grow muted">${d.second ? esc(first(nameOf(d.lead))) + ' leads and submits the report. The installer share is split.' : 'Tap who joins ' + esc(first(nameOf(d.lead)) || 'the lead') + '.'}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="draftNoSecond">Remove</button></div>`;
+    let body = '';
+    if (d.lead && d.secondOn && d.second) body = `<div class="pfr">${av(d.second)}<span class="grow"><span>${esc(nameOf(d.second))} <span class="tag">Second</span></span><span class="sub">${esc(avail(d.second))} · the installer amount is split</span></span><button type="button" class="pfx" aria-label="Remove second installer" data-a="draftNoSecond">${I.x}</button></div>`;
+    else if (d.lead && ins.length > 1) body = `<button type="button" class="pfadd" data-a="instOpen" data-v="second">+ Add a second installer <span class="muted">· rarely needed</span></button>`;
+    h += d.lead
+      ? pf({ a: 'instOpen', v: 'lead', ico: av(d.lead), title: esc(nameOf(d.lead)) + (d.lead === S.me ? ' <span class="muted">(you)</span>' : '') + (d.second ? ' <span class="tag">Lead</span>' : ''), sub: esc(avail(d.lead)), btn: 'Change', err: E.installer, body })
+      : pf({ a: 'instOpen', v: 'lead', ico: I.pfPerson, title: 'Choose an installer', sub: ins.length + (ins.length === 1 ? ' installer' : ' installers') + ' · see who is free that day', btn: 'Choose', empty: true, err: E.installer });
   }
-  h += `</div>${errL('installer')}`;
+  h += errL('installer');
   cut('inst');
-  const allTools = S.tools.map((t) => t.name); d.tools.forEach((t) => { if (!allTools.some((x) => x.toLowerCase() === t.toLowerCase())) allTools.push(t); });
-  h += `<h2 class="sec">Tools to bring · ${d.tools.length}${S.tools.length ? `<button type="button" class="link" style="font-size:13px;padding:0" data-a="toolEdit">${d.toolEdit ? 'Done' : 'Edit list'}</button>` : ''}</h2><div class="group">${allTools.map((t) => { const on = d.tools.includes(t); const saved = S.tools.find((x) => x.name === t); return d.toolEdit && saved
-      ? `<div class="row"><span class="grow">${esc(t)}</span><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removeTool" data-v="${saved.id}">Remove</button></div>`
-      : `<button type="button" class="row" aria-pressed="${on}" data-a="draftTool" data-v="${esc(t)}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span>${esc(t)}</button>`; }).join('')}
-    <div class="row"><input id="newtool" class="inl" data-bind="newTool" data-enter="addTool" value="${esc(d.newTool)}" placeholder="${allTools.length ? 'Add a tool' : 'Add the first tool, e.g. Cordless drill'}" aria-label="Add a tool" autocomplete="off" autocapitalize="sentences"><button type="button" class="btn small" style="width:auto;padding:0 14px;height:34px" data-a="addTool">Add</button></div></div>
-    <p class="foot">Tools you add are saved to the list for all admins.</p>`;
+  const tn = d.tools.length;
+  h += `<h2 class="sec">Tools to bring</h2>` + pf({ a: 'toolsOpen', ico: I.pfTool, title: tn ? tn + (tn === 1 ? ' tool' : ' tools') : 'Choose tools', sub: tn ? 'Shown on the installer\u2019s job' : S.tools.length + ' in the list · search or add new', btn: tn ? 'Change' : 'Choose', empty: !tn,
+    body: d.tools.map((t) => `<div class="pfr"><span class="grow">${esc(t)}</span><button type="button" class="pfx" aria-label="Remove ${esc(t)}" data-a="draftTool" data-v="${esc(t)}">${I.x}</button></div>`).join('') });
   cut('tools');
-  h += `<h2 class="sec">Parts to replace · ${d.parts.length}</h2><div class="group">${d.parts.map((p2) => `<div class="row"><span class="grow">${esc(p2)}</span><div class="step"><button type="button" aria-label="Fewer" data-a="dpQty" data-v="${esc(p2)}" data-d="-1">−</button><span class="num">${d.qty[p2] || 1}</span><button type="button" aria-label="More" data-a="dpQty" data-v="${esc(p2)}" data-d="1">+</button></div></div>`).join('')}
-    <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="partsOpen" data-v="ticket">+ ${d.parts.length ? 'Add more parts' : 'Add parts from the list'}<span class="muted" style="font-size:13px;margin-left:6px">${S.parts.length ? S.parts.length + ' in the list' : ''}</span></button></div>
-    <p class="foot">Search the parts list and set how many. The installer sees them on the job and ticks off what they replaced.</p>`;
+  const pn = d.parts.length;
+  h += `<h2 class="sec">Parts to replace</h2>` + pf({ a: 'partsOpen', v: 'ticket', ico: I.pfPart, title: pn ? pn + (pn === 1 ? ' part' : ' parts') : 'Choose parts', sub: pn ? 'Set how many of each' : S.parts.length + ' in the list · search by name or category', btn: pn ? 'Change' : 'Choose', empty: !pn,
+    body: d.parts.map((p2) => `<div class="pfr"><span class="grow">${esc(p2)}</span><div class="step"><button type="button" aria-label="Fewer" data-a="dpQty" data-v="${esc(p2)}" data-d="-1">−</button><span class="num">${d.qty[p2] || 1}</span><button type="button" aria-label="More" data-a="dpQty" data-v="${esc(p2)}" data-d="1">+</button></div></div>`).join('') });
   cut('parts');
-  h += `<h2 class="sec">Video instructions · ${d.videos.length}</h2><div class="group">${d.videos.map((id) => { const v = videoBy(id); return v ? `<div class="row"><button type="button" class="vbtn" data-a="playVideo" data-v="${v.id}">${videoRow(v)}</button><button type="button" class="link" style="color:var(--red);font-size:15px;padding:4px" data-a="removeDraftVideo" data-v="${v.id}">Remove</button></div>` : ''; }).join('')}
-    <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="pickVideos">+ Add videos or pictures from the library</button></div>
-    <p class="foot">The installer sees these under Video instructions on the job card.</p>`;
+  const vn = d.videos.length;
+  h += `<h2 class="sec">Video instructions</h2>` + pf({ a: 'pickVideos', ico: I.pfVideo, title: vn ? vn + (vn === 1 ? ' video or picture' : ' videos and pictures') : 'Choose from library', sub: vn ? 'Shown under Video instructions' : S.videos.length + ' videos and pictures', btn: vn ? 'Change' : 'Choose', empty: !vn,
+    body: d.videos.map((id) => { const v = videoBy(id); return v ? `<div class="pfr"><button type="button" class="vbtn" data-a="playVideo" data-v="${v.id}">${videoRow(v)}</button><button type="button" class="pfx" aria-label="Remove" data-a="removeDraftVideo" data-v="${v.id}">${I.x}</button></div>` : ''; }).join('') });
   cut('videos');
   h += d.tplOpen
     ? `<div class="card" style="gap:10px;margin-top:14px"><b>${tpl ? 'Save as template' : 'Save as a new template'}</b><span class="muted" style="font-size:15px">Saves the ${d.tools.length} ${d.tools.length === 1 ? 'tool' : 'tools'}, ${d.parts.length} ${d.parts.length === 1 ? 'part' : 'parts'} and ${d.videos.length} ${d.videos.length === 1 ? 'video' : 'videos'} above. All admins can use it.</span><input id="tplname" class="box" style="background:var(--bg)" data-bind="tplName" data-enter="saveTemplate" value="${esc(d.tplName)}" placeholder="e.g. Apple accessory wall" aria-label="Template name" autocomplete="off" autocapitalize="sentences"><div class="btn2"><button type="button" class="btn small sec" data-a="tplOpen" data-v="">Cancel</button><button type="button" class="btn small" data-a="saveTemplate">Save template</button></div></div>`
@@ -1426,6 +1465,29 @@ function parsePartList(text) {
   return String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => { const cells = (l.includes('\t') ? l.split('\t') : l.split(';')).map((x) => x.trim()).filter(Boolean); return cells.length > 1 ? { category: cells[0], name: cells.slice(1).join(' ') } : { category: '', name: cells[0] }; }).filter((x) => x.name);
 }
 
+/* ---------- ticket form: one look for every "choose from a list" field ---------- */
+function pf(o) {
+  const head = `<span class="pfi">${o.ico}</span><span class="grow"><b>${o.title}</b>${o.sub ? `<span class="sub">${o.sub}</span>` : ''}</span>${o.btn ? `<span class="pfb">${o.btn}</span>` : ''}`;
+  return `<div class="pf${o.empty ? ' pf-empty' : ''}${o.err ? ' bad-field' : ''}">${o.lock ? `<div class="pfh">${head}</div>` : `<button type="button" class="pfh" data-a="${o.a}"${o.v ? ` data-v="${o.v}"` : ''}>${head}</button>`}${o.body || ''}</div>`;
+}
+function instPickList() {
+  const d = S.draft; const q = (U.iq || '').trim().toLowerCase(); const second = U.im === 'second';
+  const list = installers(d.c).filter((u) => !(second && u.id === d.lead)).filter((u) => !q || [u.name, u.email].concat((u.cs || [u.c]).map((c) => C[c].name)).join(' ').toLowerCase().includes(q));
+  const sel = second ? d.second : d.lead;
+  if (!list.length) return `<div class="empty"><b>No installer found</b><span>Try another name.</span></div>`;
+  return `<div class="group">${list.map((u) => { const n = S.jobs.filter((j) => (j.installer === u.id || j.second === u.id) && j.date === d.date && j.id !== d.editId && OPEN.includes(effStatus(j))); const away = !(u.cs || [u.c]).includes(d.c);
+    return `<button type="button" class="row${sel === u.id ? ' pick-on' : ''}" data-a="pickInst" data-v="${u.id}"><span class="avatar pfav">${initials(u.name || u.email)}</span><span class="grow"><span>${esc(u.name || u.email)}${u.id === S.me ? ' <span class="muted">(you)</span>' : ''}</span><span class="sub">${away ? C[u.c].name + ' · ' : ''}${d.date ? (n.length ? `<span style="color:var(--orange)">${n.length} ${n.length === 1 ? 'job' : 'jobs'} that day · ${n.map((j) => j.time).filter(Boolean).sort().join(', ')}</span>` : '<span style="color:var(--green)">Free that day</span>') : ''}</span></span>${sel === u.id ? I.tick('var(--blue)', 18) : ''}</button>`; }).join('')}</div>`;
+}
+function toolPickList() {
+  const d = S.draft; const q = (U.tq || '').trim().toLowerCase();
+  const all = S.tools.map((t) => t.name); d.tools.forEach((t) => { if (!all.some((x) => x.toLowerCase() === t.toLowerCase())) all.push(t); });
+  const list = all.filter((t) => !q || t.toLowerCase().includes(q)).sort((a, b) => (d.tools.includes(b) - d.tools.includes(a)) || a.localeCompare(b));
+  const exact = q && all.some((x) => x.toLowerCase() === q);
+  let h = q && !exact ? `<button type="button" class="row pfnew" data-a="tpAddNew">+ Add “${esc(U.tq.trim())}” to the list</button>` : '';
+  if (!list.length) return h + `<p class="foot" style="margin:4px">${all.length ? 'No tools match.' : 'The tools list is empty. Type a tool above to add it.'}</p>`;
+  return h + `<div class="group">${list.map((t) => { const on = d.tools.includes(t); return `<button type="button" class="row prow2${on ? ' on' : ''}" aria-pressed="${on}" data-a="tpToggle" data-v="${esc(t)}"><span class="check ${on ? 'on' : ''}">${I.tick()}</span><span class="grow">${esc(t)}</span></button>`; }).join('')}</div>`;
+}
+function refreshToolPick() { const b = document.getElementById('tplist'); if (b) b.innerHTML = toolPickList(); const n = document.getElementById('tpcount'); if (n) n.textContent = S.draft.tools.length ? S.draft.tools.length + ' selected' : ''; }
 /* ---------- pickers: stores (ticket form) and parts (ticket form + installer report) ---------- */
 function storePickList() {
   const d = S.draft; const q = (U.sq || '').trim().toLowerCase();
@@ -1857,6 +1919,15 @@ function renderSheet() {
     body = `${sheetHead('Choose store', 'Close')}<div class="ppsearch"><input class="box" data-sq="1" value="${esc(U.sq || '')}" placeholder="Search ${storesFor(d.c).length} stores in ${C[d.c].name}" aria-label="Search stores" autocomplete="off"></div>
       <div id="splist">${storePickList()}</div><button type="button" class="btn sec" data-a="storeNew" data-v="ticket">+ New store</button>`;
     setTimeout(() => { const i = overlay.querySelector('[data-sq]'); if (i && !isTouchDevice()) i.focus(); }, 30);
+  } else if (kind === 'pickinst') {
+    const d = S.draft;
+    body = `${sheetHead(U.im === 'second' ? 'Second installer' : 'Choose installer', 'Close')}<div class="ppsearch"><input class="box" data-iq="1" value="${esc(U.iq || '')}" placeholder="Search installers" aria-label="Search installers" autocomplete="off"></div>
+      ${d.date ? `<p class="foot" style="margin:0 4px 8px">Availability for ${esc(whenLabel({ date: d.date, time: '' }))}</p>` : ''}<div id="iplist">${instPickList()}</div>`;
+    setTimeout(() => { const i = overlay.querySelector('[data-iq]'); if (i && !isTouchDevice()) i.focus(); }, 30);
+  } else if (kind === 'picktools') {
+    body = `${sheetHead('Tools to bring', '', 'Done', 'ppDone')}<div class="ppsearch"><input class="box" data-tq="1" value="${esc(U.tq || '')}" placeholder="Search ${S.tools.length} tools or type a new one" aria-label="Search tools" autocomplete="off" data-enter="tpAddNew"><span class="muted num" id="tpcount" style="font-size:13px">${S.draft.tools.length ? S.draft.tools.length + ' selected' : ''}</span></div><div id="tplist">${toolPickList()}</div>
+      <p class="foot" style="margin:8px 4px 0">New tools are saved to the list for all admins. Edit the list under Manage → Parts & tools.</p>`;
+    setTimeout(() => { const i = overlay.querySelector('[data-tq]'); if (i && !isTouchDevice()) i.focus(); }, 30);
   } else if (kind === 'pickparts') {
     body = `${sheetHead(U.pm === 'ticket' ? 'Parts to replace' : 'Parts you replaced', '', 'Done', 'ppDone')}<div class="ppsearch"><input class="box" data-pq="1" value="${esc(U.pq || '')}" placeholder="Search ${S.parts.length} parts" aria-label="Search parts" autocomplete="off"><span class="muted num" id="ppcount" style="font-size:13px">${ppCount()}</span></div><div id="pplist">${partPickList()}</div>`;
     setTimeout(() => { const i = overlay.querySelector('[data-pq]'); if (i && !isTouchDevice()) i.focus(); }, 30);
@@ -3199,6 +3270,17 @@ const A = {
     if (done) { U.sheet = null; U.form = null; renderSheet(); render(); } else if (btn) btn.disabled = false;
   },
   async addToolM() { const el = document.getElementById('newtool2'); const name = ((el && el.value) || '').trim().replace(/\s+/g, ' '); if (!name) { if (el) el.focus(); return; } if (S.tools.some((t) => t.name.toLowerCase() === name.toLowerCase())) { toast('That tool is already in the list'); return; } await act(async () => ok(await sb.from('tools').insert({ name, created_by: S.me })), '“' + name + '” added'); const n = document.getElementById('newtool2'); if (n) n.focus(); },
+  instOpen(v) { U.im = v === 'second' ? 'second' : 'lead'; U.iq = ''; U.sheet = 'pickinst'; renderSheet(); },
+  pickInst(v) { const d = S.draft; if (U.im === 'second') { d.secondOn = true; d.second = v; } else { d.lead = v; if (d.second === v) { d.second = null; d.secondOn = false; } } if (d.err) d.err.installer = ''; U.sheet = null; renderSheet(); render(); },
+  toolsOpen() { U.tq = ''; U.sheet = 'picktools'; renderSheet(); },
+  tpToggle(v) { const t = S.draft.tools; const i = t.indexOf(v); if (i >= 0) t.splice(i, 1); else t.push(v); refreshToolPick(); },
+  async tpAddNew() {
+    const name = (U.tq || '').trim().replace(/\s+/g, ' '); if (!name) return; const d = S.draft;
+    const ex = S.tools.find((t) => t.name.toLowerCase() === name.toLowerCase()); const label = ex ? ex.name : name;
+    if (!d.tools.includes(label)) d.tools.push(label);
+    if (!ex) { const r = await sb.from('tools').insert({ name, created_by: S.me }).select('*').single(); if (!r.error && r.data) S.tools.push(r.data); else if (r.error) toast(friendly(r.error)); }
+    U.tq = ''; renderSheet();
+  },
   pickStoreOpen() { U.sq = ''; U.sheet = 'pickstore'; renderSheet(); },
   pickStore(v) { const d = S.draft; d.store = v; d.storeName = ''; if (d.err) d.err.store = ''; U.sheet = null; renderSheet(); render(); },
   partsOpen(v) { U.pm = v; U.pq = ''; U.sheet = 'pickparts'; renderSheet(); },
@@ -3329,6 +3411,8 @@ document.addEventListener('input', (e) => {
   if (el.dataset.deskSearch) { S[el.dataset.deskSearch === '1' ? 'q' : el.dataset.deskSearch] = el.value; const pos = el.selectionStart; const fid = el.id; render(); const n = document.getElementById(fid); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } } return; }
   if (el.dataset.abind2 && S.view && S.view.kind === 'report') { const j = job(S.view.id); j.report.apple = j.report.apple || {}; j.report.apple[el.dataset.abind2] = el.value; queueReport(j); if (S.step === 3) updateMissing(j); return; }
   if (el.dataset.pq) { U.pq = el.value; refreshPartPick(); return; }
+  if (el.dataset.tq) { U.tq = el.value; refreshToolPick(); return; }
+  if (el.dataset.iq) { U.iq = el.value; const b = document.getElementById('iplist'); if (b) b.innerHTML = instPickList(); return; }
   if (el.dataset.sq) { U.sq = el.value; const b = document.getElementById('splist'); if (b) b.innerHTML = storePickList(); return; }
   if (el.dataset.mtool) return;
   if (el.dataset.relist && U.form) { U.form[el.dataset.fbind] = el.value; const info = document.getElementById('impinfo'); if (info) { if (U.sheet === 'storeimport') { const pr = parseStoreList(el.value); info.textContent = pr.rows.length ? pr.rows.length + ' stores ready: ' + [0, 1, 2, 3].map((c) => pr.rows.filter((x) => x.country === c).length + ' ' + C[c].k).join(', ') + (pr.bad.length ? ' \u00b7 Lines not understood: ' + pr.bad.slice(0, 8).join(', ') : '') : 'Nothing to import yet.'; } else { const n = parsePartList(el.value).length; info.textContent = n ? n + ' parts ready' : 'Nothing to import yet.'; } const hb = overlay.querySelector('.sheet [data-a="importStores"], .sheet [data-a="importParts"]'); if (hb) { const n = U.sheet === 'storeimport' ? parseStoreList(el.value).rows.length : parsePartList(el.value).length; hb.textContent = 'Import' + (n ? ' ' + n : ''); } } return; }
