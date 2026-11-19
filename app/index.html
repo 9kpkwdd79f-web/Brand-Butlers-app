@@ -440,6 +440,40 @@ div.pfh { cursor: default; }
 body.desk .sheet:has(#pplist), body.desk .sheet:has(#splist) { width: 680px; }
 .ptgrid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr); gap: 28px; align-items: start; }
 .sched { background: var(--card); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; }
+.schsum { text-transform: none; letter-spacing: 0; color: var(--fg); font-size: 13px; font-weight: 600; }
+.sch { background: var(--card); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.schr { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.schm { font-size: 12px; font-weight: 600; color: var(--muted); width: 58px; flex-shrink: 0; text-transform: uppercase; letter-spacing: .3px; }
+.schn { width: 28px; height: 36px; flex-shrink: 0; border: none; border-radius: 9px; background: none; color: var(--fg2); font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.schn:hover { background: var(--fill); }
+.schn.cal { width: 36px; background: var(--fill); color: var(--blue); }
+.sdays { flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; min-width: 0; }
+.sd { position: relative; height: 40px; border: none; border-radius: 10px; background: none; color: var(--fg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; cursor: pointer; padding: 0; }
+.sd span { font-size: 10.5px; color: var(--muted); font-weight: 600; line-height: 12px; }
+.sd b { font-size: 15px; font-weight: 600; line-height: 19px; }
+.sd i { position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 2px; background: var(--orange); }
+.sd:hover { background: var(--fill); }
+.sd.today b { color: var(--blue); }
+.sd.past { opacity: .4; }
+.sd.on { background: var(--blue); }
+.sd.on span, .sd.on b { color: #fff; }
+.sd.on i { background: #fff; }
+.stimes { flex: 1; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.schsp { width: 28px; flex-shrink: 0; }
+.stimes::-webkit-scrollbar { display: none; }
+.st { position: relative; flex: 1 0 34px; height: 32px; border: none; border-radius: 9px; background: var(--bg); color: var(--fg); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; padding: 0; }
+.st:hover { background: var(--fill); }
+.st.busy::after { content: ''; position: absolute; top: 4px; right: 4px; width: 4px; height: 4px; border-radius: 2px; background: var(--orange); }
+.st.on { background: var(--blue); color: #fff; }
+.st.on::after { background: #fff; }
+.sch24 { flex-shrink: 0; margin-left: 6px; }
+.sch24 select { height: 32px; }
+.schf { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 13px; padding: 8px 2px 0; border-top: 0.5px solid var(--sep); min-height: 22px; }
+.schf .warn { color: var(--orange); font-weight: 600; }
+.bkc { display: inline-flex; gap: 4px; padding: 2px 8px; border-radius: 7px; background: var(--fill); color: var(--fg2); font-size: 12.5px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bkc.clash { background: var(--orange-bg); color: var(--orange); }
+.schf .free { font-size: 13px; }
+@media (max-width: 520px) { .schm, .schsp { display: none; } .sch { padding: 10px; } }
 .schead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .schbig { font-size: 19px; display: block; }
 .schead .sub { font-size: 13px; color: var(--muted); }
@@ -1320,30 +1354,31 @@ const isoOf = (dt) => dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStar
 const minsOf = (t) => { const [h, m] = String(t || '0:0').split(':').map(Number); return (h || 0) * 60 + (m || 0); };
 function scheduleBlock(d, editing) {
   const sel = parseD(d.date || rel(0)); const t0 = today0();
-  if (!d.schStart) { const mon = new Date(sel.getFullYear(), sel.getMonth(), sel.getDate() - ((sel.getDay() + 6) % 7)); d.schStart = isoOf(mon < t0 ? new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() - ((t0.getDay() + 6) % 7)) : mon); }
+  const monOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate() - ((x.getDay() + 6) % 7));
+  if (!d.schStart) d.schStart = isoOf(monOf(sel));
   const start = parseD(d.schStart);
   const people = [d.lead, d.secondOn ? d.second : null].filter(Boolean);
   const visits = S.jobs.filter((j) => j.id !== d.editId && j.status !== 'declined' && (people.length ? people.includes(j.installer) || people.includes(j.second) : j.c === d.c));
   const onDay = (iso) => visits.filter((j) => j.date === iso);
   const who = people.length ? people.map((x) => first(nameOf(x))).join(' and ') : C[d.c].name;
-  const days = Array.from({ length: 14 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
-  const dayBtn = (dt) => { const iso = isoOf(dt); const n = onDay(iso).length; const past = dt < t0; return `<button type="button" class="dbtn${iso === d.date ? ' on' : ''}${iso === isoOf(t0) ? ' today' : ''}${past ? ' past' : ''}" data-a="schDay" data-v="${iso}" aria-pressed="${iso === d.date}" aria-label="${WD[dt.getDay()]} ${dt.getDate()} ${MO[dt.getMonth()]}${n ? ', ' + n + ' booked' : ''}"><span class="dw">${iso === isoOf(t0) ? 'Today' : WD[dt.getDay()]}</span><span class="dn num">${dt.getDate()}</span><span class="dm">${MO[dt.getMonth()]}</span><span class="dots">${n ? '<i></i>'.repeat(Math.min(3, n)) : ''}</span></button>`; };
+  const days = Array.from({ length: 7 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
   const booked = onDay(d.date).sort((a, b) => minsOf(a.time) - minsOf(b.time));
   const cur = minsOf(d.time); const DUR = 90;
   const busyAt = (m) => booked.filter((j) => Math.abs(minsOf(j.time) - m) < DUR);
-  const slots = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
   const clash = busyAt(cur);
   const daysTo = Math.round((sel - t0) / 86400000);
-  let h = `<h2 class="sec">When</h2><div class="sched">
-    <div class="schead"><div style="min-width:0"><b class="schbig">${WD[sel.getDay()]} ${sel.getDate()} ${MO[sel.getMonth()]} · <span class="num">${esc(d.time || '')}</span></b><span class="sub">${daysTo === 0 ? 'Today' : daysTo === 1 ? 'Tomorrow' : daysTo > 1 ? 'In ' + daysTo + ' days' : Math.abs(daysTo) + ' days ago'}${editing ? ' · booked before: ' + esc(whenLabel(editing)) : ''}</span></div>
-      <span class="calwrap"><button type="button" class="btn small sec" data-a="openCal">${small(TABICON.jobs, 'var(--blue)')} Calendar</button><input id="ddate" type="date" class="calin" data-bind="date" value="${esc(d.date)}" tabindex="-1" aria-label="Pick a date"></span></div>
-    <div class="strip"><button type="button" class="wknav" data-a="schWeek" data-v="-1" aria-label="Earlier">‹</button><div class="days">${days.map(dayBtn).join('')}</div><button type="button" class="wknav" data-a="schWeek" data-v="1" aria-label="Later">›</button></div>
-    <span class="cap" style="display:block;margin:14px 2px 6px">Time</span>
-    <div class="tgrid">${slots.map((t) => { const b = busyAt(minsOf(t)); return `<button type="button" class="tbtn${d.time === t ? ' on' : ''}${b.length ? ' busy' : ''}" data-a="schTime" data-v="${t}" title="${b.length ? esc(b.map((j) => j.time + ' ' + j.store).join(', ')) : 'Free'}">${t}${b.length ? '<i></i>' : ''}</button>`; }).join('')}</div>
-    <div class="exact"><span class="muted" style="font-size:14px">Exact time (24 h)</span><span class="t24" role="group" aria-label="Time, 24-hour clock"><select id="dhour" data-tpart="h" aria-label="Hour">${Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(0, 2) === x ? 'selected' : ''}>${x}</option>`).join('')}</select><b>:</b><select id="dmin" data-tpart="m" aria-label="Minutes">${Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${(d.time || '').slice(3, 5) === x ? 'selected' : ''}>${x}</option>`).join('')}</select></span></div>
-    <div class="booked">${booked.length ? `<span class="cap" style="display:block;margin:0 2px 6px">Already booked that day · ${esc(who)}</span>${booked.map((j) => `<div class="bk${clash.includes(j) ? ' clash' : ''}"><b class="num">${esc(j.time)}</b><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.ticket)} · ${esc(nameOf(j.installer))}</span></span>${pillFor(j)}</div>`).join('')}${clash.length ? `<p class="foot" style="color:var(--orange);margin:6px 2px 0">${esc(d.time)} is close to another visit (within 1½ hours).</p>` : ''}` : `<span class="free">${I.tick('var(--green)', 14)} Nothing else booked that day for ${esc(who)}</span>`}</div>
+  const rel2 = daysTo === 0 ? 'Today' : daysTo === 1 ? 'Tomorrow' : daysTo > 1 ? 'In ' + daysTo + ' days' : Math.abs(daysTo) + ' days ago';
+  const mo = start.getMonth() === days[6].getMonth() ? MO[start.getMonth()] : MO[start.getMonth()] + ' – ' + MO[days[6].getMonth()];
+  const dayBtn = (dt) => { const iso = isoOf(dt); const n = onDay(iso).length; return `<button type="button" class="sd${iso === d.date ? ' on' : ''}${iso === isoOf(t0) ? ' today' : ''}${dt < t0 ? ' past' : ''}" data-a="schDay" data-v="${iso}" aria-pressed="${iso === d.date}" aria-label="${WD[dt.getDay()]} ${dt.getDate()} ${MO[dt.getMonth()]}${n ? ', ' + n + ' booked' : ''}"><span>${WD[dt.getDay()].slice(0, 2)}</span><b class="num">${dt.getDate()}</b>${n ? '<i></i>' : ''}</button>`; };
+  const slots = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+  const opt = (n, v) => Array.from({ length: n }, (_, i) => String(i).padStart(2, '0')).map((x) => `<option ${v === x ? 'selected' : ''}>${x}</option>`).join('');
+  return `<h2 class="sec">When<span class="schsum">${WD[sel.getDay()]} ${sel.getDate()} ${MO[sel.getMonth()]} · <span class="num">${esc(d.time || '')}</span> <span class="muted">· ${rel2}</span></span></h2><div class="sch">
+    <div class="schr"><span class="schm">${mo}</span><button type="button" class="schn" data-a="schWeek" data-v="-1" aria-label="Previous week">‹</button><div class="sdays">${days.map(dayBtn).join('')}</div><button type="button" class="schn" data-a="schWeek" data-v="1" aria-label="Next week">›</button>
+      <span class="calwrap"><button type="button" class="schn cal" data-a="openCal" aria-label="Pick any date">${small(TABICON.jobs, 'currentColor')}</button><input id="ddate" type="date" class="calin" data-bind="date" value="${esc(d.date)}" tabindex="-1" aria-label="Pick a date"></span></div>
+    <div class="schr"><span class="schm">Time</span><span class="schsp"></span><div class="stimes">${slots.map((t) => { const b = busyAt(minsOf(t)); return `<button type="button" class="st${d.time === t ? ' on' : ''}${b.length ? ' busy' : ''}" data-a="schTime" data-v="${t}" title="${b.length ? esc(b.map((j) => j.time + ' ' + j.store).join(', ')) : 'Free'}">${t.slice(0, 2)}</button>`; }).join('')}</div>
+      <span class="t24 sch24" role="group" aria-label="Exact time, 24-hour clock"><select id="dhour" data-tpart="h" aria-label="Hour">${opt(24, (d.time || '').slice(0, 2))}</select><b>:</b><select id="dmin" data-tpart="m" aria-label="Minutes">${opt(60, (d.time || '').slice(3, 5))}</select></span></div>
+    <div class="schf">${booked.length ? `<span class="${clash.length ? 'warn' : 'muted'}">${clash.length ? '⚠ Close to another visit · ' : 'Also booked for ' + esc(who) + ': '}</span>${booked.map((j) => `<span class="bkc${clash.includes(j) ? ' clash' : ''}" title="${esc(j.ticket + ' · ' + nameOf(j.installer))}"><b class="num">${esc(j.time)}</b> ${esc(j.store)}</span>`).join('')}` : `<span class="free">${I.tick('var(--green)', 13)} Free that day for ${esc(who)}</span>`}${editing ? `<span class="muted" style="margin-left:auto">Before: ${esc(whenLabel(editing))}</span>` : ''}</div>
   </div>`;
-  return h;
 }
 /* 24-hour day planner on the ticket form: tap the day to pick a time, see other jobs that day */
 function dayPlan(d) {
