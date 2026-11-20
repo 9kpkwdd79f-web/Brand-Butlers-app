@@ -333,6 +333,12 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 .peh.n { left: 50%; top: 0; cursor: ns-resize; } .peh.s { left: 50%; top: 100%; cursor: ns-resize; } .peh.e { left: 100%; top: 50%; cursor: ew-resize; } .peh.w { left: 0; top: 50%; cursor: ew-resize; }
 .pebox.locked .peh.n, .pebox.locked .peh.s, .pebox.locked .peh.e, .pebox.locked .peh.w { display: none; }
 
+.pcard { gap: 10px; padding: 12px 14px; }
+.pcard.need { box-shadow: inset 0 0 0 1.5px var(--orange); }
+.pchead { display: flex; align-items: center; gap: 12px; }
+.pchead b { display: block; font-size: 16px; }
+.pchead .sub { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
+.pchead .grow { flex: 1; min-width: 0; }
 .xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 .xtile { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #1C1C1E; }
 .xopen { position: absolute; inset: 0; border: none; padding: 0; background: none; display: block; width: 100%; }
@@ -745,7 +751,7 @@ function picToJpeg(file, max, q) {
     im.src = url;
   });
 }
-const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0, extras: [], apple: {}, disposal: [], instSigned: false });
+const emptyReport = () => ({ init: false, contact: '', contactRole: 'Store manager', parts: [], extra: '', comments: '', nextNote: '', problem: null, probOpen: false, probType: 'Damaged fixture', probText: '', photos: { before: [null, null, null, null], after: [null, null, null, null] }, checks: [false, false, false, false], signed: false, shots: 0, extras: [], apple: {}, disposal: [], partPhotos: {}, instSigned: false });
 const toReport = (row) => { const ts = row.submitted_at ? Date.parse(row.submitted_at) : null; return Object.assign(emptyReport(), row.data || {}, { draft: row.draft, submittedTs: ts, submittedAt: ts ? hhmm(ts) : '' }); };
 
 /* privacy by design: files left behind by deleted tickets are removed (admins only, once per session) */
@@ -851,7 +857,7 @@ function hydrate() {
 
 /* report drafts are saved to the server as you go */
 const RQ = new Map();
-const REPORT_KEYS = ['init', 'contact', 'contactRole', 'parts', 'extra', 'comments', 'nextNote', 'problem', 'probType', 'probText', 'photos', 'checks', 'signed', 'shots', 'extras', 'apple', 'disposal', 'instSigned'];
+const REPORT_KEYS = ['init', 'contact', 'contactRole', 'parts', 'extra', 'comments', 'nextNote', 'problem', 'probType', 'probText', 'photos', 'checks', 'signed', 'shots', 'extras', 'apple', 'disposal', 'instSigned', 'partPhotos'];
 function queueReport(j, now) {
   if (!j || !j.report || !j.report.draft) return Promise.resolve();
   clearTimeout(RQ.get(j.id));
@@ -967,7 +973,7 @@ function render(keepScroll = true) {
   renderTabs();
   renderSheet();
   hydrate();
-  if (S.view && S.view.kind === 'report') { if (S.step === 3) setupSig(); queueReport(job(S.view.id)); }
+  if (S.view && S.view.kind === 'report') { if (S.step === 2) setupSig(); queueReport(job(S.view.id)); }
   if (S.view && S.view.kind === 'veditor' && ED) mountEditor();
   if (S.view && S.view.kind === 'peditor' && PE) mountPicEditor();
   window.scrollTo(0, keepScroll ? y : 0);
@@ -1812,6 +1818,20 @@ function ensureReport(j) {
   else names.forEach((p) => { if (!j.report.parts.some(([x]) => x === p)) j.report.parts.push([p, 0]); });
   return j.report;
 }
+/* installer report, in the order the work happens (Mathias, 20 Nov 2026):
+   1 before photos → 2 questions + both signatures → 3 after photos (before shown alongside) + photos of each replaced part → submit */
+const STEPS = ['Before photos', 'Questions and sign-off', 'After photos'];
+const replacedParts = (r) => (r.parts || []).filter(([, q]) => q > 0).map(([p, q]) => ({ key: p, name: String(p).replace(/ \(added on site\)$/, ''), q, photos: (r.partPhotos || {})[p] || [] }));
+function shotCards(j, ph) {
+  const r = j.report;
+  return `<div class="stack" style="margin-top:14px;gap:12px">${ANGLES.map((a, i) => {
+    const mine = r.photos[ph][i];
+    const slot = mine ? `<div class="ph">${pimg(mine.k, (ph === 'before' ? 'Before: ' : 'After: ') + a.t)}<span class="tag">${ph === 'before' ? 'Before' : 'After'}</span>${mine.ok ? `<span class="ok">${I.tick()}</span>` : `<span class="bad">${esc(mine.issue)}</span>`}</div>`
+      : `<div class="ph"><label class="take">${I.cam}Take ${ph} photo<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label></div>`;
+    const top = ph === 'before' ? `<div class="slot1">${slot}</div>` : `<div class="pair">${r.photos.before[i] ? `<div class="ph">${pimg(r.photos.before[i].k, 'Before: ' + a.t)}<span class="tag">Your before</span></div>` : `<div class="ph" style="display:flex;align-items:center;justify-content:center"><span class="muted" style="font-size:13px;padding:8px;text-align:center">No before photo</span></div>`}${slot}</div>`;
+    return `<div class="shot">${top}<div style="display:flex;gap:12px;align-items:flex-start"><svg class="where" viewBox="0 0 52 52" role="img" aria-label="Where to stand"><rect x="13" y="6" width="26" height="6" rx="1.5" fill="var(--fg)"/><polygon points="${a.cone}" fill="var(--blue)" fill-opacity="0.2"/><circle cx="${a.pos[0]}" cy="${a.pos[1]}" r="4" fill="var(--blue)"/></svg><div style="flex:1;display:flex;flex-direction:column;gap:3px"><b>${i + 1} · ${a.t}</b><span class="muted" style="font-size:15px;line-height:20px">${ph === 'after' ? 'Match your before photo: same spot, same angle.' : a.h}</span>${mine ? `<label class="retake" style="align-self:flex-start;margin-top:6px">Retake<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label>` : ''}</div></div></div>`;
+  }).join('')}</div>`;
+}
 function reportFlow(j) {
   const r = ensureReport(j);
   const st = S.step;
@@ -1820,43 +1840,26 @@ function reportFlow(j) {
   const right = `<span class="muted" style="justify-self:end;font-size:13px;display:flex;align-items:center;gap:4px">${I.tick('var(--muted)', 12)} Saved</span>`;
   let h = navbar(left, j.store, right, prog);
   if (j.reopenedAt && j.status === 'progress' && r.signed) h += `<div class="banner" style="margin-top:12px;background:var(--orange-bg);color:var(--fg2)"><span style="flex:1"><b>Editing a submitted report.</b> The admin sees it again when you submit.</span></div>`;
+  const title = (sub) => `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step ${st} of 3${st < 3 ? ' · next: ' + STEPS[st].toLowerCase() : ''}</span><h1 style="font-size:28px;line-height:34px">${STEPS[st - 1]}</h1>${sub ? `<p class="muted" style="margin:6px 0 0;font-size:15px;line-height:21px">${sub}</p>` : ''}</div>`;
+  const okN = (k) => r.photos[k].filter((p) => p && p.ok).length;
   if (st === 1) {
-    h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 1 of 3</span><h1 style="font-size:28px;line-height:34px">Check-in and parts</h1></div>`;
+    h += title('Take these four before you start any work. Each photo is checked for light and sharpness.');
+    if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
+    if (j.tools.length) h += `<h2 class="sec">Bring with you · ${j.tools.length}</h2><div class="group">${j.tools.map((t) => `<div class="row" style="font-size:15px">${I.tick('var(--green)', 16)}<span class="grow">${esc(t)}</span></div>`).join('')}</div>`;
+    h += `<h2 class="sec">Before photos · ${okN('before')}/4</h2>` + shotCards(j, 'before');
+    const left2 = 4 - okN('before');
+    h += `<div style="margin-top:20px"><button type="button" class="btn" data-a="stepNext" ${left2 ? 'disabled' : ''}>${left2 ? left2 + (left2 === 1 ? ' before photo left' : ' before photos left') : 'Continue to questions'}</button></div>`;
+  } else if (st === 2) {
+    const A = r.apple;
+    h += title('Answer everything, then you and the store sign. These answers go on the Apple statement of completion.');
     if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
     h += ynQ(r, 'checkedIn', 'Have you checked in?', 'Check in with the store before you start.');
     h += `<h2 class="sec">Store manager</h2><div class="group"><label class="row" for="rcontact"><span class="lbl">Name</span><input id="rcontact" class="inl" data-rbind="contact" value="${esc(r.contact)}" placeholder="Full name" autocomplete="off" autocapitalize="words"></label><div class="row" style="flex-wrap:wrap">${['Store manager', 'Department lead', 'Staff'].map((x) => `<button type="button" class="chip ${r.contactRole === x ? 'on' : ''}" data-a="rset" data-k="contactRole" data-v="${x}">${x}</button>`).join('')}</div></div>`;
     const planned = Object.fromEntries(j.partItems.map((x) => [x.name, x.qty]));
-    if (j.tools.length) h += `<h2 class="sec">Bring with you \u00b7 ${j.tools.length}</h2><div class="group">${j.tools.map((t) => `<div class="row" style="font-size:15px">${I.tick('var(--green)', 16)}<span class="grow">${esc(t)}</span></div>`).join('')}</div>`;
-    h += `<h2 class="sec">Parts replaced</h2><div class="group">${r.parts.map(([p, q], i) => `<div class="row"><button type="button" style="flex:1;display:flex;align-items:center;gap:12px;border:none;background:none;padding:0;text-align:left;min-height:44px" data-a="partToggle" data-v="${i}" aria-pressed="${q > 0}"><span class="check ${q > 0 ? 'on' : ''}">${I.tick()}</span><span style="display:flex;flex-direction:column"><span>${esc(String(p).replace(/ \(added on site\)$/, ''))}</span><span class="sub" style="font-size:12px;color:var(--muted)">${planned[p] ? 'On the ticket \u00b7 ' + planned[p] + ' planned' : 'Added on site'}</span></span></button>${q > 0 ? `<div class="step"><button type="button" aria-label="Fewer" data-a="partQty" data-v="${i}" data-d="-1">−</button><span class="num">${q}</span><button type="button" aria-label="More" data-a="partQty" data-v="${i}" data-d="1">+</button></div>` : ''}</div>`).join('')}
+    h += `<h2 class="sec">Parts replaced</h2><div class="group">${r.parts.map(([p, q], i) => `<div class="row"><button type="button" style="flex:1;display:flex;align-items:center;gap:12px;border:none;background:none;padding:0;text-align:left;min-height:44px;color:var(--fg)" data-a="partToggle" data-v="${i}" aria-pressed="${q > 0}"><span class="check ${q > 0 ? 'on' : ''}">${I.tick()}</span><span style="display:flex;flex-direction:column"><span>${esc(String(p).replace(/ \(added on site\)$/, ''))}</span><span class="sub" style="font-size:12px;color:var(--muted)">${planned[p] ? 'On the ticket · ' + planned[p] + ' planned' : 'Added on site'}</span></span></button>${q > 0 ? `<div class="step"><button type="button" aria-label="Fewer" data-a="partQty" data-v="${i}" data-d="-1">−</button><span class="num">${q}</span><button type="button" aria-label="More" data-a="partQty" data-v="${i}" data-d="1">+</button></div>` : ''}</div>`).join('')}
       <button type="button" class="row" style="color:var(--blue);font-size:15px" data-a="partsOpen" data-v="report">+ Add a part you replaced<span class="muted" style="font-size:13px;margin-left:6px">search the list</span></button></div>
-      <p class="foot">Tick what you replaced on the ticket. Anything extra you add is flagged for the admin.</p>`;
-    h += `<h2 class="sec">Security: items replaced</h2><textarea class="box" data-abind2="secItems" placeholder="${esc(partsLine(r) || 'e.g. 4 pucks, 2 tethers, 1 riser')}" style="min-height:64px">${esc(r.apple.secItems || '')}</textarea><p class="foot">How many pucks, tethers, risers and so on. Leave empty to use the parts ticked above.</p>`;
-    h += `<h2 class="sec">Note for the next visit</h2><textarea id="rnext" class="box" data-rbind="nextNote" placeholder="Parking, who to ask for, anything to check" style="min-height:64px">${esc(r.nextNote)}</textarea><p class="foot">Only for installers. Shown on the job card next time someone visits this store.</p>`;
-    h += `<div style="margin-top:20px">${r.problem ? `<div class="banner" style="background:var(--red-bg);color:var(--fg2)">${I.flagP('var(--redbtn)')}<span style="flex:1"><b style="color:var(--red)">Problem reported:</b> ${esc(r.problem.type)}. ${esc(r.problem.text)}</span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="probRemove">Remove</button></div>`
-      : r.probOpen ? `<div class="card" style="gap:12px"><b>Report a problem</b><div class="chips">${['Damaged fixture', 'Missing fixture', 'Missing parts', 'Other'].map((x) => `<button type="button" class="chip ${r.probType === x ? 'on' : ''}" data-a="rset" data-k="probType" data-v="${x}">${x}</button>`).join('')}</div><textarea id="rprob" class="box" style="background:var(--bg)" data-rbind="probText" placeholder="Describe what's wrong">${esc(r.probText)}</textarea><div class="btn2"><button type="button" class="btn small sec" data-a="rset" data-k="probOpen" data-v="">Cancel</button><button type="button" class="btn small red" data-a="probSave">Add to report</button></div></div>`
-      : `<button type="button" class="row" style="border-radius:12px;border:none;color:var(--red)" data-a="rset" data-k="probOpen" data-v="1">${I.flagP('var(--redbtn)')}<span class="grow"><span>Report a problem</span><span class="sub">Damaged or missing fixture, missing parts</span></span>${I.chev}</button>`}</div>`;
-    h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="stepNext">Continue to photos</button></div>`;
-  } else if (st === 2) {
-    const ph = S.phase;
-    const done = (k) => r.photos[k].filter((p) => p && p.ok).length;
-    h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 2 of 3</span><h1 style="font-size:28px;line-height:34px">Photos</h1><p class="muted" style="margin:6px 0 0;font-size:15px;line-height:21px">${ph === 'before' ? 'Take these four before you start work. Each photo is checked for light and sharpness.' : 'Retake each angle when you are done. Your before photo is the guide, so every pair lines up.'}</p></div>`;
-    if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
-    h += `<div class="seg" style="margin-top:14px" role="group" aria-label="Phase"><button type="button" class="${ph === 'before' ? 'on' : ''}" data-a="phase" data-v="before">Before · ${done('before')}/4</button><button type="button" class="${ph === 'after' ? 'on' : ''}" data-a="phase" data-v="after">After · ${done('after')}/4</button></div>`;
-    h += `<div class="stack" style="margin-top:14px;gap:12px">${ANGLES.map((a, i) => {
-      const mine = r.photos[ph][i];
-      const slot = mine ? `<div class="ph">${pimg(mine.k, (ph === 'before' ? 'Before: ' : 'After: ') + a.t)}<span class="tag">${ph === 'before' ? 'Before' : 'After'}</span>${mine.ok ? `<span class="ok">${I.tick()}</span>` : `<span class="bad">${esc(mine.issue)}</span>`}</div>`
-        : `<div class="ph"><label class="take">${I.cam}Take photo<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label></div>`;
-      const top = ph === 'before' ? `<div class="slot1">${slot}</div>` : `<div class="pair">${r.photos.before[i] ? `<div class="ph">${pimg(r.photos.before[i].k, 'Before: ' + a.t)}<span class="tag">Your before</span></div>` : `<div class="ph" style="display:flex;align-items:center;justify-content:center"><span class="muted" style="font-size:13px;padding:8px;text-align:center">Take the before photo first</span></div>`}${slot}</div>`;
-      return `<div class="shot">${top}<div style="display:flex;gap:12px;align-items:flex-start"><svg class="where" viewBox="0 0 52 52" role="img" aria-label="Where to stand"><rect x="13" y="6" width="26" height="6" rx="1.5" fill="var(--fg)"/><polygon points="${a.cone}" fill="var(--blue)" fill-opacity="0.2"/><circle cx="${a.pos[0]}" cy="${a.pos[1]}" r="4" fill="var(--blue)"/></svg><div style="flex:1;display:flex;flex-direction:column;gap:3px"><b>${i + 1} · ${a.t}</b><span class="muted" style="font-size:15px;line-height:20px">${a.h}</span>${mine ? `<label class="retake" style="align-self:flex-start;margin-top:6px">Retake<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label>` : ''}</div></div></div>`;
-    }).join('')}</div>`;
-    h += extrasBlock(j, true);
-    const left = 8 - done('before') - done('after');
-    h += `<div style="margin-top:20px" class="stack">${ph === 'before' && done('before') === 4 && done('after') < 4 ? '<button type="button" class="btn" data-a="phase" data-v="after">Done with work — take after photos</button>' : `<button type="button" class="btn" data-a="stepNext" ${left ? 'disabled' : ''}>${left ? left + (left === 1 ? ' photo' : ' photos') + ' left' : 'Continue to sign-off'}</button>`}</div>`;
-  } else {
-    const miss = reportMissing(j);
-    h += `<div style="padding-top:12px"><span class="muted" style="font-size:13px;font-weight:600">Step 3 of 3</span><h1 style="font-size:28px;line-height:34px">Questions and sign-off</h1><p class="muted" style="margin:6px 0 0;font-size:15px;line-height:21px">These answers go on the Apple statement of completion.</p></div>`;
-    h += `<div class="banner" style="margin-top:14px;background:var(--green-bg);color:var(--green-fg)">${I.tick('var(--green)', 18)}Before and after photos taken: all 8 passed the check</div>`;
-    const A = r.apple;
+      <p class="foot">Tick what you replaced. In the last step you take a photo of each part you tick here.</p>`;
+    h += `<h2 class="sec">Security: items replaced</h2><textarea class="box" data-abind2="secItems" placeholder="${esc(partsLine(r) || 'e.g. 4 pucks, 2 tethers, 1 riser')}" style="min-height:64px">${esc(A.secItems || '')}</textarea><p class="foot">How many pucks, tethers, risers and so on. Leave empty to use the parts ticked above.</p>`;
     h += ynQ(r, 'scope', 'Did the repair or replacement go as per the scope of work?', '', 'no', 'scopeWhy', 'Explain what was different');
     h += ynQ(r, 'issues', 'Did you experience any issues in store?', '', 'yes', null, null, A.issues !== true ? '' :
       `<div class="group" style="margin-top:8px">${[['access', 'Access'], ['alarm', 'Alarm'], ['other', 'Other']].map(([k, l]) => `<label class="row"><span class="lbl" style="min-width:64px">${l}</span><input class="inl" data-abind2="${k}" value="${esc(A[k] || '')}" placeholder="${l} issues, if any" autocomplete="off" autocapitalize="sentences"></label>`).join('')}</div>`);
@@ -1866,15 +1869,30 @@ function reportFlow(j) {
     h += `<h2 class="sec">Security: devices with alarm issues</h2><input class="box" data-abind2="alarmDevices" value="${esc(A.alarmDevices || '')}" placeholder="Which devices were alarming? Leave empty if none" autocomplete="off" autocapitalize="sentences">`;
     h += ynQ(r, 'checkedOut', 'Have you checked out?', 'Check out with the store before you leave.');
     h += `<h2 class="sec">Notes for Apple</h2><textarea id="rcomments" class="box" data-rbind="comments" placeholder="Anything Apple should know (optional)">${esc(r.comments)}</textarea>`;
-    if ((r.extras || []).length || xupFor(j).length) h += `<div class="row" style="margin-top:12px;border-radius:12px;border:none"><span class="grow"><span>${countExtras(r.extras || [])} attached</span><span class="sub">${xupFor(j).length ? 'Still uploading. Keep the app open.' : 'The admin sees them with the report.'}</span></span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="stepBack">Change</button></div>`;
+    h += `<h2 class="sec">Note for the next visit</h2><textarea id="rnext" class="box" data-rbind="nextNote" placeholder="Parking, who to ask for, anything to check" style="min-height:64px">${esc(r.nextNote)}</textarea><p class="foot">Only for installers. Shown on the job card next time someone visits this store.</p>`;
+    h += `<div style="margin-top:20px">${r.problem ? `<div class="banner" style="background:var(--red-bg);color:var(--fg2)">${I.flagP('var(--redbtn)')}<span style="flex:1"><b style="color:var(--red)">Problem reported:</b> ${esc(r.problem.type)}. ${esc(r.problem.text)}</span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="probRemove">Remove</button></div>`
+      : r.probOpen ? `<div class="card" style="gap:12px"><b>Report a problem</b><div class="chips">${['Damaged fixture', 'Missing fixture', 'Missing parts', 'Other'].map((x) => `<button type="button" class="chip ${r.probType === x ? 'on' : ''}" data-a="rset" data-k="probType" data-v="${x}">${x}</button>`).join('')}</div><textarea id="rprob" class="box" style="background:var(--bg)" data-rbind="probText" placeholder="Describe what's wrong">${esc(r.probText)}</textarea><div class="btn2"><button type="button" class="btn small sec" data-a="rset" data-k="probOpen" data-v="">Cancel</button><button type="button" class="btn small red" data-a="probSave">Add to report</button></div></div>`
+      : `<button type="button" class="row" style="border-radius:12px;border:none;color:var(--red)" data-a="rset" data-k="probOpen" data-v="1">${I.flagP('var(--redbtn)')}<span class="grow"><span>Report a problem</span><span class="sub">Damaged or missing fixture, missing parts</span></span>${I.chev}</button>`}</div>`;
     h += `<h2 class="sec" style="margin-top:26px">Works completed as per the scope of works</h2>`;
     h += `<h2 class="sec">Lead installer: ${esc(nameOf(j.installer))} <button type="button" class="link" style="font-size:13px;padding:0" data-a="sigClear" data-v="inst">Clear</button></h2><div class="card" style="gap:8px;padding:14px"><span style="font-size:15px;line-height:20px;color:var(--fg2)">Sign to confirm the work is done.</span><canvas class="sig" id="isig" aria-label="Installer signature, sign with your finger"></canvas></div>`;
     h += `<h2 class="sec">Store manager: ${esc(r.contact || 'not named yet')} <button type="button" class="link" style="font-size:13px;padding:0" data-a="sigClear" data-v="store">Clear</button></h2><div class="card" style="gap:8px;padding:14px"><span style="font-size:15px;line-height:20px;color:var(--fg2)">Hand the phone to ${esc(r.contact || 'the store manager')}.</span><canvas class="sig" id="sig" aria-label="Store manager signature, sign with your finger"></canvas><span class="muted" style="font-size:12px;line-height:16px">By signing, the store certifies that aside from any issues documented above, all work is completed on this date to their satisfaction.</span></div>`;
-    h += `<h2 class="sec">What happens next</h2><div class="group"><div class="row"><span class="grow"><span>An admin approves it first</span><span class="sub">Then the statement of completion is made for Apple. You'll see it here if anything needs changing.</span></span></div></div>`;
-    h += `${miss.length ? `<p class="foot" id="rmiss" style="color:var(--orange);margin-top:18px">Still needed: ${miss.map(esc).join(' · ')}</p>` : '<p class="foot" id="rmiss"></p>'}<div style="margin-top:8px"><button type="button" class="btn" data-a="submitReport" ${miss.length ? 'disabled' : ''}>${miss.length ? 'Answer all questions and sign' : j.reopenedAt ? 'Submit again' : 'Finalize and submit'}</button></div>`;
+    const miss = reportMissing(j, 'answers');
+    h += `${miss.length ? `<p class="foot" id="rmiss" style="color:var(--orange);margin-top:18px">Still needed: ${miss.map(esc).join(' · ')}</p>` : '<p class="foot" id="rmiss"></p>'}<div style="margin-top:8px"><button type="button" class="btn" data-a="stepNext" id="s2next" ${miss.length ? 'disabled' : ''}>${miss.length ? 'Answer all questions and sign' : 'Continue to after photos'}</button></div>`;
+  } else {
+    h += title('Retake each angle now the work is done. Your before photo sits next to it, so every pair lines up.');
+    h += `<h2 class="sec">After photos · ${okN('after')}/4</h2>` + shotCards(j, 'after');
+    const rp = replacedParts(r);
+    h += `<h2 class="sec">Photos of the parts you replaced${rp.length ? ' · ' + rp.filter((x) => x.photos.length).length + '/' + rp.length : ''}</h2>`;
+    h += rp.length ? `<div class="stack" style="gap:10px">${rp.map((x) => `<div class="card pcard${x.photos.length ? '' : ' need'}"><div class="pchead"><span class="pfi">${I.pfPart}</span><span class="grow"><b>${esc(x.name)}</b><span class="sub">${x.q} replaced · ${x.photos.length ? x.photos.length + (x.photos.length === 1 ? ' photo' : ' photos') : 'take at least one photo of the new part in place'}</span></span>${x.photos.length ? I.tick('var(--green)', 20) : ''}</div>
+        <div class="xgrid">${x.photos.map((ph, i) => `<div class="xtile"><button type="button" class="xopen" data-a="sheet" data-v="pph:${j.id}|${r.parts.findIndex(([p]) => p === x.key)}|${i}">${pimg(ph.k, x.name + ' photo ' + (i + 1))}</button><button type="button" class="xdel" data-a="pphDel" data-v="${r.parts.findIndex(([p]) => p === x.key)}|${i}" aria-label="Remove">✕</button></div>`).join('')}<label class="xtile xadd">${I.cam}<span>Photo of<br>${esc(x.name.length > 18 ? x.name.slice(0, 17) + '…' : x.name)}</span><input type="file" accept="image/*" capture="environment" multiple data-pphoto="${r.parts.findIndex(([p]) => p === x.key)}" class="vh"></label></div></div>`).join('')}</div><p class="foot">Taken from the parts you ticked in the questions. Change them there if something is missing.</p>`
+      : `<div class="row" style="border-radius:12px;border:none"><span class="grow"><span>No parts marked as replaced</span><span class="sub">If you replaced something, tick it in the questions first.</span></span><button type="button" class="link" style="font-size:15px;padding:4px" data-a="stepBack">Questions</button></div>`;
+    h += extrasBlock(j, true);
+    const miss = reportMissing(j);
+    h += `${miss.length ? `<p class="foot" id="rmiss" style="color:var(--orange);margin-top:18px">Still needed: ${miss.map(esc).join(' · ')}</p>` : '<p class="foot" id="rmiss"></p>'}<div style="margin-top:8px"><button type="button" class="btn" data-a="submitReport" ${miss.length ? 'disabled' : ''}>${miss.length ? 'Finish the photos to submit' : j.reopenedAt ? 'Submit again' : 'Finalize and submit'}</button></div>`;
+    h += `<p class="foot" style="text-align:center">An admin approves it first, then the statement of completion is made for Apple.</p>`;
   }
-  // instructions stay one tap away while taking photos and signing off
-  const vs = st >= 2 ? j.videos.map(videoBy).filter(Boolean) : [];
+  // instructions stay one tap away on every step
+  const vs = j.videos.map(videoBy).filter(Boolean);
   if (vs.length) h += `<div style="height:64px"></div><button type="button" class="xinstr" data-a="playJob" data-v="${j.id}">${I.play.replace('rgba(0,0,0,0.55)', 'rgba(255,255,255,0.25)')}<span>Instructions</span><span class="xic">${vs.length}</span></button>`;
   return h;
 }
@@ -1896,6 +1914,8 @@ function approvalDetail(j) {
   h += `<h2 class="sec">Statement of completion</h2><div class="group">${appleRows(j).map(([b, q, a, sub]) => `<div class="row" style="align-items:flex-start;padding-top:10px;padding-bottom:10px"><span class="grow"><span style="font-size:14px;line-height:19px;font-weight:600">${esc(b + q)}</span>${sub ? sub.map(([l, v]) => `<span class="sub" style="color:var(--fg)"><b>${esc(l)}</b> ${esc(v || '')}</span>`).join('') : `<span class="sub" style="color:var(--fg);white-space:pre-line">${esc(a || '\u2013')}</span>`}</span></div>`).join('')}${chk(photosOk, '8 photos passed the check', 'Bright and sharp enough')}${r.problem ? chk(false, 'Problem reported', esc(r.problem.type) + '. ' + esc(r.problem.text)) : ''}</div>
     ${(r.disposal || []).length ? `<h2 class="sec">Disposal photos \u00b7 ${r.disposal.length}</h2><div class="xgrid">${r.disposal.map((x, i) => `<div class="xtile"><button type="button" class="xopen" data-a="sheet" data-v="disp:${j.id}|${i}">${pimg(x.k, 'Disposal photo ' + (i + 1))}</button></div>`).join('')}</div>` : ''}`;
   h += `<h2 class="sec">Before and after</h2><div class="stack">${ANGLES.map((a, i) => `<div class="shot" style="padding:10px;gap:8px"><b style="font-size:13px">${i + 1} · ${a.t}</b><div class="pair"><div class="ph">${r.photos.before[i] ? pimg(r.photos.before[i].k, 'Before') : ''}<span class="tag">Before</span></div><div class="ph">${r.photos.after[i] ? pimg(r.photos.after[i].k, 'After') : ''}<span class="tag">After</span></div></div></div>`).join('')}</div>`;
+  const rpx = replacedParts(r).filter((x) => x.photos.length);
+  if (rpx.length) h += `<h2 class="sec">Replaced parts \u00b7 photos</h2><div class="stack" style="gap:10px">${rpx.map((x) => `<div class="card" style="gap:8px;padding:12px"><b style="font-size:15px">${esc(x.name)} <span class="muted" style="font-weight:400">× ${x.q}</span></b><div class="xgrid">${x.photos.map((p, i) => `<div class="xtile"><button type="button" class="xopen" data-a="sheet" data-v="pph:${j.id}|${r.parts.findIndex(([k]) => k === x.key)}|${i}">${pimg(p.k, x.name)}</button></div>`).join('')}</div></div>`).join('')}</div>`;
   if ((r.extras || []).length) h += extrasBlock(j, false);
   const parts = r.parts.filter(([, q]) => q > 0);
   h += `<h2 class="sec">Parts replaced</h2><div class="group">${parts.length ? parts.map(([p, q]) => `<div class="row"><span class="grow">${esc(p)}</span><span class="val num">× ${q}</span></div>`).join('') : '<div class="row muted">None</div>'}</div>`;
@@ -2000,6 +2020,11 @@ function renderSheet() {
     const j = job(arg); const n = (U.photoFiles || []).length; const vid = U.mediaKind === 'video'; const one = vid ? 'video' : 'picture', many = vid ? 'videos' : 'pictures';
     body = `${sheetHead(vid ? 'Videos' : 'Pictures', 'Close')}<div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:4px"><b style="font-size:20px">${n} ${n === 1 ? one : many} ready</b><span class="muted" style="font-size:15px;line-height:21px">${esc(j ? j.store + ' \u00b7 ' + j.ticket : '')}. Tap below, then choose \u201c${vid ? 'Save video' : 'Save images'}\u201d (or Save to Files) to store them one by one on this device.</span></div>
       <button type="button" class="btn" data-a="sharePhotos">Save ${n} ${n === 1 ? one : many}</button>`;
+  } else if (kind === 'pph') {
+    const [jid, pi, ix] = String(arg).split('|'); const j = job(jid); const r = j && j.report; const key = r && (r.parts[+pi] || [])[0]; const x = key && ((r.partPhotos || {})[key] || [])[+ix];
+    if (!x) { U.sheet = null; overlay.innerHTML = ''; return; }
+    body = `${sheetHead(esc(String(key).replace(/ \(added on site\)$/, '')), 'Close')}<div class="picview">${pimg(x.k, 'Replaced part')}</div>${r.draft && S.role === 'installer' ? `<button type="button" class="btn sec" style="color:var(--red)" data-a="pphDel" data-v="${+pi}|${+ix}">Remove</button>` : ''}`;
+    setTimeout(hydrate, 0);
   } else if (kind === 'disp') {
     const [jid, ix] = String(arg).split('|'); const j = job(jid); const x = j && j.report && (j.report.disposal || [])[+ix];
     if (!x) { U.sheet = null; overlay.innerHTML = ''; return; }
@@ -2544,7 +2569,8 @@ function setupPad(id, keyFn, flag) {
 }
 function updateMissing(j) {
   const miss = reportMissing(j); const btn = document.querySelector('[data-a="submitReport"]'); const p = document.getElementById('rmiss');
-  if (btn) { btn.disabled = !!miss.length; btn.textContent = miss.length ? 'Answer all questions and sign' : j.reopenedAt ? 'Submit again' : 'Finalize and submit'; }
+  if (S.step === 2) { const miss2 = reportMissing(j, 'answers'); const b2 = document.getElementById('s2next'); if (b2) { b2.disabled = !!miss2.length; b2.textContent = miss2.length ? 'Answer all questions and sign' : 'Continue to after photos'; } if (p) { p.textContent = miss2.length ? 'Still needed: ' + miss2.join(' · ') : ''; p.style.color = 'var(--orange)'; } return; }
+  if (btn) { btn.disabled = !!miss.length; btn.textContent = miss.length ? 'Finish the photos to submit' : j.reopenedAt ? 'Submit again' : 'Finalize and submit'; }
   if (p) { p.textContent = miss.length ? 'Still needed: ' + miss.join(' · ') : ''; p.style.color = 'var(--orange)'; }
 }
 
@@ -2590,18 +2616,24 @@ function ynQ(r, k, q, hint, explainOn, whyKey, whyPh, extra) {
   if (extra) h += extra;
   return h + '</div>';
 }
-function reportMissing(j) {
+function reportMissing(j, scope) {
   const r = j.report; const A = r.apple || {}; const m = [];
+  const nb = 4 - r.photos.before.filter((p) => p && p.ok).length; const beforeMiss = nb ? [nb + ' before photo' + (nb === 1 ? '' : 's') + ' (step 1)'] : [];
   const need = (k, l) => { if (A[k] !== true && A[k] !== false) m.push(l); };
-  need('checkedIn', 'checked in (step 1)');
-  if (!(r.contact || '').trim()) m.push('store manager name (step 1)');
+  need('checkedIn', 'checked in');
+  if (!(r.contact || '').trim()) m.push('store manager name');
   need('scope', 'scope of work'); if (A.scope === false && !(A.scopeWhy || '').trim()) m.push('why the scope was different');
   need('issues', 'issues in store'); if (A.issues === true && !['access', 'alarm', 'other'].some((k) => (A[k] || '').trim())) m.push('which issues');
   need('electrical', 'electrical or lighting issues'); if (A.electrical === true && !(A.electricalWhy || '').trim()) m.push('the electrical issue');
   need('disposed', 'disposal'); if (A.disposed === true && !(r.disposal || []).length) m.push('a disposal photo'); if (A.disposed === false && !(A.disposedWhy || '').trim()) m.push('why parts were not disposed');
   need('checkedOut', 'checked out');
   if (!r.instSigned) m.push('your signature'); if (!r.signed) m.push('store manager signature');
-  return m;
+  if (scope === 'answers') return m;
+  // full check (submit): step 2 collapses to one line, then the photos of step 3
+  const out = beforeMiss.concat(m.length ? ['answers and signatures (step 2)'] : []);
+  const missA = 4 - r.photos.after.filter((p) => p && p.ok).length; if (missA) out.push(missA + ' after photo' + (missA === 1 ? '' : 's'));
+  replacedParts(r).filter((x) => !x.photos.length).forEach((x) => out.push('a photo of ' + x.name));
+  return out;
 }
 
 
@@ -2611,6 +2643,7 @@ function reportPhotos(j) {
   const r = j.report || {}; const out = []; const wo = 'WO' + String(j.ticket || '').replace(/[^\w-]+/g, '');
   const slug = (t) => String(t).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
   ANGLES.forEach((ang, i) => ['before', 'after'].forEach((ph) => { const p = r.photos && r.photos[ph] && r.photos[ph][i]; if (p && p.k) out.push({ k: p.k, name: `${wo}_${i + 1}${ph === 'before' ? 'a_Before' : 'b_After'}_${slug(ang.t)}.jpg` }); }));
+  replacedParts(r).forEach((x) => x.photos.forEach((p, i) => out.push({ k: p.k, name: `${wo}_Part_${slug(x.name)}_${i + 1}.jpg` })));
   (r.disposal || []).forEach((p, i) => out.push({ k: p.k, name: `${wo}_Disposal_${i + 1}.jpg` }));
   (r.extras || []).filter((x) => x.kind === 'image').forEach((p, i) => out.push({ k: p.k, name: `${wo}_Extra_${i + 1}.jpg` }));
   return out;
@@ -2763,7 +2796,7 @@ async function photoAppendix(doc, k, j) {
   const right = 'Apple ID: ' + (st.appleId || '') + ' ' + C[j.c].name.toUpperCase();
   const pages = [];
   ANGLES.forEach((a, i) => { const b = r.photos.before[i], af = r.photos.after[i]; if (b || af) pages.push({ title: 'BEFORE & AFTER Photos', keys: [b && b.k, af && af.k], caps: ['Before', 'After'] }); });
-  const rest = (r.extras || []).filter((x) => x.kind === 'image').map((x) => x.k).concat((r.disposal || []).map((x) => x.k));
+  const rest = replacedParts(r).flatMap((x) => x.photos.map((p) => p.k)).concat((r.extras || []).filter((x) => x.kind === 'image').map((x) => x.k), (r.disposal || []).map((x) => x.k));
   for (let i = 0; i < rest.length; i += 2) pages.push({ title: 'AFTER OVERVIEW Photos', keys: rest.slice(i, i + 2), caps: [] });
   const BOX = [[111.48, 74.09], [516.66, 74.09]], BW = 213.75, BH = 380;
   for (let n = 0; n < pages.length; n++) {
@@ -3381,7 +3414,7 @@ const A = {
     try { await Promise.all(Array.from(PEND.values())).catch(() => {}); ok(await sb.rpc('job_reopen', { p_job: v })); await refresh(); }
     catch (e) { U.sheet = null; renderSheet(); toast(friendly(e)); await refresh().catch(() => {}); render(false); return; }
     const j = job(v); ensureReport(j); U.sheet = null; renderSheet();
-    S.view = { kind: 'report', id: v }; S.step = 1; S.phase = 'after'; S.focus = v; render(false);
+    S.view = { kind: 'report', id: v }; S.step = 2; S.focus = v; render(false);
     toast('Report opened. Make your changes and submit it again.');
   },
   async startReport(v, btn) {
@@ -3394,8 +3427,9 @@ const A = {
     S.view = { kind: 'report', id: v }; S.step = jj.status === 'changes' ? 2 : 1; S.phase = 'before'; S.focus = v; render(false);
   },
   closeView() { const was = S.view; S.view = null; U.confirm = null; if (was && was.kind === 'report') queueReport(job(was.id), true).catch(() => {}); render(false); quietRefresh(); },
-  stepNext() { const j = job(S.view.id), r = j.report; if (S.step === 1 && (r.extra || '').trim()) A.partAdd(true); S.step = Math.min(3, S.step + 1); if (S.step === 2) S.phase = r.photos.before.every((p) => p && p.ok) ? 'after' : 'before'; render(false); },
-  stepBack() { S.step = Math.max(1, S.step - 1); render(false); },
+  stepNext() { const j = job(S.view.id), r = j.report; if ((r.extra || '').trim()) A.partAdd(true); if (S.step === 1 && r.photos.before.some((p) => !(p && p.ok))) return; if (S.step === 2 && reportMissing(j, 'answers').length) { updateMissing(j); return; } S.step = Math.min(3, S.step + 1); render(false); window.scrollTo(0, 0); },
+  stepBack() { S.step = Math.max(1, S.step - 1); render(false); window.scrollTo(0, 0); },
+  pphDel(v) { const j = job(S.view.id); const r = j.report; const [pi, i] = String(v).split('|').map(Number); const key = (r.parts[pi] || [])[0]; const arr = (r.partPhotos || {})[key]; if (!arr || !arr[i]) return; phDel(arr[i].k); arr.splice(i, 1); queueReport(j); U.sheet = null; renderSheet(); render(); },
   rset(v, el) { const r = job(S.view.id).report; r[el.dataset.k] = el.dataset.k === 'probOpen' ? !!v : v; render(); },
   partToggle(v) { const r = job(S.view.id).report; const p = r.parts[+v]; p[1] = p[1] > 0 ? 0 : 1; render(); },
   partQty(v, el) { const r = job(S.view.id).report; const p = r.parts[+v]; p[1] = Math.max(1, p[1] + Number(el.dataset.d)); render(); },
@@ -3476,7 +3510,7 @@ document.addEventListener('submit', (e) => {
 document.addEventListener('input', (e) => {
   const el = e.target;
   if (el.dataset.deskSearch) { S[el.dataset.deskSearch === '1' ? 'q' : el.dataset.deskSearch] = el.value; const pos = el.selectionStart; const fid = el.id; render(); const n = document.getElementById(fid); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } } return; }
-  if (el.dataset.abind2 && S.view && S.view.kind === 'report') { const j = job(S.view.id); j.report.apple = j.report.apple || {}; j.report.apple[el.dataset.abind2] = el.value; queueReport(j); if (S.step === 3) updateMissing(j); return; }
+  if (el.dataset.abind2 && S.view && S.view.kind === 'report') { const j = job(S.view.id); j.report.apple = j.report.apple || {}; j.report.apple[el.dataset.abind2] = el.value; queueReport(j); if (S.step >= 2) updateMissing(j); return; }
   if (el.dataset.pq) { U.pq = el.value; refreshPartPick(); return; }
   if (el.dataset.tq) { U.tq = el.value; refreshToolPick(); return; }
   if (el.dataset.iq) { U.iq = el.value; const b = document.getElementById('iplist'); if (b) b.innerHTML = instPickList(); return; }
@@ -3529,6 +3563,12 @@ document.addEventListener('change', (e) => {
     files.forEach((f) => processPhoto(f).then((p) => { const k = j.id + '/disposal-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5) + '.jpg'; phPut(k, p.data); r.disposal.push({ k }); queueReport(j); render(); }).catch(() => toast('Couldn\u2019t read that photo. Try again.')));
     return;
   }
+  if (el.dataset.pphoto != null && el.dataset.pphoto !== '') {
+    const files = Array.from(el.files || []); el.value = ''; const j = job(S.view.id); const r = j.report; const key = (r.parts[+el.dataset.pphoto] || [])[0]; if (!key) return;
+    r.partPhotos = r.partPhotos || {}; r.partPhotos[key] = r.partPhotos[key] || [];
+    files.forEach((f) => processPhoto(f).then((p) => { const k = j.id + '/part-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5) + '.jpg'; phPut(k, p.data); r.partPhotos[key].push({ k }); queueReport(j); render(); if (S.step === 3) updateMissing(j); }).catch(() => toast('Couldn’t read that photo. Try again.')));
+    return;
+  }
   if (el.dataset.extra) { const files = Array.from(el.files || []); el.value = ''; if (files.length && S.view) addExtras(job(S.view.id), files); return; }
   if (el.dataset.shot) {
     const f = el.files && el.files[0]; if (!f) return;
@@ -3541,7 +3581,7 @@ document.addEventListener('change', (e) => {
       if (old) phDel(old.k);
       r.photos[ph][+i] = { k, ok: p.ok, issue: p.issue };
       r.shots = (r.shots || 0) + 1;
-      if (ph === 'before' && r.photos.before.every((x) => x && x.ok) && r.photos.after.every((x) => !x)) toast('Before photos done. Do the work, then take the after photos.');
+      if (ph === 'before' && r.photos.before.every((x) => x && x.ok) && r.photos.after.every((x) => !x)) toast('Before photos done. Continue to the questions.');
       else toast(p.ok ? 'Photo looks good' : p.issue.split(' ·')[0] + ': take it again');
       render();
     }).catch(() => toast('Couldn\u2019t read that photo. Try again.'));
