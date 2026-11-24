@@ -39,7 +39,13 @@
 - Capture ONLY: WO (= ticket number), store (match `stores` by country + `apple_id`), Programme, Issue, Solution, Target Visit Date. Nothing else.
 - Written to table `dynamic_tickets` (migration `dynamic_inbox`; admins only via RLS): upsert on `wo`, `last_seen` updated, never touch rows that already have `job_id` or `dismissed`. `jobs` got `programme`, `issue`, `solution`, `target_date`; `my_jobs()` returns them to installers.
 - App: Overview alert "N new tickets from Dynamic" → sheet `dyn` (Plan ticket = `planDyn`, prefilled New ticket with issue/solution/target date, links `dynamic_tickets.job_id` on create; "Not for us" = `dynDismiss`). Issue and solution show on the ticket form (`PT.issue`, full width), admin ticket view, installer job card and report step 1.
-- Scope so far: Swedish stores only (trial). Schedule: 10:00 and 15:00 Europe/Oslo on the Mac mini.
+- Scope: all four countries (Mathias, 24 Nov 2026). Schedule: 10:00 and 15:00 Europe/Oslo, scheduled task on the Mac mini.
+
+## Notifications (Mathias, 24 Nov 2026; migration `notifications_push`)
+- Table `notifications` (own rows only via RLS) is filled by database triggers: `notify_dynamic` (statement trigger on `dynamic_tickets` insert → one message per active admin, "N new tickets from Dynamic") and `notify_assign` (jobs insert / installer or second changed → the installer(s), not the admin who made the change).
+- Each new row is pushed by `pg_net` → edge function `push` (verify_jwt off; it only sends rows not yet pushed, `pushed_at`), web push with `npm:web-push`. VAPID public key is `VAPID_PUBLIC` in the app; the private key is in Supabase Vault (`vapid_private`), read only by `push_config()` (service role). Devices: table `push_subs`.
+- App: bell in the header and "Notifications" in the PC sidebar (unread count), sheet `notes` with "Turn on notifications" (`pushOn`, `sw.js` push handler; iPhone needs Add to Home Screen first). Opening the sheet marks them read; tapping one opens the Dynamic list or the job (`openNote`).
+- Photo slots offer "Take … photo" (camera) and "From library" (no `capture`), Retake also has From library; step 1 has the extra photos/videos block too.
 
 ## Parked ideas
 - Offline mode: plan in `docs/offline-mode.md`. Not built; wait for Mathias to decide.

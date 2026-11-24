@@ -155,6 +155,11 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 .ph .bad { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 8px; background: #A04800; color: #FFFFFF; font-size: 12px; font-weight: 600; }
 .take { position: absolute; inset: 0; border: 1.5px dashed var(--chev); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--blue); font-size: 13px; font-weight: 600; background: var(--card); cursor: pointer; }
 .take input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.take2 { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.take2 .take { position: relative; inset: auto; flex: 1; border-radius: 12px 12px 0 0; border-bottom: none; }
+.take2 .lib { position: relative; flex: 0 0 38px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1.5px dashed var(--chev); border-radius: 0 0 12px 12px; color: var(--blue); font-size: 14px; font-weight: 600; cursor: pointer; }
+.take2 .lib svg { width: 16px; height: 16px; }
+.take2 .lib input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .ph .take svg { position: static; width: 30px; height: 30px; }
 .retake { position: relative; display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px; border-radius: 10px; background: var(--fill); color: var(--blue); font-size: 15px; font-weight: 600; cursor: pointer; }
 .retake input { position: absolute; width: 1px; height: 1px; opacity: 0; }
@@ -333,6 +338,11 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 .peh.n { left: 50%; top: 0; cursor: ns-resize; } .peh.s { left: 50%; top: 100%; cursor: ns-resize; } .peh.e { left: 100%; top: 50%; cursor: ew-resize; } .peh.w { left: 0; top: 50%; cursor: ew-resize; }
 .pebox.locked .peh.n, .pebox.locked .peh.s, .pebox.locked .peh.e, .pebox.locked .peh.w { display: none; }
 
+.hbtns { display: flex; align-items: center; gap: 10px; }
+.bell { position: relative; width: 36px; height: 36px; border-radius: 18px; border: none; background: var(--fill); color: var(--fg); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.bdot { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.nrow.unread { background: var(--blue-bg); }
+.nrow .sub + .sub { font-size: 12px; }
 .isol { display: flex; flex-direction: column; }
 .isrow { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 0.5px solid var(--sep); }
 .isrow:last-of-type { border-bottom: none; }
@@ -745,6 +755,17 @@ const toJob = (r) => ({
   request: r.request || null, changes: r.changes || '', declineReason: r.decline_reason || '',
   videos: r.video_ids || [], partItems: Array.isArray(r.part_items) && r.part_items.length ? r.part_items.map((x) => ({ name: String(x.name), qty: Math.max(1, Number(x.qty) || 1) })) : (r.parts || []).map((n) => ({ name: n, qty: 1 })), reopenedAt: r.reopened_at ? Date.parse(r.reopened_at) : null, sentBack: Number(r.sent_back) || 0, startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
 });
+/* ---------- notifications: web push via sw.js (keys: public here, private in Supabase Vault for the push edge function) ---------- */
+const VAPID_PUBLIC = 'BEbDN8NSvRG-IuIFreBbFy48LahnF3roD6CwBd26wRbkQpRF3aUuglyWAhPzwxmdgvLIOZf3nDMBZ-aubdcc1Hk';
+const b64u = (s) => { const p = (s + '===='.slice(s.length % 4)).replace(/-/g, '+').replace(/_/g, '/'); return Uint8Array.from(atob(p), (c) => c.charCodeAt(0)); };
+let SWREG = null;
+const swReady = async () => { if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null; try { SWREG = SWREG || (await navigator.serviceWorker.register('sw.js', { scope: './' })); await navigator.serviceWorker.ready; return SWREG; } catch (e) { return null; } };
+const pushState = () => { const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone; if (!('Notification' in window) || !('serviceWorker' in navigator)) return ios && !standalone ? 'ios' : 'none'; if (ios && !standalone) return 'ios'; if (Notification.permission === 'denied') return 'denied'; let mine = ''; try { mine = localStorage.getItem('bb.push') || ''; } catch (e) { /* ignore */ } return Notification.permission === 'granted' && mine === S.me ? 'on' : 'off'; };
+const agoLabel = (ts) => { const m = Math.round((Date.now() - Date.parse(ts)) / 60000); return m < 1 ? 'Just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + (Math.round(m / 1440) === 1 ? ' day ago' : ' days ago'); };
+if ('serviceWorker' in navigator) {
+  swReady();
+  navigator.serviceWorker.addEventListener('message', (e) => { if (e.data && e.data.type === 'notif') quietRefresh(); });
+}
 const fmtDay = (iso) => { const d = parseD(iso); return isNaN(d) ? iso : WD[d.getDay()] + ' ' + d.getDate() + ' ' + MO[d.getMonth()]; };
 const toPart = (x) => ({ id: x.id, name: x.name, cat: x.category || '' });
 const partSort = (a, b) => (a.cat || '\uffff').localeCompare(b.cat || '\uffff') || a.name.localeCompare(b.name);
@@ -797,6 +818,7 @@ async function loadAll() {
     S.users = [me]; S.stores = []; jobs = ok(js); reports = ok(rs); S.videos = (vd.data || []).map(toVideo); S.parts = (pc.data || []).map(toPart);
     jobs.forEach((j) => { if (j.installer) NAMES[j.installer] = j.installer_name; if (j.second) NAMES[j.second] = j.second_name; });
   }
+  { const nq = await sb.from('notifications').select('id, kind, title, body, job_id, created_at, read_at').order('created_at', { ascending: false }).limit(60); S.notes = (nq.data || []); }
   const keep = S.view && S.view.kind === 'report' ? job(S.view.id) : null;
   const rmap = {}; reports.forEach((r) => { rmap[r.job_id] = r; });
   S.jobs = jobs.map((r) => { const j = toJob(r); if (rmap[j.id]) j.report = toReport(rmap[j.id]); return j; });
@@ -806,11 +828,14 @@ async function loadAll() {
 }
 let loadingNow = null;
 function refresh() { if (!loadingNow) loadingNow = loadAll().finally(() => { loadingNow = null; }); return loadingNow; }
+const BOOT_Q = new URLSearchParams(location.search);
 async function boot() {
   S.loading = true; render(false);
   try { await loadAll(); } catch (e) { toast('Couldn’t reach the server. Check your connection.'); }
   S.loading = false;
   render(false);
+  // opened from a notification: go straight to it
+  if (S.me && BOOT_Q.get('n')) { const kind = BOOT_Q.get('n'), jid = BOOT_Q.get('job'); history.replaceState(null, '', location.pathname); const n = (S.notes || []).find((x) => x.kind === kind && (!jid || x.job_id === jid)); if (n) A.openNote(n.id); }
 }
 const quietRefresh = () => {
   if (!S.me || S.loading || S.choosing || document.hidden || U.sheet) return;
@@ -901,6 +926,7 @@ const LOGO = (s = 72) => `<svg class="logo" width="${s}" height="${s}" viewBox="
   ? `<text x="36" y="38" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="26" font-weight="700" letter-spacing="-1" fill="var(--bg)">BB</text><text x="36" y="56" text-anchor="middle" font-family="-apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif" font-size="12" font-weight="800" letter-spacing="1.5" fill="#FF9F0A">TEST</text>`
   : `<text x="36" y="46.5" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="30" font-weight="700" letter-spacing="-1" fill="var(--bg)">BB</text>`}</svg>`;
 const I = {
+  bell: '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>',
   moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
   pfStore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5 5.5 4h13L20 9.5"/><path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M5.5 12.5V20h13v-7.5"/><path d="M10 20v-4.5h4V20"/></svg>',
@@ -1009,8 +1035,10 @@ function renderTabs() {
 
 function header(title, sub) {
   const u = meU();
-  return `<div class="head"><div><div class="date">${esc(sub)}</div><h1>${esc(title)}</h1></div><button type="button" class="avatar" data-a="sheet" data-v="account" aria-label="Account">${initials(u.name || u.email)}</button></div>`;
+  return `<div class="head"><div><div class="date">${esc(sub)}</div><h1>${esc(title)}</h1></div><span class="hbtns">${bellBtn()}<button type="button" class="avatar" data-a="sheet" data-v="account" aria-label="Account">${initials(u.name || u.email)}</button></span></div>`;
 }
+const unread = () => (S.notes || []).filter((n) => !n.read_at).length;
+const bellBtn = (cls) => { const n = unread(); return `<button type="button" class="bell${cls ? ' ' + cls : ''}" data-a="sheet" data-v="notes" aria-label="Notifications${n ? ', ' + n + ' unread' : ''}">${I.bell}${n ? `<span class="bdot num">${n > 9 ? '9+' : n}</span>` : ''}</button>`; };
 
 /* ---------- sign in ---------- */
 function viewLogin() {
@@ -1341,7 +1369,7 @@ function renderSide() {
   const el = document.createElement('aside'); el.className = 'side'; el.setAttribute('aria-label', 'Main menu');
   el.innerHTML = `<div class="sbrand">${LOGO(36)}<div><b>Brand Butlers</b><span>${PREVIEW ? 'Test version' : 'Fixture reporting'}</span></div></div>
     <nav class="snav">${items.map(([k, l]) => `<button type="button" class="nav ${S.tab === k && (!S.view || S.view.kind === 'edit') ? 'on' : ''}" data-a="tab" data-v="${k}" ${S.tab === k ? 'aria-current="page"' : ''}>${TABICON[k]}<span>${l}</span>${k === 'approvals' && waiting ? `<span class="sbadge">${waiting}</span>` : ''}</button>${k === 'team' ? `<div class="ssub">${MANAGE.map(([m, ml]) => `<button type="button" class="${S.tab === 'team' && (S.manage || 'people') === m ? 'on' : ''}" data-a="manageGo" data-v="${m}">${ml}</button>`).join('')}</div>` : ''}`).join('')}</nav>
-    <div class="sfoot"><div class="sthemes" role="group" aria-label="Appearance">${[['light', 'Light', I.sun], ['dark', 'Dark', I.moon]].map(([k, l, ic]) => `<button type="button" class="${curTheme() === k ? 'on' : ''}" aria-pressed="${curTheme() === k}" data-a="setTheme" data-v="${k}">${ic}${l}</button>`).join('')}</div>${me.installer ? `<button type="button" class="nav" data-a="switchRole" data-v="installer">${TABICON.jobs}<span>Installer view</span></button>` : ''}
+    <div class="sfoot"><button type="button" class="nav" data-a="sheet" data-v="notes">${I.bell}<span>Notifications</span>${unread() ? `<span class="sbadge">${unread()}</span>` : ''}</button><div class="sthemes" role="group" aria-label="Appearance">${[['light', 'Light', I.sun], ['dark', 'Dark', I.moon]].map(([k, l, ic]) => `<button type="button" class="${curTheme() === k ? 'on' : ''}" aria-pressed="${curTheme() === k}" data-a="setTheme" data-v="${k}">${ic}${l}</button>`).join('')}</div>${me.installer ? `<button type="button" class="nav" data-a="switchRole" data-v="installer">${TABICON.jobs}<span>Installer view</span></button>` : ''}
       <button type="button" class="sacct" data-a="sheet" data-v="account"><span class="avatar" style="margin:0;width:34px;height:34px">${initials(me.name || me.email)}</span><span class="grow"><b>${esc(me.name || me.email)}</b><span>${esc(csLabel(me.cs || [me.c]))} · Admin</span></span></button></div>`;
   return el;
 }
@@ -1848,9 +1876,9 @@ function shotCards(j, ph) {
   return `<div class="stack" style="margin-top:14px;gap:12px">${ANGLES.map((a, i) => {
     const mine = r.photos[ph][i];
     const slot = mine ? `<div class="ph">${pimg(mine.k, (ph === 'before' ? 'Before: ' : 'After: ') + a.t)}<span class="tag">${ph === 'before' ? 'Before' : 'After'}</span>${mine.ok ? `<span class="ok">${I.tick()}</span>` : `<span class="bad">${esc(mine.issue)}</span>`}</div>`
-      : `<div class="ph"><label class="take">${I.cam}Take ${ph} photo<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label></div>`;
+      : `<div class="ph"><div class="take2"><label class="take">${I.cam}Take ${ph} photo<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label><label class="lib">${I.imp.replace('M12 3v12', 'M12 15V3').replace('M7 10l5 5 5-5', 'M7 8l5-5 5 5')}From library<input type="file" accept="image/*" data-shot="${ph}-${i}"></label></div></div>`;
     const top = ph === 'before' ? `<div class="slot1">${slot}</div>` : `<div class="pair">${r.photos.before[i] ? `<div class="ph">${pimg(r.photos.before[i].k, 'Before: ' + a.t)}<span class="tag">Your before</span></div>` : `<div class="ph" style="display:flex;align-items:center;justify-content:center"><span class="muted" style="font-size:13px;padding:8px;text-align:center">No before photo</span></div>`}${slot}</div>`;
-    return `<div class="shot">${top}<div style="display:flex;gap:12px;align-items:flex-start"><svg class="where" viewBox="0 0 52 52" role="img" aria-label="Where to stand"><rect x="13" y="6" width="26" height="6" rx="1.5" fill="var(--fg)"/><polygon points="${a.cone}" fill="var(--blue)" fill-opacity="0.2"/><circle cx="${a.pos[0]}" cy="${a.pos[1]}" r="4" fill="var(--blue)"/></svg><div style="flex:1;display:flex;flex-direction:column;gap:3px"><b>${i + 1} · ${a.t}</b><span class="muted" style="font-size:15px;line-height:20px">${ph === 'after' ? 'Match your before photo: same spot, same angle.' : a.h}</span>${mine ? `<label class="retake" style="align-self:flex-start;margin-top:6px">Retake<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label>` : ''}</div></div></div>`;
+    return `<div class="shot">${top}<div style="display:flex;gap:12px;align-items:flex-start"><svg class="where" viewBox="0 0 52 52" role="img" aria-label="Where to stand"><rect x="13" y="6" width="26" height="6" rx="1.5" fill="var(--fg)"/><polygon points="${a.cone}" fill="var(--blue)" fill-opacity="0.2"/><circle cx="${a.pos[0]}" cy="${a.pos[1]}" r="4" fill="var(--blue)"/></svg><div style="flex:1;display:flex;flex-direction:column;gap:3px"><b>${i + 1} · ${a.t}</b><span class="muted" style="font-size:15px;line-height:20px">${ph === 'after' ? 'Match your before photo: same spot, same angle.' : a.h}</span>${mine ? `<span style="display:flex;gap:8px;margin-top:6px"><label class="retake">Retake<input type="file" accept="image/*" capture="environment" data-shot="${ph}-${i}"></label><label class="retake">From library<input type="file" accept="image/*" data-shot="${ph}-${i}"></label></span>` : ''}</div></div></div>`;
   }).join('')}</div>`;
 }
 function reportFlow(j) {
@@ -1869,6 +1897,7 @@ function reportFlow(j) {
     if (j.issue || j.solution) h += `<div class="card" style="margin-top:14px;gap:4px"><span class="cap">Issue</span><span style="font-size:15px;line-height:21px">${esc(j.issue || '\u2013')}</span><span class="cap" style="margin-top:6px">Solution</span><span style="font-size:15px;line-height:21px;color:var(--fg2)">${esc(j.solution || '\u2013')}</span></div>`;
     if (j.tools.length) h += `<h2 class="sec">Bring with you · ${j.tools.length}</h2><div class="group">${j.tools.map((t) => `<div class="row" style="font-size:15px">${I.tick('var(--green)', 16)}<span class="grow">${esc(t)}</span></div>`).join('')}</div>`;
     h += `<h2 class="sec">Before photos · ${okN('before')}/4</h2>` + shotCards(j, 'before');
+    h += extrasBlock(j, true);
     const left2 = 4 - okN('before');
     h += `<div style="margin-top:20px"><button type="button" class="btn" data-a="stepNext" ${left2 ? 'disabled' : ''}>${left2 ? left2 + (left2 === 1 ? ' before photo left' : ' before photos left') : 'Continue to questions'}</button></div>`;
   } else if (st === 2) {
@@ -2027,6 +2056,13 @@ function renderSheet() {
     body = `${sheetHead('Choose store', 'Close')}<div class="ppsearch"><input class="box" data-sq="1" value="${esc(U.sq || '')}" placeholder="Search ${storesFor(d.c).length} stores in ${C[d.c].name}" aria-label="Search stores" autocomplete="off"></div>
       <div id="splist">${storePickList()}</div><button type="button" class="btn sec" data-a="storeNew" data-v="ticket">+ New store</button>`;
     setTimeout(() => { const i = overlay.querySelector('[data-sq]'); if (i && !isTouchDevice()) i.focus(); }, 30);
+  } else if (kind === 'notes') {
+    const list = S.notes || []; const st = pushState();
+    body = `${sheetHead('Notifications', 'Close')}
+      ${st === 'on' ? '' : `<div class="card" style="gap:8px;margin-bottom:12px"><b>Get notified on this device</b><span class="muted" style="font-size:14px;line-height:19px">${meU().admin ? 'New tickets from Dynamic that need an installer.' : ''} ${meU().installer ? 'New jobs assigned to you.' : ''}</span>${st === 'ios' ? '<span style="font-size:14px;line-height:19px">On iPhone and iPad: open this page in Safari, tap Share → Add to Home Screen, open it from the Home Screen and turn notifications on there.</span>' : st === 'denied' ? '<span style="font-size:14px;line-height:19px;color:var(--orange)">Notifications are blocked for this app. Allow them in the browser or phone settings, then try again.</span>' : st === 'none' ? '<span class="muted" style="font-size:14px">This browser can’t show notifications.</span>' : '<button type="button" class="btn small" data-a="pushOn">Turn on notifications</button>'}</div>`}
+      ${list.length ? `<div class="group">${list.map((n) => `<button type="button" class="row nrow${n.read_at ? '' : ' unread'}" data-a="openNote" data-v="${n.id}"><span class="ico" style="background:${n.kind === 'dynamic' ? 'var(--blue-bg)' : 'var(--green-bg)'}">${small(n.kind === 'dynamic' ? TABICON.new : TABICON.jobs, n.kind === 'dynamic' ? 'var(--blue)' : 'var(--green)')}</span><span class="grow"><span>${esc(n.title)}</span><span class="sub">${esc(n.body)}</span><span class="sub">${esc(agoLabel(n.created_at))}</span></span>${I.chev}</button>`).join('')}</div>` : '<div class="empty"><b>No notifications yet</b><span>New tickets and jobs show up here.</span></div>'}`;
+    const ids = list.filter((n) => !n.read_at).map((n) => n.id);
+    if (ids.length) { const t = new Date().toISOString(); list.forEach((n) => { if (!n.read_at) n.read_at = t; }); sb.from('notifications').update({ read_at: t }).in('id', ids).then(() => { if (typeof render === 'function') render(); }); }
   } else if (kind === 'dyn') {
     const list = (S.dyn || []).filter((x) => inR(x.c, S.region)).sort((a, b) => (a.target || '9') .localeCompare(b.target || '9') || a.wo.localeCompare(b.wo));
     body = `${sheetHead('From Dynamic', 'Close')}<p class="foot" style="margin:0 4px 10px">Tickets in progress on Dynamic\u2019s portal that aren\u2019t in the app yet. Plan one to choose installer, date and price.</p>
@@ -3409,6 +3445,25 @@ const A = {
     if (!d.tools.includes(label)) d.tools.push(label);
     if (!ex) { const r = await sb.from('tools').insert({ name, created_by: S.me }).select('*').single(); if (!r.error && r.data) S.tools.push(r.data); else if (r.error) toast(friendly(r.error)); }
     U.tq = ''; renderSheet();
+  },
+  async pushOn(v, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = 'Turning on…'; }
+    try {
+      const reg = await swReady(); if (!reg) throw new Error('This browser can’t show notifications.');
+      const perm = await Notification.requestPermission(); if (perm !== 'granted') throw new Error('Notifications were not allowed.');
+      const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID_PUBLIC) }));
+      const j = sub.toJSON(); const r = await sb.from('push_subs').insert({ profile_id: S.me, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth });
+      if (r.error && r.error.code !== '23505') throw r.error;
+      try { localStorage.setItem('bb.push', S.me); } catch (e) { /* only for this visit */ }
+      toast('Notifications are on for this device'); renderSheet();
+    } catch (e) { toast(e.message || friendly(e)); if (btn) { btn.disabled = false; btn.textContent = 'Turn on notifications'; } }
+  },
+  openNote(v) {
+    const n = (S.notes || []).find((x) => x.id === v); if (!n) return;
+    if (n.kind === 'dynamic' && meU().admin) { if (S.role !== 'admin') S.role = 'admin'; S.region = 4; U.sheet = 'dyn'; renderSheet(); render(false); return; }
+    U.sheet = null; renderSheet();
+    if (n.job_id && job(n.job_id)) { if (meU().installer && (job(n.job_id).installer === S.me || job(n.job_id).second === S.me)) { S.role = 'installer'; S.view = null; S.tab = 'jobs'; S.focus = n.job_id; } else showJob(n.job_id); }
+    render(false);
   },
   planDyn(v) {
     const x = (S.dyn || []).find((y) => y.wo === v); if (!x) return;
