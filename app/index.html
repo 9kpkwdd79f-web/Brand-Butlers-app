@@ -333,6 +333,17 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 .peh.n { left: 50%; top: 0; cursor: ns-resize; } .peh.s { left: 50%; top: 100%; cursor: ns-resize; } .peh.e { left: 100%; top: 50%; cursor: ew-resize; } .peh.w { left: 0; top: 50%; cursor: ew-resize; }
 .pebox.locked .peh.n, .pebox.locked .peh.s, .pebox.locked .peh.e, .pebox.locked .peh.w { display: none; }
 
+.isol { display: flex; flex-direction: column; }
+.isrow { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 0.5px solid var(--sep); }
+.isrow:last-of-type { border-bottom: none; }
+.isrow textarea { width: 100%; resize: vertical; min-height: 44px; font-size: 16px; line-height: 22px; border: none; background: none; padding: 0; }
+.isfoot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px 12px; border-top: 0.5px solid var(--sep); font-size: 13px; }
+.dync { gap: 10px; }
+.dynh { display: flex; align-items: flex-start; gap: 10px; }
+.dynh .grow { flex: 1; min-width: 0; }
+.dynh b { display: block; font-size: 16px; }
+.dynh .sub { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+.dyni { display: flex; flex-direction: column; gap: 2px; font-size: 15px; line-height: 20px; }
 .pcard { gap: 10px; padding: 12px 14px; }
 .pcard.need { box-shadow: inset 0 0 0 1.5px var(--orange); }
 .pchead { display: flex; align-items: center; gap: 12px; }
@@ -730,9 +741,11 @@ const toJob = (r) => ({
   id: r.id, ticket: r.ticket, c: r.country, storeId: r.store_id || null, store: r.store_name, addr: r.address || '', installer: r.installer, second: r.second || null,
   date: r.date, time: r.time, status: r.status, fixture: r.fixture || '', tools: r.tools || [], parts: r.parts || [], note: r.note || '', last: r.last_note || '',
   gross: r.price != null ? Number(r.price) : null, price: r.price == null ? null : r.inst_amt != null ? Number(r.inst_amt) + (Number(r.adm_amt) || 0) : Number(r.price) * ((Number(r.inst_pct != null ? r.inst_pct : 40) + Number(r.adm_pct != null ? r.adm_pct : 10)) / 100), share: r.share != null ? Number(r.share) : null, amt: r.inst_amt != null ? { inst: Number(r.inst_amt), adm: Number(r.adm_amt) || 0, bb: 0 } : null, split: [Number(r.inst_pct != null ? r.inst_pct : 40), Number(r.adm_pct != null ? r.adm_pct : 10)],
+  programme: r.programme || '', issue: r.issue || '', solution: r.solution || '', target: r.target_date || null,
   request: r.request || null, changes: r.changes || '', declineReason: r.decline_reason || '',
   videos: r.video_ids || [], partItems: Array.isArray(r.part_items) && r.part_items.length ? r.part_items.map((x) => ({ name: String(x.name), qty: Math.max(1, Number(x.qty) || 1) })) : (r.parts || []).map((n) => ({ name: n, qty: 1 })), reopenedAt: r.reopened_at ? Date.parse(r.reopened_at) : null, sentBack: Number(r.sent_back) || 0, startedAt: r.started_at ? Date.parse(r.started_at) : null, handledAt: r.handled_at ? Date.parse(r.handled_at) : null, report: null
 });
+const fmtDay = (iso) => { const d = parseD(iso); return isNaN(d) ? iso : WD[d.getDay()] + ' ' + d.getDate() + ' ' + MO[d.getMonth()]; };
 const toPart = (x) => ({ id: x.id, name: x.name, cat: x.category || '' });
 const partSort = (a, b) => (a.cat || '\uffff').localeCompare(b.cat || '\uffff') || a.name.localeCompare(b.name);
 const toVideo = (v) => ({ id: v.id, kind: v.kind || 'video', title: v.title, notes: v.notes || '', path: v.path, poster: v.poster || '', duration: v.duration != null ? Number(v.duration) : null, edit: v.edit || null, size: v.size != null ? Number(v.size) : null });
@@ -772,7 +785,8 @@ async function loadAll() {
   const me = toUser(meRow); S.me = me.id;
   let jobs, reports;
   if (me.admin) {
-    const [ps, st, js, rs, tp, tl, vd, pc] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*'), sb.from('videos').select('*'), sb.from('parts_catalog').select('*')]);
+    const [ps, st, js, rs, tp, tl, vd, pc, dyq] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*'), sb.from('videos').select('*'), sb.from('parts_catalog').select('*'), sb.from('dynamic_tickets').select('*')]);
+    S.dyn = ((dyq || {}).data || []).filter((x) => !x.job_id && !x.dismissed).map((x) => ({ wo: x.wo, c: x.country, storeId: x.store_id, appleId: x.apple_id, store: x.store_name, addr: x.address, programme: x.programme, issue: x.issue, solution: x.solution, target: x.target_date, seen: x.first_seen }));
     S.templates = ok(tp).map((t) => ({ id: t.id, name: t.name, tools: t.tools || [], parts: t.parts || [], videos: t.video_ids || [] })).sort((a, b) => a.name.localeCompare(b.name));
     S.videos = ok(vd).map(toVideo).sort((a, b) => a.title.localeCompare(b.title));
     S.tools = ok(tl).map((t) => ({ id: t.id, name: t.name })).sort((a, b) => a.name.localeCompare(b.name));
@@ -1097,11 +1111,15 @@ function adminOverview() {
     ? `${nordicMark(40, 27)}<span class="grow"><b>Nordic overview</b><span class="sub">Norway, Sweden, Denmark and Finland together</span></span>`
     : `${flag(R, 40, 29)}<span class="grow"><span style="display:flex;align-items:center;gap:8px"><b>${C[R].name}</b>${myCs().includes(R) ? '<span class="pill p-blue" style="font-size:11px">Your country</span>' : ''}</span><span class="sub">Support: ${C[R].support[0]} · ${C[R].support[1]} · ${C[R].cur}</span></span>`;
   h += `<div class="row" style="margin-top:10px;border-radius:16px;border:none">${here}</div>`;
+  const dyn = (S.dyn || []).filter((x) => inR(x.c, R));
+  const dynAlert = dyn.length ? `<button type="button" class="alert" style="border:none;flex-direction:row;align-items:center;text-align:left;color:var(--fg)" data-a="sheet" data-v="dyn"><span class="ico" style="background:var(--blue-bg)">${small(TABICON.new, 'var(--blue)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${dyn.length} new ${dyn.length === 1 ? 'ticket' : 'tickets'} from Dynamic</b><span class="muted" style="font-size:13px">Read from Dynamic\u2019s portal \u00b7 plan installer, date and price</span></span>${I.chev}</button>` : '';
   if (!S.jobs.length) {
+    if (dynAlert) h += `<div class="stack" style="margin-top:10px">${dynAlert}</div>`;
     h += `<div class="empty" style="margin-top:16px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--blue-bg)">${small(TABICON.new, 'var(--blue)').replace('width="16" height="16"', 'width="24" height="24"')}</span><b>No tickets yet</b><span>Create the first ticket and assign it to an installer. ${S.users.length < 2 ? 'Add your installers under Team first, or assign it to yourself to try the flow.' : ''}</span><button type="button" class="btn small" style="width:auto;padding:0 18px;margin-top:6px" data-a="tab" data-v="new">Create a ticket</button></div>`;
     return h;
   }
   const alerts = [];
+  if (dynAlert) alerts.push(dynAlert);
   if (waiting.length) alerts.push(`<button type="button" class="alert" style="border:none;background:var(--blue);color:#FFFFFF;flex-direction:row;align-items:center;text-align:left" data-a="tab" data-v="approvals"><span class="ico" style="background:rgba(255,255,255,0.2)">${small(TABICON.approvals, '#FFFFFF')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">${waiting.length} ${waiting.length === 1 ? 'report' : 'reports'} waiting for approval</b><span style="font-size:13px;opacity:0.85">Nothing reaches Apple until you approve</span></span>${I.chev.replace('var(--chev)', '#FFFFFF')}</button>`);
   problems.forEach((j) => alerts.push(`<button type="button" class="alert" style="border:none;flex-direction:row;align-items:center;text-align:left;color:var(--fg)" data-a="openApproval" data-v="${j.id}"><span class="ico" style="background:var(--red-bg)">${I.flagP('var(--redbtn)')}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">Problem reported</b><span class="muted" style="font-size:13px">${esc(j.report.problem.type)} at ${esc(j.store)}</span></span>${I.chev}</button>`));
   overdue.forEach((j) => { const u = userBy(j.installer); alerts.push(`<div class="alert"><div class="top"><span class="ico" style="background:var(--red-bg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--redbtn)" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">Not started · overdue</b><span style="font-size:15px;line-height:20px;color:var(--fg2)">${esc(j.store)} was due ${esc(whenLabel(j))}. ${esc(first(nameOf(j.installer)))} hasn't started the report.</span></span></div><div class="btn2"><button type="button" class="btn small sec" data-a="openJob" data-v="${j.id}">Change installer</button>${u && u.phone ? `<button type="button" class="btn small" data-a="sheet" data-v="call:${u.id}">Call ${esc(first(u.name))}</button>` : `<button type="button" class="btn small" data-a="openJob" data-v="${j.id}">Open ticket</button>`}</div></div>`); });
@@ -1185,6 +1203,8 @@ function adminNew() {
   }
   h += errL('installer');
   cut('inst');
+  h += `<h2 class="sec">Issue and solution${d.fromDyn ? ' <span class="tag prog">From Dynamic</span>' : ''}</h2><div class="pf isol"><label class="isrow"><span class="cap">Issue</span><textarea class="inl" data-bind="issue" rows="2" placeholder="What is wrong, e.g. continuous alarm on iPhone">${esc(d.issue || '')}</textarea></label><label class="isrow"><span class="cap">Solution</span><textarea class="inl" data-bind="solution" rows="2" placeholder="How to fix it">${esc(d.solution || '')}</textarea></label>${d.target || d.programme ? `<div class="isfoot">${d.programme ? `<span class="tag prog">${esc(d.programme)}</span>` : ''}${d.target ? `<span class="muted">Dynamic\u2019s target visit date: <b style="color:var(--fg)">${esc(fmtDay(d.target))}</b></span>` : ''}</div>` : ''}</div>`;
+  cut('issue');
   const tn = d.tools.length;
   h += `<h2 class="sec">Tools to bring</h2>` + pf({ a: 'toolsOpen', ico: I.pfTool, title: tn ? tn + (tn === 1 ? ' tool' : ' tools') : 'Choose tools', sub: tn ? 'Shown on the installer\u2019s job' : S.tools.length + ' in the list · search or add new', btn: tn ? 'Change' : 'Choose', empty: !tn,
     body: d.tools.map((t) => `<div class="pfr"><span class="grow">${esc(t)}</span><button type="button" class="pfx" aria-label="Remove ${esc(t)}" data-a="draftTool" data-v="${esc(t)}">${I.x}</button></div>`).join('') });
@@ -1210,7 +1230,7 @@ function adminNew() {
   h += `<h2 class="sec">Note for installer</h2><textarea id="dnote" class="box" data-bind="note" placeholder="Anything they should know before arriving">${esc(d.note)}</textarea>`;
   cut('note');
   if (isDesk()) return newDesk(d, PT, editing);
-  h = PT.head + PT.ticket + PT.country + PT.store + PT.when + PT.inst + PT.tools + PT.parts + PT.videos + PT.note + PT.tpl + PT.tplsave + PT.price;
+  h = PT.head + PT.ticket + PT.country + PT.store + PT.when + PT.inst + PT.issue + PT.tools + PT.parts + PT.videos + PT.note + PT.tpl + PT.tplsave + PT.price;
   h += `<div style="margin-top:24px"><button type="button" class="btn" data-a="createTicket">${editing ? 'Save changes' : twoNames ? 'Create ticket for ' + esc(twoNames) : 'Create ticket'}</button></div>`;
   h += editing ? `<button type="button" class="link" style="width:100%" data-a="cancelEdit">Cancel</button>` : `<p class="foot" style="text-align:center">The job shows up in the installer's app right away.</p>`;
   return h;
@@ -1590,7 +1610,7 @@ function ppCount() { if (U.pm === 'ticket') { const k = S.draft.parts.length; re
 function newDesk(d, PT, editing) {
   const head = editing ? PT.head : `<div class="dhead"><div><div class="date">Client: Apple</div><h1>New ticket</h1></div></div>`;
   const cell = (x, full, k) => `<div class="ntc${full ? ' full' : ''}${k ? ' ' + k : ''}">${x}</div>`;
-  return head + `<div class="dgrid nt"><div class="dmain ntform">${cell(PT.ticket)}${cell(PT.country)}${cell(PT.store, false, 'pair')}${cell(PT.inst, false, 'pair')}${cell(PT.when, true)}${cell(PT.tools, false, 'pair')}${cell(PT.parts, false, 'pair')}${cell(PT.videos, false, 'pair')}${cell(PT.note, false, 'pair')}${cell(PT.tpl + PT.tplsave, true)}${cell(PT.price, true)}</div>
+  return head + `<div class="dgrid nt"><div class="dmain ntform">${cell(PT.ticket)}${cell(PT.country)}${cell(PT.store, false, 'pair')}${cell(PT.inst, false, 'pair')}${cell(PT.when, true)}${cell(PT.issue, true)}${cell(PT.tools, false, 'pair')}${cell(PT.parts, false, 'pair')}${cell(PT.videos, false, 'pair')}${cell(PT.note, false, 'pair')}${cell(PT.tpl + PT.tplsave, true)}${cell(PT.price, true)}</div>
     <div class="dright"><div id="ntsum" class="dpanel ntsum">${ntSummary(d, editing)}</div></div></div>`;
 }
 function ntSummary(d, editing) {
@@ -1775,6 +1795,7 @@ function jobCard(j) {
     <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:22px;font-weight:700;letter-spacing:-0.3px">${esc(j.store)}</span>${j.addr ? `<span class="muted" style="font-size:15px">${esc(j.addr)}</span>` : ''}<span class="muted" style="font-size:15px">Apple ticket ${esc(j.ticket)}${j.fixture ? ' · ' + esc(j.fixture) : ''}${j.second ? ' · with ' + esc(nameOf(lead ? j.second : j.installer)) : ''}</span></div>
     ${j.status === 'changes' ? `<div class="banner" style="background:var(--orange-bg);color:var(--fg2)"><span><b style="color:var(--orange)">From your admin:</b> ${esc(j.changes || 'Please check the report and resubmit.')}</span></div>` : ''}
     <div class="btn2">${j.addr ? `<a class="btn small sec" href="https://maps.apple.com/?q=${encodeURIComponent(j.store + ', ' + j.addr)}" target="_blank" rel="noopener">${I.dir} Directions</a>` : '<span></span>'}<button type="button" class="btn small sec" data-a="sheet" data-v="support:${j.c}">${I.phone()} Support</button></div>
+    ${j.issue || j.solution ? `<div class="split"><span class="cap">Issue</span><span style="font-size:15px;line-height:21px">${esc(j.issue || '\u2013')}</span><span class="cap" style="margin-top:8px">Solution</span><span style="font-size:15px;line-height:21px;color:var(--fg2)">${esc(j.solution || '\u2013')}</span></div>` : ''}
     ${j.tools.length ? `<div class="split"><span class="cap">Bring with you</span><div class="grid2">${j.tools.map((t) => `<span style="display:flex;align-items:center;gap:8px;font-size:15px">${I.tick('var(--green)', 16)}${esc(t)}</span>`).join('')}</div></div>` : ''}
     ${j.partItems.length ? `<div class="split"><span class="cap">Parts to replace \u00b7 ${j.partItems.length}</span><div class="chips">${j.partItems.map((p) => `<span class="pill p-grey" style="font-size:13px;padding:5px 10px;font-weight:500">${p.qty > 1 ? p.qty + ' \u00d7 ' : ''}${esc(p.name)}</span>`).join('')}</div></div>` : ''}
     ${j.videos.some(videoBy) ? vidButton(j) : ''}
@@ -1845,6 +1866,7 @@ function reportFlow(j) {
   if (st === 1) {
     h += title('Take these four before you start any work. Each photo is checked for light and sharpness.');
     if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
+    if (j.issue || j.solution) h += `<div class="card" style="margin-top:14px;gap:4px"><span class="cap">Issue</span><span style="font-size:15px;line-height:21px">${esc(j.issue || '\u2013')}</span><span class="cap" style="margin-top:6px">Solution</span><span style="font-size:15px;line-height:21px;color:var(--fg2)">${esc(j.solution || '\u2013')}</span></div>`;
     if (j.tools.length) h += `<h2 class="sec">Bring with you · ${j.tools.length}</h2><div class="group">${j.tools.map((t) => `<div class="row" style="font-size:15px">${I.tick('var(--green)', 16)}<span class="grow">${esc(t)}</span></div>`).join('')}</div>`;
     h += `<h2 class="sec">Before photos · ${okN('before')}/4</h2>` + shotCards(j, 'before');
     const left2 = 4 - okN('before');
@@ -1939,6 +1961,7 @@ function jobDetail(j) {
   h += EDITABLE.includes(j.status)
     ? `<div style="margin-top:14px"><button type="button" class="btn" data-a="editJob" data-v="${j.id}">Edit ticket</button></div>`
     : `<p class="foot" style="margin-top:12px">This ticket can\u2019t be edited because the report has been submitted.</p>`;
+  if (j.issue || j.solution || j.target || j.programme) h += `<h2 class="sec">Issue and solution</h2><div class="group"><div class="row" style="align-items:flex-start;flex-direction:column;gap:2px;padding-top:10px;padding-bottom:10px"><span class="cap">Issue</span><span style="font-size:15px">${esc(j.issue || '\u2013')}</span></div><div class="row" style="align-items:flex-start;flex-direction:column;gap:2px;padding-top:10px;padding-bottom:10px"><span class="cap">Solution</span><span style="font-size:15px">${esc(j.solution || '\u2013')}</span></div>${j.programme ? `<div class="row"><span class="grow">Programme</span><span class="val">${esc(j.programme)}</span></div>` : ''}${j.target ? `<div class="row"><span class="grow">Dynamic\u2019s target visit date</span><span class="val">${esc(fmtDay(j.target))}</span></div>` : ''}</div>`;
   if (j.videos.some(videoBy)) h += `<div style="margin-top:14px">${vidButton(j)}</div>`;
   if (j.partItems.length) h += `<h2 class="sec">Parts to replace</h2><div class="group">${j.partItems.map((p) => `<div class="row"><span class="grow">${esc(p.name)}</span><span class="val num">\u00d7 ${p.qty}</span></div>`).join('')}</div>`;
   if (j.tools.length) h += `<h2 class="sec">Tools</h2><div class="group"><div class="row" style="font-size:15px">${j.tools.map(esc).join(', ')}</div></div>`;
@@ -2004,6 +2027,12 @@ function renderSheet() {
     body = `${sheetHead('Choose store', 'Close')}<div class="ppsearch"><input class="box" data-sq="1" value="${esc(U.sq || '')}" placeholder="Search ${storesFor(d.c).length} stores in ${C[d.c].name}" aria-label="Search stores" autocomplete="off"></div>
       <div id="splist">${storePickList()}</div><button type="button" class="btn sec" data-a="storeNew" data-v="ticket">+ New store</button>`;
     setTimeout(() => { const i = overlay.querySelector('[data-sq]'); if (i && !isTouchDevice()) i.focus(); }, 30);
+  } else if (kind === 'dyn') {
+    const list = (S.dyn || []).filter((x) => inR(x.c, S.region)).sort((a, b) => (a.target || '9') .localeCompare(b.target || '9') || a.wo.localeCompare(b.wo));
+    body = `${sheetHead('From Dynamic', 'Close')}<p class="foot" style="margin:0 4px 10px">Tickets in progress on Dynamic\u2019s portal that aren\u2019t in the app yet. Plan one to choose installer, date and price.</p>
+      ${list.length ? `<div class="stack" style="gap:10px">${list.map((x) => { const st = S.stores.find((y) => y.id === x.storeId) || S.stores.find((y) => y.c === x.c && y.appleId && y.appleId === x.appleId); return `<div class="card dync"><div class="dynh"><span class="grow"><b>${esc(st ? st.name : x.store)}</b><span class="sub">WO ${esc(x.wo)} \u00b7 ${flag(x.c, 14, 10)} ${C[x.c].name}${x.programme ? ' \u00b7 ' + esc(x.programme) : ''}${st ? '' : ' \u00b7 <span style="color:var(--orange)">store not in the list</span>'}</span></span>${x.target ? `<span class="pill ${x.target < isoOf(today0()) ? 'p-red' : 'p-blue'}" title="Target visit date">${esc(fmtDay(x.target))}</span>` : ''}</div>
+        <div class="dyni"><span class="cap">Issue</span><span>${esc(x.issue || '\u2013')}</span></div><div class="dyni"><span class="cap">Solution</span><span>${esc(x.solution || '\u2013')}</span></div>
+        <div class="btn2"><button type="button" class="btn small sec" data-a="dynDismiss" data-v="${esc(x.wo)}">Not for us</button><button type="button" class="btn small" data-a="planDyn" data-v="${esc(x.wo)}">Plan ticket</button></div></div>`; }).join('')}</div>` : '<div class="empty"><b>All planned</b><span>Nothing new from Dynamic right now.</span></div>'}`;
   } else if (kind === 'pickinst') {
     const d = S.draft;
     body = `${sheetHead(U.im === 'second' ? 'Second installer' : 'Choose installer', 'Close')}<div class="ppsearch"><input class="box" data-iq="1" value="${esc(U.iq || '')}" placeholder="Search installers" aria-label="Search installers" autocomplete="off"></div>
@@ -3050,7 +3079,7 @@ const A = {
     S.stash = S.draft;
     S.draft = { editId: j.id, ticket: j.ticket, template: tpl ? tpl.id : null, tplName: tpl ? tpl.name : '', tplOpen: false, newTool: '', newPart: '', toolEdit: false, parts: j.partItems.map((x) => x.name), qty: Object.fromEntries(j.partItems.map((x) => [x.name, x.qty])), videos: j.videos.slice(), c: j.c,
       store: st ? st.id : 'new', storeName: st ? '' : j.store, storeAddr: st ? '' : j.addr, lead: j.installer, second: j.second, secondOn: !!j.second, date: j.date, time: j.time,
-      tools: j.tools.slice(), price: String(j.price), ainst: String(Math.round(amounts(j).inst * 100) / 100), aadm: String(Math.round(amounts(j).adm * 100) / 100), abb: String(Math.round(amounts(j).bb * 100) / 100), note: j.note, err: {} };
+      tools: j.tools.slice(), price: String(j.price), ainst: String(Math.round(amounts(j).inst * 100) / 100), aadm: String(Math.round(amounts(j).adm * 100) / 100), abb: String(Math.round(amounts(j).bb * 100) / 100), note: j.note, programme: j.programme, issue: j.issue, solution: j.solution, target: j.target, err: {} };
     S.view = { kind: 'edit', id: j.id }; U.confirm = null; render(false);
   },
   cancelEdit() { const id = S.draft && S.draft.editId; S.draft = S.stash || null; S.stash = null; if (id) showJob(id); else S.view = null; render(false); },
@@ -3273,7 +3302,7 @@ const A = {
       const id = d.editId;
       const saved = await act(async () => {
         const storeId = await resolveStore();
-        const patch = { ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, date: d.date || j0.date, time: d.time || j0.time, fixture: tpl ? tpl.name : (S.templates.some((x) => x.name === j0.fixture) ? '' : j0.fixture), tools: d.tools.slice(), parts: d.parts.slice(), part_items: d.parts.map((x) => ({ name: x, qty: (d.qty || {})[x] || 1 })), video_ids: d.videos.slice(), note: (d.note || '').trim(), price: sp.price, inst_amt: sp.inst, adm_amt: sp.adm, bb_amt: sp.bb, inst_pct: sp.price ? Math.round(sp.inst / sp.price * 10000) / 100 : 0, adm_pct: sp.price ? Math.round(sp.adm / sp.price * 10000) / 100 : 0 };
+        const patch = { ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, date: d.date || j0.date, time: d.time || j0.time, fixture: tpl ? tpl.name : (S.templates.some((x) => x.name === j0.fixture) ? '' : j0.fixture), tools: d.tools.slice(), parts: d.parts.slice(), part_items: d.parts.map((x) => ({ name: x, qty: (d.qty || {})[x] || 1 })), video_ids: d.videos.slice(), programme: d.programme || store.program || '', issue: (d.issue || '').trim(), solution: (d.solution || '').trim(), target_date: d.target || null, note: (d.note || '').trim(), price: sp.price, inst_amt: sp.inst, adm_amt: sp.adm, bb_amt: sp.bb, inst_pct: sp.price ? Math.round(sp.inst / sp.price * 10000) / 100 : 0, adm_pct: sp.price ? Math.round(sp.adm / sp.price * 10000) / 100 : 0 };
         if (!lockInstaller) { patch.installer = d.lead; patch.second = second; if (j0.status === 'declined' && d.lead !== j0.installer) { patch.status = 'scheduled'; patch.decline_reason = ''; } }
         if (j0.date !== patch.date || j0.time !== patch.time) patch.request = null;
         ok(await sb.from('jobs').update(patch).eq('id', id));
@@ -3285,7 +3314,8 @@ const A = {
     const prev = S.jobs.filter((j) => j.c === d.c && j.store.toLowerCase() === store.name.toLowerCase() && j.status === 'approved' && j.report && j.report.nextNote).sort((a, b) => (b.handledAt || 0) - (a.handledAt || 0))[0];
     const done = await act(async () => {
       const storeId = await resolveStore();
-      ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl ? tpl.name : '', tools: d.tools.slice(), parts: d.parts.slice(), part_items: d.parts.map((x) => ({ name: x, qty: (d.qty || {})[x] || 1 })), video_ids: d.videos.slice(), note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_amt: sp.inst, adm_amt: sp.adm, bb_amt: sp.bb, inst_pct: sp.price ? Math.round(sp.inst / sp.price * 10000) / 100 : 0, adm_pct: sp.price ? Math.round(sp.adm / sp.price * 10000) / 100 : 0, created_by: S.me }));
+      const nj = ok(await sb.from('jobs').insert({ ticket: t, country: d.c, store_id: storeId, store_name: store.name, address: store.addr, installer: d.lead, second, date: d.date || rel(0), time: d.time || '09:00', fixture: tpl ? tpl.name : '', tools: d.tools.slice(), parts: d.parts.slice(), part_items: d.parts.map((x) => ({ name: x, qty: (d.qty || {})[x] || 1 })), video_ids: d.videos.slice(), programme: d.programme || store.program || '', issue: (d.issue || '').trim(), solution: (d.solution || '').trim(), target_date: d.target || null, note: (d.note || '').trim(), last_note: prev ? prev.report.nextNote : '', price: sp.price, inst_amt: sp.inst, adm_amt: sp.adm, bb_amt: sp.bb, inst_pct: sp.price ? Math.round(sp.inst / sp.price * 10000) / 100 : 0, adm_pct: sp.price ? Math.round(sp.adm / sp.price * 10000) / 100 : 0, created_by: S.me }).select('id').single());
+      if (d.fromDyn && nj) ok(await sb.from('dynamic_tickets').update({ job_id: nj.id }).eq('wo', d.fromDyn));
     }, 'Ticket ' + t + ' created for ' + first(nameOf(d.lead)) + (second ? ' and ' + first(nameOf(second)) : ''));
     if (done) { S.draft = null; S.tab = 'overview'; S.region = d.c; S.period = 2; render(false); }
     else if (btn) { btn.disabled = false; btn.textContent = 'Create ticket'; }
@@ -3380,6 +3410,18 @@ const A = {
     if (!ex) { const r = await sb.from('tools').insert({ name, created_by: S.me }).select('*').single(); if (!r.error && r.data) S.tools.push(r.data); else if (r.error) toast(friendly(r.error)); }
     U.tq = ''; renderSheet();
   },
+  planDyn(v) {
+    const x = (S.dyn || []).find((y) => y.wo === v); if (!x) return;
+    if (S.jobs.some((j) => j.ticket === x.wo)) { toast('WO ' + x.wo + ' is already a ticket'); return; }
+    const d = newDraft(); d.c = x.c; d.ticket = x.wo;
+    const st = S.stores.find((y) => y.id === x.storeId) || S.stores.find((y) => y.c === x.c && y.appleId && y.appleId === x.appleId);
+    d.store = st ? st.id : null; d.storeName = st ? '' : x.store;
+    const ins = installers(d.c); if (!ins.some((u) => u.id === d.lead)) d.lead = ins.length === 1 ? ins[0].id : null;
+    d.programme = x.programme || (st ? st.program : ''); d.issue = x.issue; d.solution = x.solution; d.target = x.target; d.fromDyn = x.wo;
+    if (x.target && x.target >= isoOf(today0())) d.date = x.target;
+    S.draft = d; S.view = null; S.tab = 'new'; U.sheet = null; renderSheet(); render(false); window.scrollTo(0, 0);
+  },
+  async dynDismiss(v) { await act(async () => ok(await sb.from('dynamic_tickets').update({ dismissed: true }).eq('wo', v)), 'WO ' + v + ' hidden'); renderSheet(); },
   pickStoreOpen() { U.sq = ''; U.sheet = 'pickstore'; renderSheet(); },
   pickStore(v) { const d = S.draft; d.store = v; d.storeName = ''; if (d.err) d.err.store = ''; U.sheet = null; renderSheet(); render(); },
   partsOpen(v) { U.pm = v; U.pq = ''; U.sheet = 'pickparts'; renderSheet(); },

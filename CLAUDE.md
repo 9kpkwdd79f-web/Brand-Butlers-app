@@ -34,5 +34,12 @@
 - The schema and functions are the migrations `core_schema`, `functions_storage_seed`, `apple_sign_in` (now only the login guard and account_status with country), `templates_and_tools`, `video_library`, `video_edits`, `library_pictures`, `report_extras`, `installer_reopen`, `apple_export`, `privacy_by_design` (account_status returns only status; `admin_names` dropped), `multi_country`, `manual_amounts`, `stores_parts_catalog` and `orphan_photo_cleanup` (`orphan_photo_files()`: files in `photos` whose ticket no longer exists; the app removes them via the Storage API when an admin signs in, `cleanOrphans`) in the project; read them with `list_migrations` / `get_edge_function` before changing anything.
 - Before the first live deploy on Supabase: create a separate live project so test data never mixes with real data, and point the live build at it.
 
+## Dynamic portal agent (Mathias, 24 Nov 2026)
+- Source: Dynamic's installer portal https://maintenance-dynamiceu.com (Mathias signed in himself in the Claude built-in browser on the Mac mini "mathias-sin-mac-mini-local"; never store or type his password). In progress list: `/preservation/reactive/includes/sessions-reactive.php?status=InProgress` (one table; read cells by header name).
+- Capture ONLY: WO (= ticket number), store (match `stores` by country + `apple_id`), Programme, Issue, Solution, Target Visit Date. Nothing else.
+- Written to table `dynamic_tickets` (migration `dynamic_inbox`; admins only via RLS): upsert on `wo`, `last_seen` updated, never touch rows that already have `job_id` or `dismissed`. `jobs` got `programme`, `issue`, `solution`, `target_date`; `my_jobs()` returns them to installers.
+- App: Overview alert "N new tickets from Dynamic" → sheet `dyn` (Plan ticket = `planDyn`, prefilled New ticket with issue/solution/target date, links `dynamic_tickets.job_id` on create; "Not for us" = `dynDismiss`). Issue and solution show on the ticket form (`PT.issue`, full width), admin ticket view, installer job card and report step 1.
+- Scope so far: Swedish stores only (trial). Schedule: 10:00 and 15:00 Europe/Oslo on the Mac mini.
+
 ## Parked ideas
 - Offline mode: plan in `docs/offline-mode.md`. Not built; wait for Mathias to decide.
