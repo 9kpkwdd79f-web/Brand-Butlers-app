@@ -814,7 +814,7 @@ async function loadAll() {
   let jobs, reports;
   if (me.admin) {
     const [ps, st, js, rs, tp, tl, vd, pc, dyq] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*'), sb.from('videos').select('*'), sb.from('parts_catalog').select('*'), sb.from('dynamic_tickets').select('*')]);
-    S.dyn = ((dyq || {}).data || []).filter((x) => !x.job_id && !x.dismissed).map((x) => ({ wo: x.wo, c: x.country, storeId: x.store_id, appleId: x.apple_id, store: x.store_name, addr: x.address, programme: x.programme, issue: x.issue, solution: x.solution, target: x.target_date, status: x.dyn_status || '', seen: x.first_seen }));
+    S.dyn = ((dyq || {}).data || []).filter((x) => !x.job_id && !x.dismissed && !x.gone_at).map((x) => ({ wo: x.wo, c: x.country, storeId: x.store_id, appleId: x.apple_id, store: x.store_name, addr: x.address, programme: x.programme, issue: x.issue, solution: x.solution, target: x.target_date, status: x.dyn_status || '', seen: x.first_seen }));
     S.templates = ok(tp).map((t) => ({ id: t.id, name: t.name, tools: t.tools || [], parts: t.parts || [], videos: t.video_ids || [] })).sort((a, b) => a.name.localeCompare(b.name));
     S.videos = ok(vd).map(toVideo).sort((a, b) => a.title.localeCompare(b.title));
     S.tools = ok(tl).map((t) => ({ id: t.id, name: t.name })).sort((a, b) => a.name.localeCompare(b.name));
