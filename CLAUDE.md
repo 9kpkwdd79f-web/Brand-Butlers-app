@@ -36,7 +36,10 @@
 
 ## Dynamic portal agent (Mathias, 24 Nov 2026)
 - Source: Dynamic's installer portal https://maintenance-dynamiceu.com (Mathias signed in himself in the Claude built-in browser on the Mac mini "mathias-sin-mac-mini-local"; never store or type his password). In progress list: `/preservation/reactive/includes/sessions-reactive.php?status=InProgress` (one table; read cells by header name).
-- Capture ONLY: WO (= ticket number), store (match `stores` by country + `apple_id`), Programme, Issue, Solution, Target Visit Date. Nothing else.
+- Capture ONLY: WO (= ticket number), store (match `stores` by country + `apple_id`), Programme, Issue, Solution, Target Visit Date, and Dynamic's Status (`dynamic_tickets.dyn_status`, migration `dynamic_status`, added 25 Nov 2026). Nothing else.
+- When Dynamic and the app's store list disagree (store name, address, programme), the app's store list always wins (Mathias, 25 Nov 2026).
+- The `dyn` sheet has a country filter (Nordic/Mine views, `U.dynC`) and a Dynamic status filter (`U.dynS`), action `dynF`.
+- Dynamic's site logs out after some hours (seen 25 Nov 2026: signed in 20:28, logged out by 09:50). A run that finds the sign-in page stops and reports it.
 - Written to table `dynamic_tickets` (migration `dynamic_inbox`; admins only via RLS): upsert on `wo`, `last_seen` updated, never touch rows that already have `job_id` or `dismissed`. `jobs` got `programme`, `issue`, `solution`, `target_date`; `my_jobs()` returns them to installers.
 - App: Overview alert "N new tickets from Dynamic" → sheet `dyn` (Plan ticket = `planDyn`, prefilled New ticket with issue/solution/target date, links `dynamic_tickets.job_id` on create; "Not for us" = `dynDismiss`). Issue and solution show on the ticket form (`PT.issue`, full width), admin ticket view, installer job card and report step 1.
 - Scope: all four countries (Mathias, 24 Nov 2026). Schedule: 10:00 and 15:00 Europe/Oslo, scheduled task on the Mac mini.

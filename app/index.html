@@ -349,6 +349,8 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 .isrow textarea { width: 100%; resize: vertical; min-height: 44px; font-size: 16px; line-height: 22px; border: none; background: none; padding: 0; }
 .isfoot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px 12px; border-top: 0.5px solid var(--sep); font-size: 13px; }
 .dync { gap: 10px; }
+.dynf { margin: 0 0 10px; gap: 6px; }
+.chip.sm2 { min-height: 30px; font-size: 13px; padding: 0 11px; }
 .dynh { display: flex; align-items: flex-start; gap: 10px; }
 .dynh .grow { flex: 1; min-width: 0; }
 .dynh b { display: block; font-size: 16px; }
@@ -807,7 +809,7 @@ async function loadAll() {
   let jobs, reports;
   if (me.admin) {
     const [ps, st, js, rs, tp, tl, vd, pc, dyq] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*'), sb.from('videos').select('*'), sb.from('parts_catalog').select('*'), sb.from('dynamic_tickets').select('*')]);
-    S.dyn = ((dyq || {}).data || []).filter((x) => !x.job_id && !x.dismissed).map((x) => ({ wo: x.wo, c: x.country, storeId: x.store_id, appleId: x.apple_id, store: x.store_name, addr: x.address, programme: x.programme, issue: x.issue, solution: x.solution, target: x.target_date, seen: x.first_seen }));
+    S.dyn = ((dyq || {}).data || []).filter((x) => !x.job_id && !x.dismissed).map((x) => ({ wo: x.wo, c: x.country, storeId: x.store_id, appleId: x.apple_id, store: x.store_name, addr: x.address, programme: x.programme, issue: x.issue, solution: x.solution, target: x.target_date, status: x.dyn_status || '', seen: x.first_seen }));
     S.templates = ok(tp).map((t) => ({ id: t.id, name: t.name, tools: t.tools || [], parts: t.parts || [], videos: t.video_ids || [] })).sort((a, b) => a.name.localeCompare(b.name));
     S.videos = ok(vd).map(toVideo).sort((a, b) => a.title.localeCompare(b.title));
     S.tools = ok(tl).map((t) => ({ id: t.id, name: t.name })).sort((a, b) => a.name.localeCompare(b.name));
@@ -2064,9 +2066,16 @@ function renderSheet() {
     const ids = list.filter((n) => !n.read_at).map((n) => n.id);
     if (ids.length) { const t = new Date().toISOString(); list.forEach((n) => { if (!n.read_at) n.read_at = t; }); sb.from('notifications').update({ read_at: t }).in('id', ids).then(() => { if (typeof render === 'function') render(); }); }
   } else if (kind === 'dyn') {
-    const list = (S.dyn || []).filter((x) => inR(x.c, S.region)).sort((a, b) => (a.target || '9') .localeCompare(b.target || '9') || a.wo.localeCompare(b.wo));
+    const all = (S.dyn || []).filter((x) => inR(x.c, S.region));
+    const cs = regionCs(S.region).filter((c) => all.some((x) => x.c === c)); const DC = U.dynC != null && cs.includes(U.dynC) ? U.dynC : null;
+    const inC = all.filter((x) => DC == null || x.c === DC);
+    const stats = Array.from(new Set(inC.map((x) => x.status || 'No status'))).sort((a, b) => inC.filter((x) => (x.status || 'No status') === b).length - inC.filter((x) => (x.status || 'No status') === a).length);
+    const DS = U.dynS && stats.includes(U.dynS) ? U.dynS : '';
+    const list = inC.filter((x) => !DS || (x.status || 'No status') === DS).sort((a, b) => (a.target || '9').localeCompare(b.target || '9') || a.wo.localeCompare(b.wo));
     body = `${sheetHead('From Dynamic', 'Close')}<p class="foot" style="margin:0 4px 10px">Tickets in progress on Dynamic\u2019s portal that aren\u2019t in the app yet. Plan one to choose installer, date and price.</p>
-      ${list.length ? `<div class="stack" style="gap:10px">${list.map((x) => { const st = S.stores.find((y) => y.id === x.storeId) || S.stores.find((y) => y.c === x.c && y.appleId && y.appleId === x.appleId); return `<div class="card dync"><div class="dynh"><span class="grow"><b>${esc(st ? st.name : x.store)}</b><span class="sub">WO ${esc(x.wo)} \u00b7 ${flag(x.c, 14, 10)} ${C[x.c].name}${x.programme ? ' \u00b7 ' + esc(x.programme) : ''}${st ? '' : ' \u00b7 <span style="color:var(--orange)">store not in the list</span>'}</span></span>${x.target ? `<span class="pill ${x.target < isoOf(today0()) ? 'p-red' : 'p-blue'}" title="Target visit date">${esc(fmtDay(x.target))}</span>` : ''}</div>
+      ${cs.length > 1 ? `<div class="chips dynf" role="group" aria-label="Country">${[null].concat(cs).map((c) => `<button type="button" class="chip ${DC === c ? 'on' : ''}" data-a="dynF" data-k="c" data-v="${c == null ? '' : c}">${c == null ? 'All' : flag(c, 16, 11) + ' ' + C[c].name} <span class="num" style="opacity:.6">${c == null ? all.length : all.filter((x) => x.c === c).length}</span></button>`).join('')}</div>` : ''}
+      ${stats.length > 1 ? `<div class="chips dynf" role="group" aria-label="Status in Dynamic">${[''].concat(stats).map((t) => `<button type="button" class="chip sm2 ${DS === t ? 'on' : ''}" data-a="dynF" data-k="s" data-v="${esc(t)}">${t ? esc(t) : 'All statuses'} <span class="num" style="opacity:.6">${t ? inC.filter((x) => (x.status || 'No status') === t).length : inC.length}</span></button>`).join('')}</div>` : ''}
+      ${list.length ? `<div class="stack" style="gap:10px">${list.map((x) => { const st = S.stores.find((y) => y.id === x.storeId) || S.stores.find((y) => y.c === x.c && y.appleId && y.appleId === x.appleId); return `<div class="card dync"><div class="dynh"><span class="grow"><b>${esc(st ? st.name : x.store)}</b><span class="sub">WO ${esc(x.wo)} \u00b7 ${flag(x.c, 14, 10)} ${C[x.c].name}${(st && st.program) || x.programme ? ' \u00b7 ' + esc((st && st.program) || x.programme) : ''}${x.status ? ' <span class="tag" style="margin-left:4px">' + esc(x.status) + '</span>' : ''}${st ? '' : ' \u00b7 <span style="color:var(--orange)">store not in the list</span>'}</span></span>${x.target ? `<span class="pill ${x.target < isoOf(today0()) ? 'p-red' : 'p-blue'}" title="Target visit date">${esc(fmtDay(x.target))}</span>` : ''}</div>
         <div class="dyni"><span class="cap">Issue</span><span>${esc(x.issue || '\u2013')}</span></div><div class="dyni"><span class="cap">Solution</span><span>${esc(x.solution || '\u2013')}</span></div>
         <div class="btn2"><button type="button" class="btn small sec" data-a="dynDismiss" data-v="${esc(x.wo)}">Not for us</button><button type="button" class="btn small" data-a="planDyn" data-v="${esc(x.wo)}">Plan ticket</button></div></div>`; }).join('')}</div>` : '<div class="empty"><b>All planned</b><span>Nothing new from Dynamic right now.</span></div>'}`;
   } else if (kind === 'pickinst') {
@@ -3465,6 +3474,7 @@ const A = {
     if (n.job_id && job(n.job_id)) { if (meU().installer && (job(n.job_id).installer === S.me || job(n.job_id).second === S.me)) { S.role = 'installer'; S.view = null; S.tab = 'jobs'; S.focus = n.job_id; } else showJob(n.job_id); }
     render(false);
   },
+  dynF(v, el) { if (el.dataset.k === 'c') { U.dynC = v === '' ? null : +v; U.dynS = ''; } else U.dynS = v; renderSheet(); },
   planDyn(v) {
     const x = (S.dyn || []).find((y) => y.wo === v); if (!x) return;
     if (S.jobs.some((j) => j.ticket === x.wo)) { toast('WO ' + x.wo + ' is already a ticket'); return; }
@@ -3472,7 +3482,7 @@ const A = {
     const st = S.stores.find((y) => y.id === x.storeId) || S.stores.find((y) => y.c === x.c && y.appleId && y.appleId === x.appleId);
     d.store = st ? st.id : null; d.storeName = st ? '' : x.store;
     const ins = installers(d.c); if (!ins.some((u) => u.id === d.lead)) d.lead = ins.length === 1 ? ins[0].id : null;
-    d.programme = x.programme || (st ? st.program : ''); d.issue = x.issue; d.solution = x.solution; d.target = x.target; d.fromDyn = x.wo;
+    d.programme = (st && st.program) || x.programme; // the app's store list wins over Dynamic d.issue = x.issue; d.solution = x.solution; d.target = x.target; d.fromDyn = x.wo;
     if (x.target && x.target >= isoOf(today0())) d.date = x.target;
     S.draft = d; S.view = null; S.tab = 'new'; U.sheet = null; renderSheet(); render(false); window.scrollTo(0, 0);
   },
