@@ -350,6 +350,11 @@ body.desk .pecols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; 
 .isfoot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px 12px; border-top: 0.5px solid var(--sep); font-size: 13px; }
 .dync { gap: 10px; }
 .dynf { margin: 0 0 10px; gap: 6px; }
+/* country filter: always one line (All + every country) */
+.dync1 { display: grid; gap: 6px; margin: 0 0 10px; }
+.dync1 .chip { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; white-space: nowrap; overflow: hidden; min-width: 0; font-size: 14px; }
+.dync1 .ck { display: none; }
+@media (max-width: 560px) { .dync1 .cn { display: none; } .dync1 .ck { display: inline; } .dync1 .chip { font-size: 13px; padding: 0 4px; } }
 .chip.sm2 { min-height: 30px; font-size: 13px; padding: 0 11px; }
 .dynh { display: flex; align-items: flex-start; gap: 10px; }
 .dynh .grow { flex: 1; min-width: 0; }
@@ -2073,7 +2078,7 @@ function renderSheet() {
     const DS = U.dynS && stats.includes(U.dynS) ? U.dynS : '';
     const list = inC.filter((x) => !DS || (x.status || 'No status') === DS).sort((a, b) => (a.target || '9').localeCompare(b.target || '9') || a.wo.localeCompare(b.wo));
     body = `${sheetHead('From Dynamic', 'Close')}<p class="foot" style="margin:0 4px 10px">Tickets in progress on Dynamic\u2019s portal that aren\u2019t in the app yet. Plan one to choose installer, date and price.</p>
-      ${cs.length > 1 ? `<div class="chips dynf" role="group" aria-label="Country">${[null].concat(cs).map((c) => `<button type="button" class="chip ${DC === c ? 'on' : ''}" data-a="dynF" data-k="c" data-v="${c == null ? '' : c}">${c == null ? 'All' : flag(c, 16, 11) + ' ' + C[c].name} <span class="num" style="opacity:.6">${c == null ? all.length : all.filter((x) => x.c === c).length}</span></button>`).join('')}</div>` : ''}
+      ${cs.length > 1 ? `<div class="dync1" role="group" aria-label="Country" style="grid-template-columns:repeat(${cs.length + 1},minmax(0,1fr))">${[null].concat(cs).map((c) => `<button type="button" class="chip ${DC === c ? 'on' : ''}" data-a="dynF" data-k="c" data-v="${c == null ? '' : c}">${c == null ? 'All' : flag(c, 16, 11) + `<span class="cn">${C[c].name}</span><span class="ck">${C[c].k}</span>`} <span class="num" style="opacity:.6">${c == null ? all.length : all.filter((x) => x.c === c).length}</span></button>`).join('')}</div>` : ''}
       ${stats.length > 1 ? `<div class="chips dynf" role="group" aria-label="Status in Dynamic">${[''].concat(stats).map((t) => `<button type="button" class="chip sm2 ${DS === t ? 'on' : ''}" data-a="dynF" data-k="s" data-v="${esc(t)}">${t ? esc(t) : 'All statuses'} <span class="num" style="opacity:.6">${t ? inC.filter((x) => (x.status || 'No status') === t).length : inC.length}</span></button>`).join('')}</div>` : ''}
       ${list.length ? `<div class="stack" style="gap:10px">${list.map((x) => { const st = S.stores.find((y) => y.id === x.storeId) || S.stores.find((y) => y.c === x.c && y.appleId && y.appleId === x.appleId); return `<div class="card dync"><div class="dynh"><span class="grow"><b>${esc(st ? st.name : x.store)}</b><span class="sub">WO ${esc(x.wo)} \u00b7 ${flag(x.c, 14, 10)} ${C[x.c].name}${(st && st.program) || x.programme ? ' \u00b7 ' + esc((st && st.program) || x.programme) : ''}${x.status ? ' <span class="tag" style="margin-left:4px">' + esc(x.status) + '</span>' : ''}${st ? '' : ' \u00b7 <span style="color:var(--orange)">store not in the list</span>'}</span></span>${x.target ? `<span class="pill ${x.target < isoOf(today0()) ? 'p-red' : 'p-blue'}" title="Target visit date">${esc(fmtDay(x.target))}</span>` : ''}</div>
         <div class="dyni"><span class="cap">Issue</span><span>${esc(x.issue || '\u2013')}</span></div><div class="dyni"><span class="cap">Solution</span><span>${esc(x.solution || '\u2013')}</span></div>
