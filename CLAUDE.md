@@ -56,5 +56,11 @@
 - App: bell in the header and "Notifications" in the PC sidebar (unread count), sheet `notes` with "Turn on notifications" (`pushOn`, `sw.js` push handler; iPhone needs Add to Home Screen first). Opening the sheet marks them read; tapping one opens the Dynamic list or the job (`openNote`).
 - Photo slots offer "Take … photo" (camera) and "From library" (no `capture`), Retake also has From library; step 1 has the extra photos/videos block too.
 
+## Welcome for new installers (Mathias, 26 Nov 2026; migration `welcome_intro`)
+- First time an installer opens the installer view, sheet `welcome` opens by itself (`maybeWelcome`, once per person: `profiles.intro_seen_at`, set by rpc `intro_seen()` when the sheet closes, `introSeen`). It holds the narrated intro video `app/intro/welcome.mp4` (720×1280, poster `intro/welcome.jpg`) and two checks from `welcomeSteps()`: Add to Home Screen (done when `isHome()`, iPhone/Android instructions) and Turn on notifications (`pushOn`). A playing video survives sheet redraws (`#wvid` kept in `renderSheet`).
+- Everyone can replay it: account sheet → "Welcome video" (`welcome:again`). After the intro, installer Today shows `pushBanner()` while notifications are off on that device (× = `pushAskNo`, `bb.pushask`).
+- Source of the video: `/home/claude/film3` (film.html + frames.py, Kokoro voice af_heart, mix.py); one-page PDF guide `/home/claude/guide1/guide.html`. Both end with the NaaUt logo (never on the Apple report).
+- On wide screens without the desk layout, sheets are capped at 560 px.
+
 ## Parked ideas
 - Offline mode: plan in `docs/offline-mode.md`. Not built; wait for Mathias to decide.

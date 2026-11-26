@@ -173,6 +173,7 @@ input.box { width: 100%; height: 48px; background: var(--card); border: none; bo
 .tab .badge { position: absolute; top: -2px; left: calc(50% + 6px); min-width: 18px; height: 18px; border-radius: 9px; background: var(--redbtn); color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
 .scrim { position: fixed; inset: 0; z-index: 40; background: var(--scrim); display: flex; flex-direction: column; justify-content: flex-end; }
 .scrim .close { flex: 1; border: none; background: transparent; }
+@media (min-width: 700px) { body:not(.desk) .sheet { width: 100%; max-width: 560px; margin: 0 auto; } }
 .sheet { background: var(--bg); border-radius: 14px 14px 0 0; padding: 8px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); max-height: 88vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 .grab { align-self: center; width: 36px; height: 5px; border-radius: 3px; background: var(--chev); opacity: 0.6; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 50; background: rgba(28,28,30,0.94); color: #FFFFFF; font-size: 15px; font-weight: 500; padding: 10px 16px; border-radius: 999px; display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 32px); text-align: center; }
@@ -567,6 +568,18 @@ body.desk button.row:hover, body.desk .chip:hover { filter: brightness(0.97); }
 body.desk .btn:hover { filter: brightness(1.06); }
 body.desk .scrim { justify-content: center; align-items: center; padding: 24px; }
 body.desk .scrim .close { position: absolute; inset: 0; }
+.wvid { display: flex; justify-content: center; }
+.wvid video { display: block; height: min(38vh, 520px); width: auto; aspect-ratio: 9 / 16; object-fit: cover; background: #000; border-radius: 14px; box-shadow: 0 0 0 1px var(--sep); }
+.wrow { align-items: flex-start; padding-top: 12px; padding-bottom: 12px; }
+.wnum { width: 28px; height: 28px; border-radius: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--fill); color: var(--fg); font-weight: 700; font-size: 14px; }
+.wnum.on { background: var(--green); }
+.wrow .sub { line-height: 19px; }
+.kbd { display: inline-block; padding: 0 5px; border-radius: 5px; background: var(--fill); font-weight: 600; }
+.nban { flex-direction: row; align-items: center; gap: 12px; margin-top: 16px; padding: 12px 12px 12px 14px; }
+.nban .grow { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nban .sub { font-size: 13px; color: var(--muted); line-height: 17px; }
+.nban .btn.small { width: auto; padding: 0 14px; flex-shrink: 0; }
+.nbx { border: none; background: none; color: var(--muted); font-size: 15px; width: 28px; height: 36px; padding: 0; flex-shrink: 0; }
 body.desk .sheet { position: relative; width: 540px; max-width: 100%; border-radius: 18px; max-height: 88vh; padding: 14px 20px 22px; box-shadow: 0 24px 60px rgba(0,0,0,0.3); }
 body.desk .sheet .grab { display: none; }
 body.desk .toast { left: calc(50% + 124px); bottom: 30px; }
@@ -753,7 +766,7 @@ const friendly = (e) => {
   if (/fetch|network|Failed/i.test(m)) return 'No connection. Check your internet and try again.';
   return m && m.length < 140 ? m : 'Something went wrong. Try again.';
 };
-const toUser = (p) => ({ id: p.id, email: p.email, name: p.name || '', phone: p.phone || '', c: p.country, cs: (p.countries && p.countries.length ? p.countries : [p.country]).map(Number), admin: p.is_admin, installer: p.is_installer, status: p.status, active: p.active, hash: p.status === 'active', reset: p.status === 'reset' });
+const toUser = (p) => ({ id: p.id, email: p.email, name: p.name || '', phone: p.phone || '', c: p.country, cs: (p.countries && p.countries.length ? p.countries : [p.country]).map(Number), admin: p.is_admin, installer: p.is_installer, status: p.status, active: p.active, hash: p.status === 'active', reset: p.status === 'reset', intro: !!p.intro_seen_at });
 const toJob = (r) => ({
   id: r.id, ticket: r.ticket, c: r.country, storeId: r.store_id || null, store: r.store_name, addr: r.address || '', installer: r.installer, second: r.second || null,
   date: r.date, time: r.time, status: r.status, fixture: r.fixture || '', tools: r.tools || [], parts: r.parts || [], note: r.note || '', last: r.last_note || '',
@@ -767,7 +780,9 @@ const VAPID_PUBLIC = 'BEbDN8NSvRG-IuIFreBbFy48LahnF3roD6CwBd26wRbkQpRF3aUuglyWAh
 const b64u = (s) => { const p = (s + '===='.slice(s.length % 4)).replace(/-/g, '+').replace(/_/g, '/'); return Uint8Array.from(atob(p), (c) => c.charCodeAt(0)); };
 let SWREG = null;
 const swReady = async () => { if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null; try { SWREG = SWREG || (await navigator.serviceWorker.register('sw.js', { scope: './' })); await navigator.serviceWorker.ready; return SWREG; } catch (e) { return null; } };
-const pushState = () => { const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone; if (!('Notification' in window) || !('serviceWorker' in navigator)) return ios && !standalone ? 'ios' : 'none'; if (ios && !standalone) return 'ios'; if (Notification.permission === 'denied') return 'denied'; let mine = ''; try { mine = localStorage.getItem('bb.push') || ''; } catch (e) { /* ignore */ } return Notification.permission === 'granted' && mine === S.me ? 'on' : 'off'; };
+const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+const isHome = () => matchMedia('(display-mode: standalone)').matches || !!navigator.standalone;
+const pushState = () => { const ios = isIOS(); const standalone = isHome(); if (!('Notification' in window) || !('serviceWorker' in navigator)) return ios && !standalone ? 'ios' : 'none'; if (ios && !standalone) return 'ios'; if (Notification.permission === 'denied') return 'denied'; let mine = ''; try { mine = localStorage.getItem('bb.push') || ''; } catch (e) { /* ignore */ } return Notification.permission === 'granted' && mine === S.me ? 'on' : 'off'; };
 const agoLabel = (ts) => { const m = Math.round((Date.now() - Date.parse(ts)) / 60000); return m < 1 ? 'Just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + (Math.round(m / 1440) === 1 ? ' day ago' : ' days ago'); };
 if ('serviceWorker' in navigator) {
   swReady();
@@ -832,6 +847,34 @@ async function loadAll() {
   if (keep && keep.report) { const j = job(keep.id); if (j) j.report = keep.report; }
   if (!me.installer) S.role = 'admin';
   if (!me.admin) S.role = 'installer';
+}
+/* welcome for new installers: intro video + Add to Home Screen + notifications, once per person (profiles.intro_seen_at) */
+let INTRO_ASKED = false;
+function maybeWelcome() {
+  const me = meU(); if (!me || S.loading || S.choosing || U.sheet || INTRO_ASKED || me.intro || !me.installer || S.role !== 'installer' || S.view) return;
+  INTRO_ASKED = true; U.sheet = 'welcome'; renderSheet();
+}
+function introSeen() { const me = meU(); if (!me || me.intro) return; me.intro = true; Promise.resolve(sb.rpc('intro_seen')).then(() => {}, () => {}); }
+const pushAsked = () => { try { return localStorage.getItem('bb.pushask') === S.me; } catch (e) { return false; } };
+function pushBanner() {
+  const st = pushState(); if (!(st === 'off' || st === 'ios') || pushAsked()) return '';
+  return `<div class="card nban"><span class="pfi">${I.bell}</span><span class="grow"><b>${st === 'ios' ? 'Add the app to your Home Screen' : 'Turn on notifications'}</b><span class="sub">${st === 'ios' ? 'Needed on iPhone to get told about new jobs.' : 'Get told when you get a new job.'}</span></span>${st === 'ios' ? '<button type="button" class="btn small" data-a="sheet" data-v="welcome:again">How</button>' : '<button type="button" class="btn small" data-a="pushOn">Turn on</button>'}<button type="button" class="nbx" data-a="pushAskNo" aria-label="Not now">✕</button></div>`;
+}
+function welcomeSteps() {
+  const st = pushState(); const home = isHome(); const ios = isIOS(); const and = /Android/i.test(navigator.userAgent);
+  const done = (t) => `<span class="wnum on">${I.tick('#FFFFFF', 14)}</span>`;
+  const num = (n) => `<span class="wnum">${n}</span>`;
+  const hs = home ? 'Done. You opened the app from your Home Screen.'
+    : ios ? 'In Safari tap <b>Share</b> <span class="kbd">↑</span> then <b>Add to Home Screen</b>. Open the app from the new icon and sign in once more.'
+    : and ? 'In Chrome tap <b>⋮</b> then <b>Add to Home screen</b> or <b>Install app</b>. Open it from the new icon.'
+    : 'On your phone: open this page, then add it to the Home Screen from the browser menu.';
+  const nt = st === 'on' ? 'Done. You get a message when a job is assigned to you.'
+    : st === 'ios' ? 'Do step 1 first. Then open the app from the Home Screen and turn notifications on there.'
+    : st === 'denied' ? 'Notifications are blocked. Allow them for this app in your phone settings.'
+    : st === 'none' ? 'This browser can’t show notifications. Use Safari on iPhone or Chrome on Android.'
+    : 'Get a message on your phone when you are given a new job.';
+  return `<div class="group" id="wsteps"><div class="row wrow">${home ? done() : num(1)}<span class="grow"><span>Add to Home Screen</span><span class="sub">${hs}</span></span></div>
+    <div class="row wrow">${st === 'on' ? done() : num(2)}<span class="grow"><span>Turn on notifications</span><span class="sub">${nt}</span>${st === 'off' ? '<button type="button" class="btn small" style="width:auto;padding:0 16px;margin-top:8px;align-self:flex-start" data-a="pushOn">Turn on notifications</button>' : ''}</span></div></div>`;
 }
 let loadingNow = null;
 function refresh() { if (!loadingNow) loadingNow = loadAll().finally(() => { loadingNow = null; }); return loadingNow; }
@@ -1025,6 +1068,7 @@ function render(keepScroll = true) {
   if (S.view && S.view.kind === 'peditor' && PE) mountPicEditor();
   window.scrollTo(0, keepScroll ? y : 0);
   save();
+  maybeWelcome();
 }
 
 function renderTabs() {
@@ -1813,6 +1857,7 @@ function viewInstaller() {
   const rest = active.filter((j) => j !== next);
   const sent = mine.filter((j) => ['waiting', 'approved'].includes(j.status)).sort((a, b) => jobTs(b) - jobTs(a));
   let h = header('Today', longToday());
+  if (me.intro) h += pushBanner();
   if (next) h += jobCard(next);
   else h += `<div class="empty" style="margin-top:16px"><span class="ico" style="width:52px;height:52px;border-radius:26px;background:var(--green-bg)">${small(TABICON.jobs, 'var(--green)').replace('width="16" height="16"', 'width="24" height="24"')}</span><b>No jobs right now</b><span>When an admin assigns a job to you, it shows up here.${me.admin ? ' You are an admin too: create a ticket and assign it to yourself to try the report.' : ''}</span>${me.admin ? '<button type="button" class="btn small" style="width:auto;padding:0 18px;margin-top:6px" data-a="switchRole" data-v="admin">Go to admin</button>' : ''}</div>`;
   if (rest.length) h += `<h2 class="sec">Coming up</h2><div class="group">${rest.map((j) => { const d = parseD(j.date); return `<button type="button" class="row" data-a="focusJob" data-v="${j.id}"><span style="width:44px;display:flex;flex-direction:column;align-items:center;flex-shrink:0"><span style="font-size:11px;font-weight:600;color:${dayDiff(j.date) === 0 ? 'var(--redbtn)' : 'var(--muted)'}">${WD[d.getDay()].toUpperCase()}</span><span class="num" style="font-size:20px;font-weight:600">${d.getDate()}</span></span><span class="grow"><span>${esc(j.store)}</span><span class="sub">${esc(j.time)}${j.addr ? ' · ' + esc(j.addr.split(',').pop().trim()) : ''}${j.second ? ' · with ' + esc(first(nameOf(j.installer === S.me ? j.second : j.installer))) : ''}</span></span>${pillFor(j)}</button>`; }).join('')}</div>`;
@@ -2132,11 +2177,17 @@ function renderSheet() {
       ${list.length > 1 ? `<div class="btn2"><button type="button" class="btn small sec" data-a="sheet" data-v="extra:${jid}|${+ix - 1}" ${+ix === 0 ? 'disabled' : ''}>\u2039 Previous</button><button type="button" class="btn small" data-a="sheet" data-v="extra:${jid}|${+ix + 1}" ${+ix === list.length - 1 ? 'disabled' : ''}>Next \u203a</button></div><p class="foot" style="text-align:center;margin:0">${+ix + 1} of ${list.length}</p>` : ''}
       ${canDel ? `<button type="button" class="btn sec" style="color:var(--red)" data-a="extraDel" data-v="${+ix}">Remove from report</button>` : ''}`;
     setTimeout(() => { hydrate(); const vd = overlay.querySelector('video[data-pv]'); if (vd) { phGet(vd.dataset.pv).then((u) => { if (u) vd.src = u; }); if (x.poster) phGet(x.poster).then((u) => { if (u) vd.poster = u; }); } }, 0);
+  } else if (kind === 'welcome' && me) {
+    body = `${sheetHead('Welcome' + (me.name ? ', ' + esc(first(me.name)) : ''), arg === 'again' ? 'Close' : 'Skip')}
+      <div class="wvid"><video id="wvid" src="intro/welcome.mp4" poster="intro/welcome.jpg" controls playsinline preload="metadata"></video></div>
+      <p class="foot" style="margin:0 4px;text-align:center">One minute: how the app works. Turn the sound on.</p>
+      <h2 class="sec" style="margin-top:4px">Two things to do now</h2>${welcomeSteps()}
+      <button type="button" class="btn" data-a="closeSheet">${arg === 'again' ? 'Done' : 'Get started'}</button>`;
   } else if (kind === 'account' && me) {
     body = `<div style="display:flex;align-items:center;gap:12px;padding:8px 4px"><span class="avatar" style="width:48px;height:48px;border-radius:24px;margin:0">${initials(me.name || me.email)}</span><div style="display:flex;flex-direction:column;min-width:0"><b>${esc(me.name)}</b><span class="muted" style="font-size:13px;word-break:break-all">${esc(me.email)}</span></div></div>
       ${me.admin && me.installer ? `<div class="group">${['admin', 'installer'].map((r) => `<button type="button" class="row" data-a="switchRole" data-v="${r}"><span class="grow"><span>${r === 'admin' ? 'Admin workspace' : 'Installer workspace'}</span><span class="sub">${r === 'admin' ? 'Tickets, approvals, team and insights' : 'Jobs, reports and earnings'}</span></span>${S.role === r ? I.tick('var(--blue)', 18) : ''}</button>`).join('')}</div>` : ''}
-      <div class="group"><button type="button" class="row" data-a="chpw"><span class="grow">Change password</span>${I.chev}</button><button type="button" class="row" data-a="signOut"><span class="grow" style="color:var(--red)">Sign out</span></button></div>
-      <p class="foot" style="text-align:center;margin-top:0">Tip: in Safari, tap Share and then Add to Home Screen to open this like an app.</p>`;
+      <div class="group"><button type="button" class="row" data-a="sheet" data-v="welcome:again"><span class="grow"><span>Welcome video</span><span class="sub">How the app works, Home Screen and notifications</span></span>${I.chev}</button><button type="button" class="row" data-a="chpw"><span class="grow">Change password</span>${I.chev}</button><button type="button" class="row" data-a="signOut"><span class="grow" style="color:var(--red)">Sign out</span></button></div>
+`;
   } else if (kind === 'chpw') {
     body = `<form data-form="chpw" class="stack" novalidate>${sheetHead('Change password')}
       <input class="vh" type="email" autocomplete="username" value="${esc(me.email)}" tabindex="-1" aria-hidden="true">
@@ -2222,7 +2273,9 @@ function renderSheet() {
   }
   if ((kind === 'play' || kind === 'video') && !isPic(videoBy(arg))) setTimeout(() => loadPlayer(arg), 0);
   if (kind === 'play' || kind === 'video') setTimeout(hydrate, 0);
+  const keepV = kind === 'welcome' ? overlay.querySelector('#wvid') : null;
   overlay.innerHTML = `<div class="scrim"><button type="button" class="close" aria-label="Close" data-a="closeSheet"></button><div class="sheet" role="dialog" aria-modal="true"><span class="grab"></span>${body}</div></div>`;
+  if (keepV) { const nv = overlay.querySelector('#wvid'); if (nv) nv.replaceWith(keepV); }
 }
 
 /* read length and a preview picture from a video file before uploading */
@@ -3078,7 +3131,7 @@ const A = {
     U.sheet = v; U.err = ''; U.confirm = null; renderSheet();
 
   },
-  closeSheet() { if (U.sheet === 'upload' && U.form && U.form.progress != null) return; if (U.sheet === 'upload' && U.form && U.form.items) U.form.items.forEach((it) => { if (it.posterUrl) URL.revokeObjectURL(it.posterUrl); }); if (U.sheet === 'upload' && U.form && U.form.back === 'pick') { U.sheet = 'pickvideos'; U.form = null; renderSheet(); return; } U.sheet = null; U.cant = null; U.err = ''; U.confirm = null; renderSheet(); },
+  closeSheet() { if (String(U.sheet).startsWith('welcome')) { introSeen(); const v = overlay.querySelector('#wvid'); if (v) v.pause(); } if (U.sheet === 'upload' && U.form && U.form.progress != null) return; if (U.sheet === 'upload' && U.form && U.form.items) U.form.items.forEach((it) => { if (it.posterUrl) URL.revokeObjectURL(it.posterUrl); }); if (U.sheet === 'upload' && U.form && U.form.back === 'pick') { U.sheet = 'pickvideos'; U.form = null; renderSheet(); return; } U.sheet = null; U.cant = null; U.err = ''; U.confirm = null; renderSheet(); },
   confirm(v) { U.confirm = v || null; if (U.sheet) renderSheet(); else render(); },
   setTheme(v) { applyTheme(v); try { localStorage.setItem(THEME_KEY, v); } catch (e) { /* only for this visit */ } render(); },
   switchRole(v) { const me = meU(); if (v === 'admin' && !me.admin) return; if (v === 'installer' && !me.installer) return; const fromSubmit = S.view && S.view.kind === 'submitted'; S.role = v; S.tab = v === 'admin' ? (fromSubmit ? 'approvals' : 'overview') : 'jobs'; S.view = null; U.sheet = null; render(false); },
@@ -3469,9 +3522,10 @@ const A = {
       const j = sub.toJSON(); const r = await sb.from('push_subs').insert({ profile_id: S.me, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth });
       if (r.error && r.error.code !== '23505') throw r.error;
       try { localStorage.setItem('bb.push', S.me); } catch (e) { /* only for this visit */ }
-      toast('Notifications are on for this device'); renderSheet();
+      toast('Notifications are on for this device'); if (U.sheet) renderSheet(); render();
     } catch (e) { toast(e.message || friendly(e)); if (btn) { btn.disabled = false; btn.textContent = 'Turn on notifications'; } }
   },
+  pushAskNo() { try { localStorage.setItem('bb.pushask', S.me); } catch (e) { /* only for this visit */ } render(); },
   openNote(v) {
     const n = (S.notes || []).find((x) => x.id === v); if (!n) return;
     if (n.kind === 'dynamic' && meU().admin) { if (S.role !== 'admin') S.role = 'admin'; S.region = 4; U.sheet = 'dyn'; renderSheet(); render(false); return; }
