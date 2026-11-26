@@ -766,7 +766,7 @@ const friendly = (e) => {
   if (/fetch|network|Failed/i.test(m)) return 'No connection. Check your internet and try again.';
   return m && m.length < 140 ? m : 'Something went wrong. Try again.';
 };
-const toUser = (p) => ({ id: p.id, email: p.email, name: p.name || '', phone: p.phone || '', c: p.country, cs: (p.countries && p.countries.length ? p.countries : [p.country]).map(Number), admin: p.is_admin, installer: p.is_installer, status: p.status, active: p.active, hash: p.status === 'active', reset: p.status === 'reset', intro: !!p.intro_seen_at });
+const toUser = (p) => ({ id: p.id, email: p.email, name: p.name || '', phone: p.phone || '', c: p.country, cs: (p.countries && p.countries.length ? p.countries : [p.country]).map(Number), admin: p.is_admin, installer: p.is_installer, status: p.status, active: p.active, hash: p.status === 'active', reset: p.status === 'reset', intro: !!p.intro_seen_at, introAt: p.intro_seen_at || null });
 const toJob = (r) => ({
   id: r.id, ticket: r.ticket, c: r.country, storeId: r.store_id || null, store: r.store_name, addr: r.address || '', installer: r.installer, second: r.second || null,
   date: r.date, time: r.time, status: r.status, fixture: r.fixture || '', tools: r.tools || [], parts: r.parts || [], note: r.note || '', last: r.last_note || '',
@@ -826,6 +826,7 @@ async function loadAll() {
     return;
   }
   const me = toUser(meRow); S.me = me.id;
+  if (INTRO_ARM) { INTRO_PENDING = !meRow.intro_seen_at; INTRO_ARM = false; }
   let jobs, reports;
   if (me.admin) {
     const [ps, st, js, rs, tp, tl, vd, pc, dyq] = await Promise.all([sb.from('profiles').select('*'), sb.from('stores').select('*'), sb.from('jobs').select('*'), sb.from('reports').select('*'), sb.from('templates').select('*'), sb.from('tools').select('*'), sb.from('videos').select('*'), sb.from('parts_catalog').select('*'), sb.from('dynamic_tickets').select('*')]);
@@ -848,13 +849,13 @@ async function loadAll() {
   if (!me.installer) S.role = 'admin';
   if (!me.admin) S.role = 'installer';
 }
-/* welcome for new installers: intro video + Add to Home Screen + notifications, once per person (profiles.intro_seen_at) */
-let INTRO_ASKED = false;
+/* welcome for everyone (admins and installers): intro video + Add to Home Screen + notifications, once per person (profiles.intro_seen_at) */
+let INTRO_ASKED = false, INTRO_ARM = true, INTRO_PENDING = false; // armed on app start and sign-in only, so an admin's reset never pops up mid-work
 function maybeWelcome() {
-  const me = meU(); if (!me || S.loading || S.choosing || U.sheet || INTRO_ASKED || me.intro || !me.installer || S.role !== 'installer' || S.view) return;
+  const me = meU(); if (!me || S.loading || S.choosing || U.sheet || INTRO_ASKED || !INTRO_PENDING || S.view) return;
   INTRO_ASKED = true; U.sheet = 'welcome'; renderSheet();
 }
-function introSeen() { const me = meU(); if (!me || me.intro) return; me.intro = true; Promise.resolve(sb.rpc('intro_seen')).then(() => {}, () => {}); }
+function introSeen() { INTRO_PENDING = false; const me = meU(); if (!me || me.intro) return; me.intro = true; Promise.resolve(sb.rpc('intro_seen')).then(() => {}, () => {}); }
 const pushAsked = () => { try { return localStorage.getItem('bb.pushask') === S.me; } catch (e) { return false; } };
 function pushBanner() {
   const st = pushState(); if (!(st === 'off' || st === 'ios') || pushAsked()) return '';
@@ -2214,6 +2215,7 @@ function renderSheet() {
     const canRemove = !self;
     body = `${sheetHead(esc(u.name || 'Account'), 'Close', 'Save', 'savePerson')}${personForm(U.form)}
       <span class="cap">Password</span>${pwBlock}
+      <span class="cap">Welcome video</span><div class="row" style="border-radius:12px;border:none"><span class="ico" style="background:var(--blue-bg)">${I.play.replace('rgba(0,0,0,0.55)', 'var(--blue)')}</span><span class="grow"><span style="font-size:15px;font-weight:500">${u.introAt ? 'Seen ' + esc(fmtDay(String(u.introAt).slice(0, 10))) : 'Not seen yet'}</span><span class="sub">${u.introAt ? 'Show it again the next time they open the app.' : 'It opens by itself the next time they open the app.'}</span></span>${u.introAt ? `<button type="button" class="btn small sec" style="width:auto;padding:0 14px;flex-shrink:0" data-a="introReset" data-v="${u.id}">Show again</button>` : ''}</div>
       <button type="button" class="btn" data-a="savePerson">Save changes</button>
       ${canRemove ? (U.confirm === 'remove' ? `<div class="card" style="gap:10px"><b>Remove ${esc(u.name || u.email)}?</b><span class="muted" style="font-size:15px">They can no longer sign in. Their past jobs and reports stay.</span><div class="btn2"><button type="button" class="btn small sec" data-a="confirm" data-v="">Cancel</button><button type="button" class="btn small red" data-a="removeUser" data-v="${u.id}">Remove</button></div></div>` : `<button type="button" class="link" style="color:var(--red)" data-a="confirm" data-v="remove">Remove account</button>`) : ''}`;
   } else if (kind === 'play') {
@@ -3051,6 +3053,7 @@ async function signInHashed(email, pw) {
 /* ACTIONS                                                             */
 /* =================================================================== */
 async function afterSignIn() {
+  INTRO_ARM = true; INTRO_ASKED = false;
   await loadAll();
   const me = meU();
   if (!me) { S.login = { step: 'email', email: S.login.email, err: 'This account has no access. Ask a Brand Butlers admin.', acc: null }; render(false); return; }
@@ -3135,7 +3138,7 @@ const A = {
   confirm(v) { U.confirm = v || null; if (U.sheet) renderSheet(); else render(); },
   setTheme(v) { applyTheme(v); try { localStorage.setItem(THEME_KEY, v); } catch (e) { /* only for this visit */ } render(); },
   switchRole(v) { const me = meU(); if (v === 'admin' && !me.admin) return; if (v === 'installer' && !me.installer) return; const fromSubmit = S.view && S.view.kind === 'submitted'; S.role = v; S.tab = v === 'admin' ? (fromSubmit ? 'approvals' : 'overview') : 'jobs'; S.view = null; U.sheet = null; render(false); },
-  async signOut() { await sb.auth.signOut().catch(() => {}); S = Object.assign(fresh(), { loading: false, lastEmail: '' }); VU.clear(); PREF_KEYS.forEach((k) => { if (k !== 'lastEmail') { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); if (p[k] !== undefined) S[k] = p[k]; } catch (e) { /* defaults */ } } }); PH.clear(); PHT.clear(); U.sheet = null; render(false); },
+  async signOut() { INTRO_ARM = true; INTRO_ASKED = false; INTRO_PENDING = false; await sb.auth.signOut().catch(() => {}); S = Object.assign(fresh(), { loading: false, lastEmail: '' }); VU.clear(); PREF_KEYS.forEach((k) => { if (k !== 'lastEmail') { try { const p = JSON.parse(localStorage.getItem(KEY) || '{}'); if (p[k] !== undefined) S[k] = p[k]; } catch (e) { /* defaults */ } } }); PH.clear(); PHT.clear(); U.sheet = null; render(false); },
   chpw() { U.sheet = 'chpw'; U.err = ''; renderSheet(); },
   copy(v) { const done = () => toast('Number copied'); try { navigator.clipboard.writeText(v).then(done, () => toast(v)); } catch (e) { toast(v); } },
 
@@ -3524,6 +3527,14 @@ const A = {
       try { localStorage.setItem('bb.push', S.me); } catch (e) { /* only for this visit */ }
       toast('Notifications are on for this device'); if (U.sheet) renderSheet(); render();
     } catch (e) { toast(e.message || friendly(e)); if (btn) { btn.disabled = false; btn.textContent = 'Turn on notifications'; } }
+  },
+  async introReset(v, btn) {
+    if (btn) btn.disabled = true;
+    const r = await sb.rpc('intro_reset', { p_profile: v });
+    if (r.error) { toast(friendly(r.error)); if (btn) btn.disabled = false; return; }
+    const u = userBy(v); if (u) { u.introAt = null; u.intro = false; }
+    if (v === S.me) { INTRO_ARM = true; }
+    toast('The welcome video opens the next time they open the app'); renderSheet();
   },
   pushAskNo() { try { localStorage.setItem('bb.pushask', S.me); } catch (e) { /* only for this visit */ } render(); },
   openNote(v) {
